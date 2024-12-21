@@ -40,7 +40,7 @@ const ForgotPassword = () => {
 
       if (error) return;
 
-      setFormData((prev) => ({ ...prev, otp: data.otp }));
+     // setFormData((prev) => ({ ...prev, otp: data.otp }));
       setCurrentStep("otp");
       setTimeLeft(30);
       setCanResend(false);
