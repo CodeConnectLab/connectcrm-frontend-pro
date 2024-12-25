@@ -327,6 +327,8 @@ const LeadAction: React.FC = () => {
             handleSelectChange={handleSelectChange}
             formData={formData}
             defaultValue={formData.status}
+            value={formData.status}
+            lostReasonValue={formData.leadLostReasonId}
           />
 
           <DateTimePicker

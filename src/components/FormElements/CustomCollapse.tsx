@@ -4,7 +4,7 @@ import type { CollapseProps } from "antd";
 export default function CustomCollapse({ items }: CollapseProps) {
   return (
     <>
-      <Collapse items={items} defaultActiveKey={["1"]} className="bg-primary" />
+      <Collapse items={items} className="bg-primary" />
 
       <style>{`
         .ant-collapse>.ant-collapse-item >.ant-collapse-header .ant-collapse-arrow{

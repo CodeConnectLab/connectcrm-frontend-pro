@@ -23,6 +23,8 @@ interface Lead {
   addCalender: boolean;
   followUpDate: any;
   statusData: any;
+  leadLostReasonId: string;
+  comment: string;
 }
 
 interface APILead {
@@ -37,6 +39,8 @@ interface APILead {
   leadWonAmount: number;
   addCalender: boolean;
   followUpDate: any;
+  leadLostReasonId: string;
+  comment: string;
 }
 
 const AllLeads = ({ derivativeEndpoint = "" }) => {
@@ -68,6 +72,8 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       leadWonAmount: lead?.leadWonAmount,
       addCalender: lead?.addCalender,
       followUpDate: new Date(lead?.followUpDate),
+      leadLostReasonId: lead.leadLostReasonId,
+      comment: lead.comment,
     }));
   };
 
@@ -101,7 +107,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         page: pagination.current,
         limit: pagination.pageSize,
         search: debouncedSearchTerm,
-        ...advancedFilters
+        ...advancedFilters,
       };
 
       const { data, error, options } = await API.getAuthAPI(
@@ -127,16 +133,21 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
 
   useEffect(() => {
     fetchLeads();
-  }, [pagination.current, pagination.pageSize, debouncedSearchTerm, advancedFilters]);
+  }, [
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    advancedFilters,
+  ]);
 
   const handleAdvancedFilter = useCallback((filters: any) => {
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
     setAdvancedFilters(filters);
   }, []);
 
   const handleResetFilters = useCallback(() => {
     setAdvancedFilters({});
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
   }, []);
 
   const handleTableChange = (page: number, pageSize: number) => {
@@ -413,7 +424,9 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
             status: selectedLead.statusData?._id || "",
             followUpDate: selectedLead.followUpDate,
             leadWonAmount: selectedLead.leadWonAmount,
-            addCalender: selectedLead.addCalender, // You might want to get this from your lead data
+            addCalender: selectedLead.addCalender,
+            leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
+            comment: selectedLead.comment, // You might want to get this from your lead data
           }}
           isLoading={isUpdating}
         />

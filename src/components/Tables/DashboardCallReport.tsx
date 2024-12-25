@@ -39,14 +39,14 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
             startDate,
             endDate,
           },
-          'call-report',
+          "call-report",
           true
         );
-        
+
         if (response.error) throw new Error(response.error);
         setCallData(response.data.employeeList);
       } catch (error) {
-        console.error('Failed to fetch call report:', error);
+        console.error("Failed to fetch call report:", error);
       } finally {
         setLoading(false);
       }
@@ -81,7 +81,9 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
             <div className="mb-3 flex items-center gap-3">
               <div className="relative flex-shrink-0">
                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-600 text-lg">{employee.user[0]}</span>
+                  <span className="text-gray-600 text-lg">
+                    {employee.user[0]}
+                  </span>
                 </div>
               </div>
               <div>
@@ -94,25 +96,33 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col">
-                <span className="text-xs uppercase text-gray-500">Total Duration</span>
+                <span className="text-xs uppercase text-gray-500">
+                  Total Duration
+                </span>
                 <span className="font-medium text-dark dark:text-white">
                   {employee.totalDuration}
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs uppercase text-gray-500">Average Duration</span>
+                <span className="text-xs uppercase text-gray-500">
+                  Average Duration
+                </span>
                 <span className="font-medium text-dark dark:text-white">
                   {employee.averageCallDuration}
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs uppercase text-gray-500">Incoming</span>
+                <span className="text-xs uppercase text-gray-500">
+                  Incoming
+                </span>
                 <span className="font-medium text-green">
                   {employee.callDetails.incoming}
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs uppercase text-gray-500">Outgoing</span>
+                <span className="text-xs uppercase text-gray-500">
+                  Outgoing
+                </span>
                 <span className="font-medium text-blue-500">
                   {employee.callDetails.outgoing}
                 </span>
@@ -124,7 +134,9 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs uppercase text-gray-500">Total Calls</span>
+                <span className="text-xs uppercase text-gray-500">
+                  Total Calls
+                </span>
                 <span className="font-medium text-dark dark:text-white">
                   {employee.highestCalls}
                 </span>
@@ -191,14 +203,16 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
             <div className="col-span-2 flex items-center gap-3.5 px-2 py-4 pl-4">
               <div className="relative flex-shrink-0">
                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-600 text-lg">{employee.user[0]}</span>
+                  <span className="text-gray-600 text-lg">
+                    {employee.user[0]}
+                  </span>
                 </div>
               </div>
               <div>
                 <p className="font-medium text-dark dark:text-white">
                   {employee.user}
                 </p>
-                <p className="text-sm text-gray-500">{employee.email}</p>
+                <p className="text-sm text-gray-500 w-[127px] truncate">{employee.email}</p>
               </div>
             </div>
 
@@ -233,9 +247,9 @@ const CallReport: React.FC<CallReportProps> = ({ startDate, endDate }) => {
               </p>
             </div>
             <div className="flex items-center justify-center px-2 py-4">
-              <span className="rounded-full bg-green/10 px-4 py-1 text-sm font-medium text-green">
-                {employee.role}
-              </span>
+              <div className="rounded-full bg-green/10 px-4 py-1 text-sm font-medium text-green flex">
+                <span className="w-max">{employee.role}</span>
+              </div>
             </div>
           </div>
         ))}
