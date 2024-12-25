@@ -34,7 +34,11 @@ const DateTimePicker: React.FC<DatePickerOneProps> = ({
         nextArrow:
           '<svg class="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
         onClose: (selectedDates, dateStr) => {
-          onChange(selectedDates, dateStr);
+          // Convert to UTC before passing back
+          if (selectedDates.length > 0) {
+            const utcDate = new Date(selectedDates[0].toUTCString());
+            onChange([utcDate], utcDate.toISOString());
+          }
         },
       });
 

@@ -40,7 +40,7 @@ interface LeadFormData {
   leadStatus: string;
   followUpDate: string;
   description: string;
-  leadLostReasonId: string;
+  // leadLostReasonId: string;
   additionalDetails?: AdditionalDetails;
 }
 
@@ -55,7 +55,7 @@ const initialFormState: LeadFormData = {
   leadStatus: "",
   followUpDate: "",
   description: "",
-  leadLostReasonId: "",
+  // leadLostReasonId: "",
   additionalDetails: {
     fullAddress: "",
     country: "",
@@ -332,7 +332,7 @@ export default function AddLeads() {
                       handleSelectChange={handleSelectChange}
                       formData={formData}
                       statusFieldName="leadStatus"
-                      lostReasonValue={formData.leadLostReasonId}
+                      // lostReasonValue={formData.leadLostReasonId}
                       value={formData.leadStatus}
                     />
                   </div>
@@ -343,7 +343,7 @@ export default function AddLeads() {
                   <DateTimePicker
                     label="Follow-up date"
                     onChange={handleDateChange}
-                    defaultValue={new Date().toISOString()}
+                    defaultValue={formData.followUpDate}
                     enableTime
                   />
                 </div>
