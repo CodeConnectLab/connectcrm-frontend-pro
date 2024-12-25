@@ -33,7 +33,7 @@ export default function DeleteConfirmModal({
             {selectedCount !== 1 ? "s" : ""}? This action cannot be undone.
           </p>
 
-          <div className="flex w-full gap-3">
+          <div className="flex justify-center w-full gap-3">
             <ButtonDefault
               label="Cancel"
               variant="outline"
