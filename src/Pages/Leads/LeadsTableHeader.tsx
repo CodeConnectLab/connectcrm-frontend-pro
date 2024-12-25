@@ -7,6 +7,8 @@ import AdvanceFilterUI from "../Components/AdvanceFilterUI";
 import useScreenHook from "../../hooks/useScreenHook";
 import SearchForm from "../../components/Header/SearchForm";
 import { getStoredAgents, getStoredStatus } from "../../api/commonAPI";
+import { Modal } from "antd";
+import DeleteConfirmModal from "../../components/Modals/DeleteConfirmModal";
 
 interface LeadsTableHeaderProps {
   handleSearch: (value: string) => void;
@@ -43,9 +45,19 @@ export default function LeadsTableHeader({
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [isAdvanceFilterEnable, setIsAdvanceFilterEnable] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Hooks
   const { deviceType } = useScreenHook();
+
+  const showDeleteConfirmation = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setIsDeleteModalOpen(false);
+    handleDelete();
+  };
 
   const handleSubmit = async () => {
     if (!selectedStatus && !selectedAgent) {
@@ -74,6 +86,16 @@ export default function LeadsTableHeader({
       setIsLoading(false);
     }
   };
+
+  const deleteButtons = (
+    <ButtonDefault
+      label="Delete"
+      variant="outline"
+      customClasses="bg-red-500 text-white"
+      disabled={selectedCount === 0}
+      onClick={showDeleteConfirmation}
+    />
+  );
 
   const renderMobileView = () => {
     return (
@@ -144,11 +166,7 @@ export default function LeadsTableHeader({
             variant="outline"
             customClasses="bg-black text-white"
           />
-          <ButtonDefault
-            label="Delete"
-            variant="outline"
-            customClasses="bg-red-500 text-white"
-          />
+          {deleteButtons}
         </div>
       </>
     );
@@ -239,17 +257,18 @@ export default function LeadsTableHeader({
             variant="outline"
             customClasses="bg-black text-white"
           />
-          <ButtonDefault
-            label="Delete"
-            variant="outline"
-            customClasses="bg-red-500 text-white"
-            disabled={selectedCount === 0}
-            onClick={handleDelete}
-          />
+          {deleteButtons}
         </div>
       </div>
 
       {deviceType === "mobile" && renderMobileView()}
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        selectedCount={selectedCount}
+        handleDeleteConfirm={handleDeleteConfirm}
+        setIsDeleteModalOpen={setIsDeleteModalOpen}
+        isDeleteModalOpen={isDeleteModalOpen}
+      />
     </>
   );
 }

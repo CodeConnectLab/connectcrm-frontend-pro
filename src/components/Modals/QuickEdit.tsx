@@ -37,12 +37,20 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
     comment: initialData.comment || "",
     leadLostReasonId: initialData.leadLostReasonId,
   });
+  const [firstTimeClick, setFirstTimeClick] = useState(true);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const clearTextArea = (name: string) => {
+    if (!firstTimeClick) return;
+
+    setFormData((prev) => ({ ...prev, [name]: "" }));
+    setFirstTimeClick(false);
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -107,6 +115,7 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
           <textarea
             name="comment"
             value={formData.comment}
+            onFocus={() => clearTextArea("comment")}
             onChange={handleInputChange}
             placeholder="Add your comment"
             className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
