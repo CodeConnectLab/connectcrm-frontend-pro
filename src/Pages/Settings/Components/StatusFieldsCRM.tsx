@@ -289,12 +289,10 @@ export default function StatusFieldsCRM() {
   const handleAdd = async (newItem: any) => {
     try {
       setIsLoading(true);
-      console.log({ newItem });
-
       const payload = {
         displayName: newItem.display,
         name: newItem.status,
-        color: newItem.color, // Default color
+        color: newItem.color || "#5750F1", // Default color
       };
 
       const { error } = await API.postAuthAPI(
@@ -303,7 +301,7 @@ export default function StatusFieldsCRM() {
         true
       );
 
-      if (error) return;
+      if (error) throw new Error(error);
 
       toast.success("Status field added successfully!");
       fetchStatusFields();

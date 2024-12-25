@@ -14,6 +14,8 @@ interface QuickEditModalProps {
     id: string;
     status: string;
     followUpDate: string;
+    leadLostReasonId: string;
+    comment: string;
     leadWonAmount: number;
     addCalender: boolean;
   };
@@ -32,7 +34,8 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
     followup: initialData.followUpDate,
     leadWonAmount: initialData.leadWonAmount || 0,
     addCalender: initialData.addCalender || false,
-    comment: "",
+    comment: initialData.comment || "",
+    leadLostReasonId: initialData.leadLostReasonId,
   });
 
   const handleInputChange = (
@@ -66,6 +69,8 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
       followUpDate: formData.followup,
       addCalender: formData.addCalender,
       comment: formData.comment,
+      leadLostReasonId: formData.leadLostReasonId,
+      leadWonAmount: formData.leadWonAmount,
     });
   };
 
@@ -84,6 +89,8 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
           handleSelectChange={handleSelectChange}
           formData={formData}
           defaultValue={formData.status}
+          value={formData.status}
+          lostReasonValue={formData.leadLostReasonId}
         />
 
         <DateTimePicker

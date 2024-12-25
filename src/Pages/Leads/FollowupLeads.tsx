@@ -21,6 +21,8 @@ interface Lead {
   statusData: any;
   leadWonAmount: number;
   addCalender: boolean;
+  leadLostReasonId: string;
+  comment: string;
 }
 
 interface APILead {
@@ -34,6 +36,8 @@ interface APILead {
   leadStatus: any;
   leadWonAmount: number;
   addCalender: boolean;
+  leadLostReasonId: string;
+  comment: string;
 }
 
 const isWithinNext24Hours = (date: Date): boolean => {
@@ -88,6 +92,8 @@ const FollowupLeads = () => {
       statusData: lead.leadStatus || {},
       leadWonAmount: lead.leadWonAmount,
       addCalender: lead.addCalender,
+      leadLostReasonId: lead.leadLostReasonId,
+      comment: lead.comment,
     }));
   };
 
@@ -266,11 +272,11 @@ const FollowupLeads = () => {
         return (
           <div className="flex items-center gap-2">
             <span>{formattedDate}</span>
-            {isUpcoming && (
+            {/* {isUpcoming && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
                 Due Soon
               </span>
-            )}
+            )} */}
             {isMissed && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
                 Overdue
@@ -437,10 +443,12 @@ const FollowupLeads = () => {
         }}
         rowClassName={(record: Lead) => {
           if (isWithinNext24Hours(record.followUpDate)) {
-            return "bg-green-50 hover:bg-green-100 transition-colors duration-200 animate-in-range";
+            // return "bg-green-50 hover:bg-green-100 transition-colors duration-200 animate-in-range";
+            return "bg-green-50 hover:bg-green-100 transition-colors duration-200";
           }
           if (isWithinPast24Hours(record.followUpDate)) {
-            return "bg-red-50 hover:bg-red-100 transition-colors duration-200 animate-in-range";
+            return "bg-red-50 hover:bg-red-100 transition-colors duration-200";
+            // return "bg-red-50 hover:bg-red-100 transition-colors duration-200 animate-in-range";
           }
           return "animate-slide-in";
         }}
@@ -466,6 +474,8 @@ const FollowupLeads = () => {
             followUpDate: selectedLead.followUpDate,
             leadWonAmount: selectedLead.leadWonAmount,
             addCalender: selectedLead.addCalender, // You might want to get this from your lead data
+            leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
+            comment: selectedLead.comment, // You might want to get this from your lead data
           }}
           isLoading={isUpdating}
         />

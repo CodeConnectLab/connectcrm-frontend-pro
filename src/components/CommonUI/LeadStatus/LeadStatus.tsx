@@ -8,6 +8,8 @@ export default function LeadStatusUI({
   handleSelectChange = () => {},
   formData,
   defaultValue,
+  value,
+  lostReasonValue,
   statusFieldName = "status",
 }: any) {
   const leadStatusList = getStoredStatus(true);
@@ -45,6 +47,7 @@ export default function LeadStatusUI({
           label="Lost Reason"
           required
           options={lostReasonList}
+          selectedOption={lostReasonValue}
           setSelectedOption={(value) =>
             handleSelectChange("leadLostReasonId", value)
           }
@@ -65,7 +68,7 @@ export default function LeadStatusUI({
         setSelectedOption={(value) =>
           handleSelectChange(statusFieldName, value)
         }
-        selectedOption={defaultValue}
+        selectedOption={value}
       />
       {renderHiddenField(formData?.status)}
     </>
