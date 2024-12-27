@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import flatpickr from "flatpickr";
 
 interface DatePickerOneProps {
-  label: string;
+  label?: string;
   onChange: (selectedDates: Date[], dateStr: string) => void;
   enableTime?: boolean;
   defaultValue?: string;
