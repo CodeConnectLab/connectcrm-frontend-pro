@@ -72,6 +72,15 @@ interface LeadFormData {
   addCalender?: boolean;
 }
 
+interface GeoLocation {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  s3Url: string;
+  coordinates: string;
+  createdAt: string;
+}
+
 const LeadAction: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const agendList = getStoredAgents(true);
@@ -80,6 +89,7 @@ const LeadAction: React.FC = () => {
   const [leadData, setLeadData] = useState<{
     lead: LeadData;
     history: LeadHistory[];
+    geoLocation: GeoLocation[];
   } | null>(null);
   const [formData, setFormData] = useState({
     status: "",
@@ -282,7 +292,7 @@ const LeadAction: React.FC = () => {
     },
     {
       tabName: "Geo-Location Record",
-      component: <AttachmentTab />,
+      component: <AttachmentTab geoLocations={leadData?.geoLocation || []} />,
     },
   ];
 
