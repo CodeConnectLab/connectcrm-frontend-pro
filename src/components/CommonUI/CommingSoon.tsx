@@ -1,42 +1,36 @@
-import React from 'react';
-import { 
-  BiTerminal, 
-  BiCodeBlock 
-} from "react-icons/bi";
+import React from "react";
+import { BiTerminal, BiCodeBlock } from "react-icons/bi";
 import { GiBarrier } from "react-icons/gi";
-// import { 
-//   GiBarrier 
+// import {
+//   GiBarrier
 // } from "react-icons/gi";
 
-const ComingSoon = ({ 
+const ComingSoon = ({
   title = "Feature Coming Soon",
   description = "We're working hard to bring you something amazing. Stay tuned!",
-  estimatedTime = "Q1 2025"
+  estimatedTime = "Q1 2025",
+  useFullHightWidth = true,
 }) => {
   return (
-    <div className="min-h-full w-full flex justify-center items-center rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+    <div
+      className={`${
+        useFullHightWidth ? "min-h-full w-full" : ""
+      } flex justify-center items-center rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800`}
+    >
       <div className="flex h-full flex-col items-center justify-center space-y-6">
         {/* Top Construction Icon */}
         <div className="relative">
           <div className="absolute -left-6 -top-6">
-            <GiBarrier
-              className="h-8 w-8 animate-bounce text-primary opacity-50" 
-            />
+            <GiBarrier className="h-8 w-8 animate-bounce text-primary opacity-50" />
           </div>
           <div className="rounded-full bg-primary/10 p-4 dark:bg-primary/5">
             <div className="relative">
-              <BiTerminal 
-                className="h-12 w-12 text-primary" 
-              />
-              <BiCodeBlock 
-                className="absolute -right-2 -top-2 h-6 w-6 text-primary" 
-              />
+              <BiTerminal className="h-12 w-12 text-primary" />
+              <BiCodeBlock className="absolute -right-2 -top-2 h-6 w-6 text-primary" />
             </div>
           </div>
           <div className="absolute -bottom-6 -right-6">
-            <GiBarrier 
-              className="h-8 w-8 animate-bounce text-primary opacity-50" 
-            />
+            <GiBarrier className="h-8 w-8 animate-bounce text-primary opacity-50" />
           </div>
         </div>
 
@@ -45,9 +39,7 @@ const ComingSoon = ({
           <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
             {title}
           </h2>
-          <p className="mb-6 text-gray-600 dark:text-gray-300">
-            {description}
-          </p>
+          <p className="mb-6 text-gray-600 dark:text-gray-300">{description}</p>
         </div>
 
         {/* Progress Indicator */}
@@ -57,10 +49,11 @@ const ComingSoon = ({
             <span>60%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-            <div 
+            <div
               className="h-full w-[60%] rounded-full bg-primary transition-all duration-1000 ease-in-out"
               style={{
-                background: 'linear-gradient(90deg, rgba(87,80,241,1) 0%, rgba(110,104,242,1) 100%)'
+                background:
+                  "linear-gradient(90deg, rgba(87,80,241,1) 0%, rgba(110,104,242,1) 100%)",
               }}
             />
           </div>
@@ -70,15 +63,21 @@ const ComingSoon = ({
         <div className="mt-6 flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className="h-3 w-3 rounded-full bg-green-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Planning</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Planning
+            </span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="h-3 w-3 rounded-full bg-blue-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Development</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Development
+            </span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Testing</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Testing
+            </span>
           </div>
         </div>
 
