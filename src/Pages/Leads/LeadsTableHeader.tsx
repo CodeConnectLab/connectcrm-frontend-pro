@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
@@ -7,8 +7,7 @@ import AdvanceFilterUI from "../Components/AdvanceFilterUI";
 import useScreenHook from "../../hooks/useScreenHook";
 import SearchForm from "../../components/Header/SearchForm";
 import { getStoredAgents, getStoredStatus } from "../../api/commonAPI";
-import { Modal } from "antd";
-import DeleteConfirmModal from "../../components/Modals/DeleteConfirmModal";
+import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 
 interface LeadsTableHeaderProps {
   handleSearch: (value: string) => void;
@@ -229,7 +228,6 @@ export default function LeadsTableHeader({
           </div>
         </div>
       </div>
-
       {isAdvanceFilterEnable && deviceType !== "mobile" && (
         <AdvanceFilterUI
           onFilter={onAdvancedFilter}
@@ -260,14 +258,17 @@ export default function LeadsTableHeader({
           {deleteButtons}
         </div>
       </div>
-
       {deviceType === "mobile" && renderMobileView()}
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        selectedCount={selectedCount}
-        handleDeleteConfirm={handleDeleteConfirm}
-        setIsDeleteModalOpen={setIsDeleteModalOpen}
-        isDeleteModalOpen={isDeleteModalOpen}
+      {/* // Delete confirmation */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        type="delete"
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${selectedCount} item`}
+        count={selectedCount}
+        confirmLabel="Delete"
       />
     </>
   );

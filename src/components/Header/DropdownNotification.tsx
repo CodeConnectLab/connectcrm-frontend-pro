@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ClickOutside from "../ClickOutside";
+import BlurScreenOverlay from "../CommonUI/BlurScreenOverlay";
 
 const notificationList = [
   {
@@ -88,45 +89,47 @@ const DropdownNotification = () => {
               </span>
             </div>
 
-            <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
-              {notificationList.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
-                    to="#"
-                  >
-                    <span className="block h-14 w-14 rounded-full">
-                      <img
-                        width={112}
-                        height={112}
-                        src={item.image}
-                        style={{
-                          width: "auto",
-                          height: "auto",
-                        }}
-                        alt="User"
-                      />
-                    </span>
-
-                    <span className="block">
-                      <span className="block font-medium text-dark dark:text-white">
-                        {item.title}
+            <BlurScreenOverlay>
+              <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
+                {notificationList.map((item, index) => (
+                  <li key={index}>
+                    <Link
+                      className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
+                      to="#"
+                    >
+                      <span className="block h-14 w-14 rounded-full">
+                        <img
+                          width={112}
+                          height={112}
+                          src={item.image}
+                          style={{
+                            width: "auto",
+                            height: "auto",
+                          }}
+                          alt="User"
+                        />
                       </span>
-                      <span className="block text-body-sm font-medium text-dark-5 dark:text-dark-6">
-                        {item.subTitle}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
 
-            <Link
-              className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
-              to="#"
-            >
-              See all notifications
-            </Link>
+                      <span className="block">
+                        <span className="block font-medium text-dark dark:text-white">
+                          {item.title}
+                        </span>
+                        <span className="block text-body-sm font-medium text-dark-5 dark:text-dark-6">
+                          {item.subTitle}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
+                to="#"
+              >
+                See all notifications
+              </Link>
+            </BlurScreenOverlay>
           </div>
         )}
       </li>

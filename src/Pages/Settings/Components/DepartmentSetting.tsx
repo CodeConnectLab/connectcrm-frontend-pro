@@ -243,7 +243,7 @@ export default function DepartmentSetting() {
       key: "roll",
     },
     {
-      title: "Team Lead",
+      title: "Team Leader",
       dataIndex: "assignTeamLeader",
       key: "assignTeamLeader",
       render: (teamLead: string, record: User) => {
@@ -347,7 +347,7 @@ export default function DepartmentSetting() {
             <SelectGroupOne
               label="User Role"
               options={[
-                { value: "Team Admin", label: "Team Admin" },
+                { value: "Team Admin", label: "Team Leader" },
                 { value: "Employee", label: "Employee" },
               ]}
               placeholder="Select User Role"
@@ -358,12 +358,12 @@ export default function DepartmentSetting() {
             />
             {formData.userType === "Employee" && (
               <SelectGroupOne
-                label="Assign Team Lead"
+                label="Assign Team Leader (TL)"
                 options={teamLeads}
                 placeholder={
                   teamLeads.length
-                    ? "Select Team Lead"
-                    : "No team leads available"
+                    ? "Select Team Leader"
+                    : "No team leaders available"
                 }
                 selectedOption={formData.assignedTL}
                 setSelectedOption={(value) =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
@@ -14,6 +14,7 @@ import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
 import { API } from "../../api";
 import { getStoredAgents } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
+import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 
 interface LeadHistory {
   _id: string;
@@ -101,6 +102,9 @@ const LeadAction: React.FC = () => {
     leadWonAmount: 0,
     leadLostReasonId: "",
   });
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchLeadData = async () => {
     try {
@@ -133,6 +137,17 @@ const LeadAction: React.FC = () => {
       fetchLeadData();
     }
   }, [leadId]);
+
+  // Add this function to handle navigation
+  const handleNavigation = () => {
+    // Check if there are unsaved changes here if needed
+    setShowNavigationModal(true);
+  };
+
+  const handleNavigationConfirm = () => {
+    setShowNavigationModal(false);
+    navigate(-1);
+  };
 
   const handleUpdateLead = async (updateData: Partial<LeadFormData>) => {
     try {
@@ -387,10 +402,16 @@ const LeadAction: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex w-full justify-center">
+      <div className="flex w-full gap-3 justify-center">
         <ButtonDefault
           onClick={handleMainFormSubmit}
           label={isUpdating ? "Updating..." : "Update Lead"}
+          variant="primary"
+          disabled={isUpdating}
+        />
+        <ButtonDefault
+          onClick={handleNavigation}
+          label={"Go Back"}
           variant="primary"
           disabled={isUpdating}
         />
@@ -401,6 +422,17 @@ const LeadAction: React.FC = () => {
         type="card"
         defaultActiveKey="1"
         customClassName="mt-6"
+      />
+
+      <ConfirmationModal
+        isOpen={showNavigationModal}
+        onClose={() => setShowNavigationModal(false)}
+        onConfirm={handleNavigationConfirm}
+        type="warning"
+        title="Confirm Navigation"
+        message="Are you sure you want to leave this page? Any unsaved changes will be lost."
+        confirmLabel="Leave Page"
+        cancelLabel="Stay"
       />
     </div>
   );

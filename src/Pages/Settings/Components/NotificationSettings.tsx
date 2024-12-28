@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import dayjs from "dayjs";
 import { getStoredStatus } from "../../../api/commonAPI";
-import DateTimePicker from "../../../components/FormElements/DatePicker/DateTimePicker";
+// import DateTimePicker from "../../../components/FormElements/DatePicker/DateTimePicker";
 import Heading from "../../../components/CommonUI/Heading";
+import { TimePicker } from "antd";
 
 // SwitcherTwo Component
 const SwitcherTwo = ({
@@ -165,14 +166,11 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 dark:text-gray-300">
-                    * Custom Time:
-                    <div className="mt-2">
-                      <DateTimePicker
-                        onChange={() => {}}
-                        defaultValue={""}
-                        enableTime
-                      />
-                    </div>
+                    * Custom Time:{" "}
+                    <TimePicker
+                      defaultValue={dayjs("12:08", "HH:mm")}
+                      size="small"
+                    />
                   </span>
                 </div>
                 <SwitcherTwo
