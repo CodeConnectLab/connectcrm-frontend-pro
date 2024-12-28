@@ -347,7 +347,7 @@ export default function DepartmentSetting() {
             <SelectGroupOne
               label="User Role"
               options={[
-                { value: "Team Admin", label: "Team Leader" },
+                { value: "Team Leader", label: "Team Leader" },
                 { value: "Employee", label: "Employee" },
               ]}
               placeholder="Select User Role"
