@@ -322,7 +322,6 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       title: "Action",
       key: "action",
       render: (record: any) => {
-        console.log({ record });
         return (
           <div className="flex space-x-2">
             <Link to={`/leads/${record.key}`}>

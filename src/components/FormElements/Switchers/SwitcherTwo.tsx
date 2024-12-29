@@ -5,11 +5,13 @@ const SwitcherTwo = ({
   defaultChecked,
   onChange = () => {},
   idForAPI = "",
+  disabled = false,
 }: {
   id: string;
   defaultChecked?: boolean;
   onChange?: any;
   idForAPI?: string;
+  disabled?: boolean;
 }) => {
   const [enabled, setEnabled] = useState(defaultChecked);
 
@@ -28,6 +30,7 @@ const SwitcherTwo = ({
               onChange(idForAPI ? idForAPI : id, !enabled);
               setEnabled(!enabled);
             }}
+            disabled={disabled}
           />
           <div className="h-5 w-14 rounded-full bg-gray-3 dark:bg-[#5A616B]"></div>
           <div
