@@ -102,12 +102,10 @@ const StorageInsights = () => {
   };
 
   const handleFromDateChange = (selectedDates: Date[], dateStr: string) => {
-    console.log({ selectedDates });
     setFromDate(dateStr);
   };
 
   const handleToDateChange = (selectedDates: Date[], dateStr: string) => {
-    console.log({ selectedDates });
     setToDate(dateStr);
   };
 
