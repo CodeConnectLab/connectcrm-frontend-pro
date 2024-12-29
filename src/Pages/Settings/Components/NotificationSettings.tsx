@@ -1,51 +1,11 @@
 import React, { useState } from "react";
 import dayjs from "dayjs";
 import { getStoredStatus } from "../../../api/commonAPI";
-// import DateTimePicker from "../../../components/FormElements/DatePicker/DateTimePicker";
 import Heading from "../../../components/CommonUI/Heading";
-import { TimePicker } from "antd";
+import { Select, TimePicker } from "antd";
+import SelectGroupOne from "../../../components/FormElements/SelectGroup/SelectGroupOne";
+import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
 
-// SwitcherTwo Component
-const SwitcherTwo = ({
-  id,
-  defaultChecked,
-  onChange = () => {},
-  idForAPI = "",
-}: {
-  id: string;
-  defaultChecked?: boolean;
-  onChange?: any;
-  idForAPI?: string;
-}) => {
-  const [enabled, setEnabled] = useState(defaultChecked);
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="flex cursor-pointer select-none items-center"
-      >
-        <div className="relative">
-          <input
-            id={id}
-            type="checkbox"
-            className="sr-only"
-            onChange={() => {
-              onChange(idForAPI ? idForAPI : id, !enabled);
-              setEnabled(!enabled);
-            }}
-          />
-          <div className="h-5 w-14 rounded-full bg-gray-3 dark:bg-[#5A616B]"></div>
-          <div
-            className={`dot shadow-switch-2 absolute -top-1 left-0 h-7 w-7 rounded-full bg-white transition ${
-              enabled &&
-              "!right-0 !translate-x-full !bg-primary dark:!bg-green-light"
-            }`}
-          ></div>
-        </div>
-      </label>
-    </div>
-  );
-};
 
 interface NotificationTime {
   time: string;
@@ -68,6 +28,33 @@ interface NotificationTemplateProps {
     regularUser: boolean;
   };
 }
+
+const timeInterval = [
+  {
+    label: "5 minute",
+    value: 5,
+  },
+  {
+    label: "15 minute",
+    value: 15,
+  },
+  {
+    label: "30 minute",
+    value: 30,
+  },
+  {
+    label: "1 hour",
+    value: 60,
+  },
+  {
+    label: "2 hour",
+    value: 120,
+  },
+  {
+    label: "4 hour",
+    value: 240,
+  },
+];
 
 // Individual notification section component
 const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
@@ -154,7 +141,14 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600 dark:text-gray-300">
-                    * Same as Follow-Up Time and Date:
+                    *{" "}
+                    <Select
+                      defaultValue="5 minute"
+                      style={{ width: "auto" }}
+                      // onChange={handleChange}
+                      options={timeInterval}
+                    />{" "}
+                    Before Follow-Up Date and Time.
                   </span>
                 </div>
                 <SwitcherTwo
@@ -168,8 +162,11 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
                   <span className="text-gray-600 dark:text-gray-300">
                     * Custom Time:{" "}
                     <TimePicker
-                      defaultValue={dayjs("12:08", "HH:mm")}
+                      defaultValue={dayjs("12:08", 'HH:mm')}
+                      format={'HH:mm'}
                       size="small"
+                      style={{ width: "auto" }}
+
                     />
                   </span>
                 </div>

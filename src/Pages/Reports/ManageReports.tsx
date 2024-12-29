@@ -151,6 +151,10 @@ const ManageReports: React.FC = () => {
     fetchReportData();
   };
 
+  useEffect(() => {
+    fetchReportData();
+  }, []);
+
   return (
     <div className="rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
       <Heading title="CRM Report" />
