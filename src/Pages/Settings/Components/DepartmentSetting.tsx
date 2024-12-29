@@ -42,7 +42,7 @@ interface FormData {
   password: string;
   isActive: string;
   userType: string | number;
-  assignedTL?: string;
+  assignedTL?: string | null;
 }
 
 export default function DepartmentSetting() {
@@ -62,7 +62,7 @@ export default function DepartmentSetting() {
     password: "",
     isActive: "active",
     userType: "",
-    assignedTL: "",
+    assignedTL: null,
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
@@ -129,7 +129,7 @@ export default function DepartmentSetting() {
 
   const handleSelectChange = (name: string, value: string | number) => {
     if (name === "userType" && value.toString() !== "Employee") {
-      setFormData((prev) => ({ ...prev, [name]: value, assignedTL: "" }));
+      setFormData((prev) => ({ ...prev, [name]: value, assignedTL: null }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -146,7 +146,7 @@ export default function DepartmentSetting() {
         phone: formData.mobile,
         password: formData.password,
         role: formData.userType,
-        assignedTL: formData.assignedTL,
+        assignedTL: formData.assignedTL || null,
       };
 
       if (editingUser) {
@@ -189,7 +189,7 @@ export default function DepartmentSetting() {
         password: "",
         isActive: user.isActive ? "active" : "inactive",
         userType: user.roll,
-        assignedTL: user.assignedTL || "",
+        assignedTL: user.assignedTL || null,
       });
       setEditingUser(key);
       setShowForm(true);

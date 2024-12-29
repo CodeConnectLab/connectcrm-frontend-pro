@@ -84,7 +84,7 @@ export default function SignUp() {
   return (
     <div className="linePattern_Container dark overflow-auto p-5 md:p-0">
       <div
-        className={`m-auto flex h-screen w-full overflow-auto md:items-center md:justify-center ${
+        className={`m-auto flex h-screen w-full overflow-hidden md:items-center md:justify-center ${
           isFinalStep ? "max-w-md" : "md:max-w-xl xl:max-w-4xl"
         }`}
       >
