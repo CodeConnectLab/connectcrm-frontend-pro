@@ -1,105 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { getStoredStatus } from "../../../api/commonAPI";
+import { API } from "../../../api";
 import Heading from "../../../components/CommonUI/Heading";
 import { Select, TimePicker } from "antd";
-import SelectGroupOne from "../../../components/FormElements/SelectGroup/SelectGroupOne";
 import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
-
+import MiniLoader from "../../../components/CommonUI/Loader/MiniLoader";
+import { toast } from "react-toastify";
 
 interface NotificationTime {
   time: string;
-  enabled: boolean;
-}
-
-interface Status {
+  isEnabled: boolean;
   _id: string;
-  name: string;
-  wonStatus: boolean;
-  lossStatus: boolean;
 }
 
-interface NotificationTemplateProps {
-  title: string;
-  defaultTimes?: NotificationTime[];
-  recipients?: {
+interface NotificationSettings {
+  _id: string;
+  statusId: {
+    _id: string;
+    name: string;
+  };
+  isEnabled: boolean;
+  useFollowUpTime: boolean;
+  time: number;
+  notificationCustomTime: NotificationTime[];
+  recipients: {
     admin: boolean;
     teamLead: boolean;
     regularUser: boolean;
   };
+  titleTemplate: string;
+  bodyTemplate: string;
 }
 
 const timeInterval = [
-  {
-    label: "5 minute",
-    value: 5,
-  },
-  {
-    label: "15 minute",
-    value: 15,
-  },
-  {
-    label: "30 minute",
-    value: 30,
-  },
-  {
-    label: "1 hour",
-    value: 60,
-  },
-  {
-    label: "2 hour",
-    value: 120,
-  },
-  {
-    label: "4 hour",
-    value: 240,
-  },
+  { label: "2 minute", value: 2 },
+  { label: "5 minute", value: 5 },
+  { label: "15 minute", value: 15 },
+  { label: "30 minute", value: 30 },
+  { label: "1 hour", value: 60 },
+  { label: "2 hour", value: 120 },
+  { label: "4 hour", value: 240 },
 ];
 
-// Individual notification section component
-const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
-  title,
-  defaultTimes = [
-    { time: "09:00 AM", enabled: false },
-    { time: "02:00 PM", enabled: false },
-  ],
-  recipients = {
-    admin: false,
-    teamLead: false,
-    regularUser: false,
-  },
-}) => {
-  const [enabled, setEnabled] = useState(false);
-  const [notificationTimes, setNotificationTimes] = useState(defaultTimes);
-  const [recipientSettings, setRecipientSettings] = useState(recipients);
-  const [notificationTitle, setNotificationTitle] = useState(
-    `Meeting: {${title.toLowerCase()}_title}`
-  );
-  const [notificationBody, setNotificationBody] = useState(
-    `Your ${title.toLowerCase()} {${title.toLowerCase()}_title} is scheduled for {time}. Location: {location}`
-  );
+const NotificationTemplate: React.FC<{
+  settings: NotificationSettings;
+  onUpdate: (id: string, updatedData: Partial<NotificationSettings>) => void;
+}> = ({ settings, onUpdate }) => {
+  const handleMainToggle = (id: string, checked: boolean): void => {
+    onUpdate(settings._id, { isEnabled: checked });
+  };
 
-  const handleMainToggle = (_: string, checked: boolean) => {
-    setEnabled(checked);
+  const handleCustomTimeToggle = (index: number) => (id: string, checked: boolean): void => {
+    const newTimes = [...settings.notificationCustomTime];
+    newTimes[index].isEnabled = checked;
+    onUpdate(settings._id, { notificationCustomTime: newTimes });
+  };
+
+  const handleRecipientToggle = (recipientType: 'admin' | 'teamLead' | 'regularUser') => 
+    (id: string, checked: boolean): void => {
+      onUpdate(settings._id, {
+        recipients: {
+          ...settings.recipients,
+          [recipientType]: checked
+        }
+      });
   };
 
   return (
     <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {title} Notifications
+          {settings.statusId?.name} Notifications
         </h2>
         <SwitcherTwo
-          id={`${title.toLowerCase()}-notifications`}
-          defaultChecked={enabled}
+          id={`${settings.statusId?.name?.toLowerCase()}-notifications`}
+          defaultChecked={settings.isEnabled}
           onChange={handleMainToggle}
         />
       </div>
       <p className="mb-1 text-gray-600 dark:text-gray-300">
-        Reminder settings for upcoming {title.toLowerCase()}s and updates
+        Reminder settings for upcoming {settings.statusId?.name?.toLowerCase()}s and updates
       </p>
 
-      {enabled && (
+      {settings.isEnabled && (
         <>
           {/* Notification Content Section */}
           <div className="mb-6">
@@ -113,9 +96,9 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={notificationTitle}
-                  onChange={(e) => setNotificationTitle(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 p-2 text-sm dark:text-white dark:border-gray-600 dark:bg-gray-700"
+                  value={settings.titleTemplate}
+                  onChange={(e) => onUpdate(settings._id, { titleTemplate: e.target.value })}
+                  className="w-full rounded-md border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
               </div>
               <div>
@@ -123,10 +106,10 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
                   Body Template
                 </label>
                 <textarea
-                  value={notificationBody}
-                  onChange={(e) => setNotificationBody(e.target.value)}
+                  value={settings.bodyTemplate}
+                  onChange={(e) => onUpdate(settings._id, { bodyTemplate: e.target.value })}
                   rows={3}
-                  className="w-full rounded-md border border-gray-300 p-2 text-sm dark:text-white dark:border-gray-600 dark:bg-gray-700"
+                  className="w-full rounded-md border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
               </div>
             </div>
@@ -143,39 +126,45 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
                   <span className="text-gray-600 dark:text-gray-300">
                     *{" "}
                     <Select
-                      defaultValue="5 minute"
+                      value={settings.time}
                       style={{ width: "auto" }}
-                      // onChange={handleChange}
+                      onChange={(value) => onUpdate(settings._id, { time: value })}
                       options={timeInterval}
                     />{" "}
                     Before Follow-Up Date and Time.
                   </span>
                 </div>
                 <SwitcherTwo
-                  id={`${title.toLowerCase()}-followup-time`}
-                  defaultChecked={true}
-                  onChange={() => {}}
+                  id={`${settings.statusId?.name?.toLowerCase()}-followup-time`}
+                  defaultChecked={settings.useFollowUpTime}
+                  onChange={(id:any, checked:boolean) => onUpdate(settings._id, { useFollowUpTime: checked })}
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    * Custom Time:{" "}
-                    <TimePicker
-                      defaultValue={dayjs("12:08", 'HH:mm')}
-                      format={'HH:mm'}
-                      size="small"
-                      style={{ width: "auto" }}
-
-                    />
-                  </span>
+              {settings.notificationCustomTime.map((customTime, index) => (
+                <div key={customTime._id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 dark:text-gray-300">
+                      * Custom Time:{" "}
+                      <TimePicker
+                        value={dayjs(customTime.time, 'HH:mm')}
+                        format={'HH:mm'}
+                        size="small"
+                        style={{ width: "auto" }}
+                        onChange={(time) => {
+                          const newTimes = [...settings.notificationCustomTime];
+                          newTimes[index].time = time?.format('HH:mm') || '00:00';
+                          onUpdate(settings._id, { notificationCustomTime: newTimes });
+                        }}
+                      />
+                    </span>
+                  </div>
+                  <SwitcherTwo
+                    id={`${settings.statusId?.name?.toLowerCase()}-custom-time-${index}`}
+                    defaultChecked={customTime.isEnabled}
+                    onChange={handleCustomTimeToggle(index)}
+                  />
                 </div>
-                <SwitcherTwo
-                  id={`${title.toLowerCase()}-custom-time`}
-                  defaultChecked={true}
-                  onChange={() => {}}
-                />
-              </div>
+              ))}
             </div>
           </div>
 
@@ -188,44 +177,25 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-300">Admin</span>
                 <SwitcherTwo
-                  id={`${title.toLowerCase()}-admin`}
-                  defaultChecked={recipientSettings.admin}
-                  onChange={(_: any, checked: any) =>
-                    setRecipientSettings({
-                      ...recipientSettings,
-                      admin: checked,
-                    })
-                  }
+                  id={`${settings.statusId?.name?.toLowerCase()}-admin`}
+                  defaultChecked={settings.recipients?.admin}
+                  onChange={handleRecipientToggle('admin')}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-300">
-                  Team Lead
-                </span>
+                <span className="text-gray-600 dark:text-gray-300">Team Lead</span>
                 <SwitcherTwo
-                  id={`${title.toLowerCase()}-teamlead`}
-                  defaultChecked={recipientSettings.teamLead}
-                  onChange={(_: any, checked: any) =>
-                    setRecipientSettings({
-                      ...recipientSettings,
-                      teamLead: checked,
-                    })
-                  }
+                  id={`${settings.statusId?.name?.toLowerCase()}-teamlead`}
+                  defaultChecked={settings.recipients?.teamLead}
+                  onChange={handleRecipientToggle('teamLead')}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-300">
-                  Regular User
-                </span>
+                <span className="text-gray-600 dark:text-gray-300">Regular User</span>
                 <SwitcherTwo
-                  id={`${title.toLowerCase()}-regularuser`}
-                  defaultChecked={recipientSettings.regularUser}
-                  onChange={(_: any, checked: any) =>
-                    setRecipientSettings({
-                      ...recipientSettings,
-                      regularUser: checked,
-                    })
-                  }
+                  id={`${settings.statusId?.name?.toLowerCase()}-regularuser`}
+                  defaultChecked={settings.recipients?.regularUser}
+                  onChange={handleRecipientToggle('regularUser')}
                 />
               </div>
             </div>
@@ -236,15 +206,94 @@ const NotificationTemplate: React.FC<NotificationTemplateProps> = ({
   );
 };
 
-const statuses = getStoredStatus();
+const StatusNotificationSettings: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings[]>([]);
 
-// Main component that renders notification settings for all statuses
-const StatusNotificationSettings: React.FC<{ statuses?: Status[] }> = () => {
+  useEffect(() => {
+    const fetchNotificationSettings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await API.getAuthAPI('getNotificationList', true);
+        if (response.error) throw new Error(response.error);
+        
+        setNotificationSettings(response.data || []);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to fetch notification settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotificationSettings();
+  }, []);
+
+  const handleUpdateSettings = async (id: string, updatedData: Partial<NotificationSettings>) => {
+    try {
+      // First update local state for optimistic update
+      setNotificationSettings(prev => prev.map(setting => 
+        setting._id === id ? { ...setting, ...updatedData } : setting
+      ));
+
+      // Prepare the payload
+      const payload = {
+        isEnabled: updatedData.isEnabled !== undefined ? updatedData.isEnabled : notificationSettings.find(s => s._id === id)?.isEnabled,
+        useFollowUpTime: updatedData.useFollowUpTime !== undefined ? updatedData.useFollowUpTime : notificationSettings.find(s => s._id === id)?.useFollowUpTime,
+        time: updatedData.time !== undefined ? updatedData.time : notificationSettings.find(s => s._id === id)?.time,
+        notificationCustomTime: updatedData.notificationCustomTime !== undefined 
+          ? updatedData.notificationCustomTime?.map(({ time, isEnabled }) => ({ time, isEnabled }))
+          : notificationSettings.find(s => s._id === id)?.notificationCustomTime.map(({ time, isEnabled }) => ({ time, isEnabled })),
+        recipients: updatedData.recipients !== undefined 
+          ? updatedData.recipients 
+          : notificationSettings.find(s => s._id === id)?.recipients,
+        titleTemplate: updatedData.titleTemplate !== undefined 
+          ? updatedData.titleTemplate 
+          : notificationSettings.find(s => s._id === id)?.titleTemplate,
+        bodyTemplate: updatedData.bodyTemplate !== undefined 
+          ? updatedData.bodyTemplate 
+          : notificationSettings.find(s => s._id === id)?.bodyTemplate,
+      };
+
+      // Make API call
+      const response = await API.updateAuthAPI(
+        payload,
+        id,
+        'updateNotification',
+        true
+      );
+
+      if (response.error) throw new Error(response.error);
+
+      // Update local state with server response if needed
+      const updatedSetting = response.data;
+      setNotificationSettings(prev => prev.map(setting => 
+        setting._id === id ? { ...setting, ...updatedSetting } : setting
+      ));
+
+      toast.success('Notification settings updated successfully');
+    } catch (error: any) {
+      // Revert optimistic update on error
+      const response = await API.getAuthAPI('getNotificationList', true);
+      if (!response.error) {
+        setNotificationSettings(response.data || []);
+      }
+      toast.error(error.message || 'Failed to update notification settings');
+    }
+  };
+
+  if (isLoading) {
+    return <MiniLoader />;
+  }
+
   return (
     <div className="space-y-6">
       <Heading title="Manage Your Reminders" />
-      {statuses.map((status) => (
-        <NotificationTemplate key={status._id} title={status.name} />
+      {notificationSettings.map((settings) => (
+        <NotificationTemplate
+          key={settings._id}
+          settings={settings}
+          onUpdate={handleUpdateSettings}
+        />
       ))}
     </div>
   );
