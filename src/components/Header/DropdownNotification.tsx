@@ -1,40 +1,77 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ClickOutside from "../ClickOutside";
-import { getStoredNotification } from "../../api/commonAPI";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import {
+  MdOutlineNotifications,
+  MdCalendarToday,
+  MdPersonAdd,
+} from "react-icons/md";
+import { FiBell, FiAlertCircle } from "react-icons/fi";
+import { toast } from "react-toastify";
+import { API } from "../../api";
+
+dayjs.extend(relativeTime);
 
 interface Notification {
-  id: string;
-  title: string;
-  subTitle: string;
-  image: string;
-  seen: boolean;
-  timestamp: string;
+  _id: string;
+  companyId: string;
+  userId: string;
+  titleTemplate: string;
+  bodyTemplate: string;
+  seenStatus: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const response = await API.getAuthAPI("getNotification", true);
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      setNotifications(response.data || []);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch notifications");
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Get notifications and ensure they have the required properties
-    const storedNotifications = getStoredNotification().map(notification => ({
-      ...notification,
-      seen: notification.seen ?? false, // Default to unseen if not specified
-      id: notification.id ?? crypto.randomUUID(), // Ensure each notification has an ID
-    }));
-    setNotifications(storedNotifications);
+    fetchNotifications();
   }, []);
 
   // Calculate number of unseen notifications
-  const unseenCount = notifications.filter(notification => !notification.seen).length;
+  const unseenCount = notifications.filter(
+    (notification) => !notification.seenStatus
+  ).length;
 
   const handleNotificationClick = (notificationId: string) => {
-    setNotifications(prev => prev.map(notification => 
-      notification.id === notificationId 
-        ? { ...notification, seen: true }
-        : notification
-    ));
+    // Update local state
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification._id === notificationId
+          ? { ...notification, seenStatus: true }
+          : notification
+      )
+    );
+
+    // Here you could also make an API call to update the seenStatus on the server
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    return dayjs(dateString).fromNow();
   };
 
   return (
@@ -75,7 +112,7 @@ const DropdownNotification = () => {
 
         {dropdownOpen && (
           <div className="absolute -right-27 mt-7.5 flex h-[550px] w-75 flex-col rounded-xl border-[0.5px] border-stroke bg-white px-5.5 pb-5.5 pt-5 shadow-default dark:border-dark-3 dark:bg-gray-dark sm:right-0 sm:w-[364px]">
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
               <h5 className="text-lg font-medium text-dark dark:text-white">
                 Notifications
               </h5>
@@ -86,61 +123,87 @@ const DropdownNotification = () => {
               )}
             </div>
 
-            <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
-              {notifications.map((notification) => (
-                <li 
-                  key={notification.id}
-                  className={`transition-all duration-300 ${
-                    !notification.seen ? 'bg-blue-50 dark:bg-blue-900/10' : ''
-                  }`}
-                >
-                  <Link
-                    className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
-                    to="#"
-                    onClick={() => handleNotificationClick(notification.id)}
+            <ul className="no-scrollbar mb-0 flex h-auto flex-col gap-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary"></div>
+                </div>
+              ) : notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <li
+                    key={notification._id}
+                    className={`transition-all duration-300 ${
+                      !notification.seenStatus
+                        ? "bg-blue-50 dark:bg-blue-900/10"
+                        : ""
+                    }`}
                   >
-                    <span className="relative block h-14 w-14 rounded-full">
-                      <img
-                        width={112}
-                        height={112}
-                        src={notification.image}
-                        style={{
-                          width: "auto",
-                          height: "auto",
-                        }}
-                        alt="User"
-                      />
-                      {!notification.seen && (
-                        <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-primary">
-                          <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                        </span>
-                      )}
-                    </span>
+                    <Link
+                      className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
+                      to="#"
+                      onClick={() => handleNotificationClick(notification._id)}
+                    >
+                      {/* Icon container with background */}
+                      <div
+                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
+                          !notification.seenStatus
+                            ? "bg-primary/10 text-primary dark:bg-primary/20"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        }`}
+                      >
+                        {notification.titleTemplate
+                          .toLowerCase()
+                          .includes("follow-up") ? (
+                          <MdCalendarToday size={20} />
+                        ) : notification.titleTemplate
+                            .toLowerCase()
+                            .includes("new lead") ? (
+                          <MdPersonAdd size={20} />
+                        ) : notification.titleTemplate
+                            .toLowerCase()
+                            .includes("notification") ? (
+                          <MdOutlineNotifications size={20} />
+                        ) : (
+                          <FiAlertCircle size={20} />
+                        )}
+                      </div>
 
-                    <div className="flex flex-1 flex-col">
-                      <span className="block font-medium text-dark dark:text-white">
-                        {notification.title}
-                      </span>
-                      <span className="block text-body-sm text-dark-5 dark:text-dark-6">
-                        {notification.subTitle}
-                      </span>
-                      {notification.timestamp && (
-                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(notification.timestamp).toLocaleString()}
+                      <div className="flex w-full flex-col">
+                        <div className="flex items-center justify-between">
+                          <span className="block font-medium text-dark dark:text-white">
+                            {notification.titleTemplate}
+                          </span>
+                          {!notification.seenStatus && (
+                            <span className="h-2 w-2 rounded-full bg-primary"></span>
+                          )}
+                        </div>
+                        <span className="block text-sm text-dark-5 dark:text-dark-6">
+                          {notification.bodyTemplate}
                         </span>
-                      )}
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {formatTimeAgo(notification.createdAt)}
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <div>No notifications</div>
+              )}
             </ul>
 
-            <Link
-              className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
+            {notifications.length === 0 && (
+              <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">
+                No notifications yet
+              </div>
+            )}
+
+            {/* <Link
+              className="mt-auto flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
               to="#"
             >
               See all notifications
-            </Link>
+            </Link> */}
           </div>
         )}
       </li>
