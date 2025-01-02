@@ -24,6 +24,11 @@ export const fetchGeneralData = async (): Promise<void> => {
       END_POINT.GENERAL_DATA,
       true
     );
+    const { data: notificationData } = await API.getAuthAPI(
+      "getNotification",
+      // END_POINT.GENERAL_DATA,
+      true
+    );
 
     if (error) return;
 
@@ -50,6 +55,12 @@ export const fetchGeneralData = async (): Promise<void> => {
 
       // Optional: Return success message
       //   toast.success("General data updated successfully");
+    }
+    if (notificationData) {
+      localStorage.setItem(
+        "crm_notifictaion",
+        JSON.stringify(notificationData)
+      );
     }
   } catch (error: any) {
     console.error("Error fetching general data:", error);
@@ -166,6 +177,17 @@ export const getStoredCountries = (forSelectOptions = false): any[] => {
     } else {
       return transformedData;
     }
+  } catch (error) {
+    console.error("Error parsing countries data:", error);
+    return [];
+  }
+};
+
+export const getStoredNotification = (forSelectOptions = false): any[] => {
+  try {
+    const data = localStorage.getItem("crm_notifictaion");
+    const parsedData = data ? JSON.parse(data) : [];
+    return parsedData;
   } catch (error) {
     console.error("Error parsing countries data:", error);
     return [];

@@ -1,39 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ClickOutside from "../ClickOutside";
-import BlurScreenOverlay from "../CommonUI/BlurScreenOverlay";
+import { getStoredNotification } from "../../api/commonAPI";
 
-const notificationList = [
-  {
-    image: "/images/user/user-15.png",
-    title: "Piter Joined the Team!",
-    subTitle: "Congratulate him",
-  },
-  {
-    image: "/images/user/user-02.png",
-    title: "New message received",
-    subTitle: "Devid sent you new message",
-  },
-  {
-    image: "/images/user/user-26.png",
-    title: "New Payment received",
-    subTitle: "Check your earnings",
-  },
-  {
-    image: "/images/user/user-28.png",
-    title: "Jolly completed tasks",
-    subTitle: "Assign her newtasks",
-  },
-  {
-    image: "/images/user/user-27.png",
-    title: "Roman Joined the Team!",
-    subTitle: "Congratulate him",
-  },
-];
+interface Notification {
+  id: string;
+  title: string;
+  subTitle: string;
+  image: string;
+  seen: boolean;
+  timestamp: string;
+}
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifying, setNotifying] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  useEffect(() => {
+    // Get notifications and ensure they have the required properties
+    const storedNotifications = getStoredNotification().map(notification => ({
+      ...notification,
+      seen: notification.seen ?? false, // Default to unseen if not specified
+      id: notification.id ?? crypto.randomUUID(), // Ensure each notification has an ID
+    }));
+    setNotifications(storedNotifications);
+  }, []);
+
+  // Calculate number of unseen notifications
+  const unseenCount = notifications.filter(notification => !notification.seen).length;
+
+  const handleNotificationClick = (notificationId: string) => {
+    setNotifications(prev => prev.map(notification => 
+      notification.id === notificationId 
+        ? { ...notification, seen: true }
+        : notification
+    ));
+  };
 
   return (
     <ClickOutside
@@ -42,10 +44,7 @@ const DropdownNotification = () => {
     >
       <li>
         <Link
-          onClick={() => {
-            setNotifying(false);
-            setDropdownOpen(!dropdownOpen);
-          }}
+          onClick={() => setDropdownOpen(!dropdownOpen)}
           to="#"
           className="relative flex h-12 w-12 items-center justify-center rounded-full border border-stroke bg-gray-2 text-dark hover:text-primary dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:hover:text-white"
         >
@@ -66,70 +65,82 @@ const DropdownNotification = () => {
               />
             </svg>
 
-            <span
-              className={`absolute -top-0.5 right-0 z-1 h-2.5 w-2.5 rounded-full border-2 border-gray-2 bg-red-light dark:border-dark-3 ${
-                !notifying ? "hidden" : "inline"
-              }`}
-            >
-              <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-red-light opacity-75"></span>
-            </span>
+            {unseenCount > 0 && (
+              <span className="absolute -top-0.5 right-0 z-1 h-2.5 w-2.5 rounded-full border-2 border-gray-2 bg-red-light dark:border-dark-3">
+                <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-red-light opacity-75"></span>
+              </span>
+            )}
           </span>
         </Link>
 
         {dropdownOpen && (
-          <div
-            className={`absolute -right-27 mt-7.5 flex h-[550px] w-75 flex-col rounded-xl border-[0.5px] border-stroke bg-white px-5.5 pb-5.5 pt-5 shadow-default dark:border-dark-3 dark:bg-gray-dark sm:right-0 sm:w-[364px]`}
-          >
+          <div className="absolute -right-27 mt-7.5 flex h-[550px] w-75 flex-col rounded-xl border-[0.5px] border-stroke bg-white px-5.5 pb-5.5 pt-5 shadow-default dark:border-dark-3 dark:bg-gray-dark sm:right-0 sm:w-[364px]">
             <div className="mb-5 flex items-center justify-between">
               <h5 className="text-lg font-medium text-dark dark:text-white">
                 Notifications
               </h5>
-              <span className="rounded-md bg-primary px-2 py-0.5 text-body-xs font-medium text-white">
-                5 new
-              </span>
+              {unseenCount > 0 && (
+                <span className="rounded-md bg-primary px-2 py-0.5 text-body-xs font-medium text-white">
+                  {unseenCount} new
+                </span>
+              )}
             </div>
 
-            <BlurScreenOverlay>
-              <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
-                {notificationList.map((item, index) => (
-                  <li key={index}>
-                    <Link
-                      className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
-                      to="#"
-                    >
-                      <span className="block h-14 w-14 rounded-full">
-                        <img
-                          width={112}
-                          height={112}
-                          src={item.image}
-                          style={{
-                            width: "auto",
-                            height: "auto",
-                          }}
-                          alt="User"
-                        />
-                      </span>
-
-                      <span className="block">
-                        <span className="block font-medium text-dark dark:text-white">
-                          {item.title}
+            <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
+              {notifications.map((notification) => (
+                <li 
+                  key={notification.id}
+                  className={`transition-all duration-300 ${
+                    !notification.seen ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+                  }`}
+                >
+                  <Link
+                    className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
+                    to="#"
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <span className="relative block h-14 w-14 rounded-full">
+                      <img
+                        width={112}
+                        height={112}
+                        src={notification.image}
+                        style={{
+                          width: "auto",
+                          height: "auto",
+                        }}
+                        alt="User"
+                      />
+                      {!notification.seen && (
+                        <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-primary">
+                          <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
                         </span>
-                        <span className="block text-body-sm font-medium text-dark-5 dark:text-dark-6">
-                          {item.subTitle}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+                      )}
+                    </span>
 
-              <Link
-                className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
-                to="#"
-              >
-                See all notifications
-              </Link>
-            </BlurScreenOverlay>
+                    <div className="flex flex-1 flex-col">
+                      <span className="block font-medium text-dark dark:text-white">
+                        {notification.title}
+                      </span>
+                      <span className="block text-body-sm text-dark-5 dark:text-dark-6">
+                        {notification.subTitle}
+                      </span>
+                      {notification.timestamp && (
+                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(notification.timestamp).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
+              to="#"
+            >
+              See all notifications
+            </Link>
           </div>
         )}
       </li>

@@ -35,36 +35,45 @@ interface NotificationSettings {
 const timeInterval = [
   { label: "2 minute", value: 2 },
   { label: "5 minute", value: 5 },
-  { label: "15 minute", value: 15 },
-  { label: "30 minute", value: 30 },
-  { label: "1 hour", value: 60 },
-  { label: "2 hour", value: 120 },
-  { label: "4 hour", value: 240 },
+  // { label: "15 minute", value: 15 },
+  // { label: "30 minute", value: 30 },
+  // { label: "1 hour", value: 60 },
+  // { label: "2 hour", value: 120 },
+  // { label: "4 hour", value: 240 },
 ];
 
 const NotificationTemplate: React.FC<{
   settings: NotificationSettings;
   onUpdate: (id: string, updatedData: Partial<NotificationSettings>) => void;
 }> = ({ settings, onUpdate }) => {
+  const [localTitleTemplate, setLocalTitleTemplate] = useState(settings.titleTemplate);
+  const [localBodyTemplate, setLocalBodyTemplate] = useState(settings.bodyTemplate);
+
   const handleMainToggle = (id: string, checked: boolean): void => {
     onUpdate(settings._id, { isEnabled: checked });
   };
 
-  const handleCustomTimeToggle = (index: number) => (id: string, checked: boolean): void => {
-    const newTimes = [...settings.notificationCustomTime];
-    newTimes[index].isEnabled = checked;
-    onUpdate(settings._id, { notificationCustomTime: newTimes });
+  const handleTitleBlur = () => {
+    if (localTitleTemplate !== settings.titleTemplate) {
+      onUpdate(settings._id, { titleTemplate: localTitleTemplate });
+    }
   };
 
-  const handleRecipientToggle = (recipientType: 'admin' | 'teamLead' | 'regularUser') => 
+  const handleBodyBlur = () => {
+    if (localBodyTemplate !== settings.bodyTemplate) {
+      onUpdate(settings._id, { bodyTemplate: localBodyTemplate });
+    }
+  };
+
+  const handleRecipientToggle = (recipientType: "admin" | "teamLead" | "regularUser") => 
     (id: string, checked: boolean): void => {
       onUpdate(settings._id, {
         recipients: {
           ...settings.recipients,
-          [recipientType]: checked
-        }
+          [recipientType]: checked,
+        },
       });
-  };
+    };
 
   return (
     <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -79,7 +88,8 @@ const NotificationTemplate: React.FC<{
         />
       </div>
       <p className="mb-1 text-gray-600 dark:text-gray-300">
-        Reminder settings for upcoming {settings.statusId?.name?.toLowerCase()}s and updates
+        Reminder settings for upcoming {settings.statusId?.name?.toLowerCase()}s
+        and updates
       </p>
 
       {settings.isEnabled && (
@@ -96,8 +106,9 @@ const NotificationTemplate: React.FC<{
                 </label>
                 <input
                   type="text"
-                  value={settings.titleTemplate}
-                  onChange={(e) => onUpdate(settings._id, { titleTemplate: e.target.value })}
+                  value={localTitleTemplate}
+                  onChange={(e) => setLocalTitleTemplate(e.target.value)}
+                  onBlur={handleTitleBlur}
                   className="w-full rounded-md border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
               </div>
@@ -106,8 +117,9 @@ const NotificationTemplate: React.FC<{
                   Body Template
                 </label>
                 <textarea
-                  value={settings.bodyTemplate}
-                  onChange={(e) => onUpdate(settings._id, { bodyTemplate: e.target.value })}
+                  value={localBodyTemplate}
+                  onChange={(e) => setLocalBodyTemplate(e.target.value)}
+                  onBlur={handleBodyBlur}
                   rows={3}
                   className="w-full rounded-md border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
@@ -137,10 +149,11 @@ const NotificationTemplate: React.FC<{
                 <SwitcherTwo
                   id={`${settings.statusId?.name?.toLowerCase()}-followup-time`}
                   defaultChecked={settings.useFollowUpTime}
-                  onChange={(id:any, checked:boolean) => onUpdate(settings._id, { useFollowUpTime: checked })}
+                  onChange={(id: any, checked: boolean) =>
+                    onUpdate(settings._id, { useFollowUpTime: checked })
+                  }
                 />
-              </div>
-              {settings.notificationCustomTime.map((customTime, index) => (
+                {/* {settings.notificationCustomTime.map((customTime, index) => (
                 <div key={customTime._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 dark:text-gray-300">
@@ -164,7 +177,8 @@ const NotificationTemplate: React.FC<{
                     onChange={handleCustomTimeToggle(index)}
                   />
                 </div>
-              ))}
+              ))} */}
+              </div>
             </div>
           </div>
 
@@ -174,7 +188,7 @@ const NotificationTemplate: React.FC<{
               <span className="text-blue-500">👥</span> Recipients
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-300">Admin</span>
                 <SwitcherTwo
                   id={`${settings.statusId?.name?.toLowerCase()}-admin`}
@@ -189,13 +203,15 @@ const NotificationTemplate: React.FC<{
                   defaultChecked={settings.recipients?.teamLead}
                   onChange={handleRecipientToggle('teamLead')}
                 />
-              </div>
+              </div> */}
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Regular User</span>
+                <span className="text-gray-600 dark:text-gray-300">
+                  Assigned Employee
+                </span>
                 <SwitcherTwo
                   id={`${settings.statusId?.name?.toLowerCase()}-regularuser`}
                   defaultChecked={settings.recipients?.regularUser}
-                  onChange={handleRecipientToggle('regularUser')}
+                  onChange={handleRecipientToggle("regularUser")}
                 />
               </div>
             </div>
@@ -214,12 +230,12 @@ const StatusNotificationSettings: React.FC = () => {
     const fetchNotificationSettings = async () => {
       try {
         setIsLoading(true);
-        const response = await API.getAuthAPI('getNotificationList', true);
+        const response = await API.getAuthAPI("getNotificationList", true);
         if (response.error) throw new Error(response.error);
-        
+
         setNotificationSettings(response.data || []);
       } catch (error: any) {
-        toast.error(error.message || 'Failed to fetch notification settings');
+        toast.error(error.message || "Failed to fetch notification settings");
       } finally {
         setIsLoading(false);
       }
@@ -228,56 +244,65 @@ const StatusNotificationSettings: React.FC = () => {
     fetchNotificationSettings();
   }, []);
 
-  const handleUpdateSettings = async (id: string, updatedData: Partial<NotificationSettings>) => {
+  const handleUpdateSettings = async (
+    id: string,
+    updatedData: Partial<NotificationSettings>
+  ) => {
     try {
       // First update local state for optimistic update
-      setNotificationSettings(prev => prev.map(setting => 
-        setting._id === id ? { ...setting, ...updatedData } : setting
-      ));
+      setNotificationSettings((prev) =>
+        prev.map((setting) =>
+          setting._id === id ? { ...setting, ...updatedData } : setting
+        )
+      );
 
       // Prepare the payload
       const payload = {
-        isEnabled: updatedData.isEnabled !== undefined ? updatedData.isEnabled : notificationSettings.find(s => s._id === id)?.isEnabled,
-        useFollowUpTime: updatedData.useFollowUpTime !== undefined ? updatedData.useFollowUpTime : notificationSettings.find(s => s._id === id)?.useFollowUpTime,
-        time: updatedData.time !== undefined ? updatedData.time : notificationSettings.find(s => s._id === id)?.time,
+        isEnabled: updatedData.isEnabled !== undefined 
+          ? updatedData.isEnabled 
+          : notificationSettings.find((s) => s._id === id)?.isEnabled,
+        useFollowUpTime: updatedData.useFollowUpTime !== undefined 
+          ? updatedData.useFollowUpTime 
+          : notificationSettings.find((s) => s._id === id)?.useFollowUpTime,
+        time: updatedData.time !== undefined 
+          ? updatedData.time 
+          : notificationSettings.find((s) => s._id === id)?.time,
         notificationCustomTime: updatedData.notificationCustomTime !== undefined 
           ? updatedData.notificationCustomTime?.map(({ time, isEnabled }) => ({ time, isEnabled }))
-          : notificationSettings.find(s => s._id === id)?.notificationCustomTime.map(({ time, isEnabled }) => ({ time, isEnabled })),
+          : notificationSettings.find((s) => s._id === id)?.notificationCustomTime
+              .map(({ time, isEnabled }) => ({ time, isEnabled })),
         recipients: updatedData.recipients !== undefined 
           ? updatedData.recipients 
-          : notificationSettings.find(s => s._id === id)?.recipients,
+          : notificationSettings.find((s) => s._id === id)?.recipients,
         titleTemplate: updatedData.titleTemplate !== undefined 
           ? updatedData.titleTemplate 
-          : notificationSettings.find(s => s._id === id)?.titleTemplate,
+          : notificationSettings.find((s) => s._id === id)?.titleTemplate,
         bodyTemplate: updatedData.bodyTemplate !== undefined 
           ? updatedData.bodyTemplate 
-          : notificationSettings.find(s => s._id === id)?.bodyTemplate,
+          : notificationSettings.find((s) => s._id === id)?.bodyTemplate,
       };
 
       // Make API call
-      const response = await API.updateAuthAPI(
-        payload,
-        id,
-        'updateNotification',
-        true
-      );
+      const response = await API.updateAuthAPI(payload, id, "updateNotification", true);
 
       if (response.error) throw new Error(response.error);
 
       // Update local state with server response if needed
       const updatedSetting = response.data;
-      setNotificationSettings(prev => prev.map(setting => 
-        setting._id === id ? { ...setting, ...updatedSetting } : setting
-      ));
+      setNotificationSettings((prev) =>
+        prev.map((setting) =>
+          setting._id === id ? { ...setting, ...updatedSetting } : setting
+        )
+      );
 
-      toast.success('Notification settings updated successfully');
+      toast.success("Settings updated successfully.");
     } catch (error: any) {
       // Revert optimistic update on error
-      const response = await API.getAuthAPI('getNotificationList', true);
+      const response = await API.getAuthAPI("getNotificationList", true);
       if (!response.error) {
         setNotificationSettings(response.data || []);
       }
-      toast.error(error.message || 'Failed to update notification settings');
+      console.error(error.message || "Failed to update notification settings");
     }
   };
 
