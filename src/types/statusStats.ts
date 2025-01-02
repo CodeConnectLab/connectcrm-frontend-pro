@@ -8,4 +8,5 @@ export type statusStatsType = {
   nextValue?: string | number;
   growthRate?: number;
   percent?: number;
+  webroute?: string;
 };
