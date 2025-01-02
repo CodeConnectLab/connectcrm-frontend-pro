@@ -29,6 +29,7 @@ const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [unSeenNotifIds, setUnSeenNotifIds] = useState([]);
 
   const fetchNotifications = async () => {
     try {
@@ -40,6 +41,15 @@ const DropdownNotification = () => {
       }
 
       setNotifications(response.data || []);
+      const unseenIds =
+        response.data
+          ?.filter((notification: Notification) => !notification.seenStatus)
+          .map((notification: Notification) => notification._id) || [];
+
+      // Update seen status if there are unseen notifications
+      if (unseenIds.length > 0) {
+        setUnSeenNotifIds(unseenIds);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch notifications");
       setNotifications([]);
@@ -48,9 +58,36 @@ const DropdownNotification = () => {
     }
   };
 
+  const updateSeenStatus = async (notificationIds: string[]) => {
+    try {
+      const response = await API.postAuthAPI(
+        { notificationIds },
+        "seenUpdate",
+        true
+      );
+
+      if (response.error) throw new Error(response.error);
+
+      // // Update local state
+      // setNotifications((prev) =>
+      //   prev.map((notification) =>
+      //     notificationIds.includes(notification._id)
+      //       ? { ...notification, seenStatus: true }
+      //       : notification
+      //   )
+      // );
+    } catch (error: any) {
+      console.error("Failed to update notification status:", error);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    if (dropdownOpen && unSeenNotifIds) updateSeenStatus(unSeenNotifIds);
+  }, [dropdownOpen]);
 
   // Calculate number of unseen notifications
   const unseenCount = notifications.filter(
