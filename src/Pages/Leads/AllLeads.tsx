@@ -4,7 +4,7 @@ import { EditFilled } from "@ant-design/icons";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import LeadsTableHeader from "./LeadsTableHeader";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
@@ -44,6 +44,7 @@ interface APILead {
 }
 
 const AllLeads = ({ derivativeEndpoint = "" }) => {
+  const navigate = useNavigate();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -378,6 +379,10 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
     }
   };
 
+  const handleRowClick = (record: any) => {
+    navigate(`/leads/${record.key}`);
+  };
+
   useEffect(() => {
     console.log("Selected rows:", selectedRowKeys);
   }, [selectedRowKeys]);
@@ -408,6 +413,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
           showSizeChanger: true,
         }}
         isLoading={loading}
+        onRow={(record: any) => ({ onClick: () => handleRowClick(record) })}
       />
 
       {selectedLead && (

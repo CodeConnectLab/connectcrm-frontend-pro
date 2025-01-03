@@ -27,7 +27,7 @@ const EmployeePerformance: React.FC<EmployeePerformanceProps> = ({ data = [] }) 
     } else {
       return "text-green";
     }
-  };
+  };  
 
   return (
     <div className="rounded-lg bg-white px-4 pb-4 pt-5 shadow-1 dark:bg-gray-dark dark:shadow-card sm:px-7.5 sm:pt-7.5">
