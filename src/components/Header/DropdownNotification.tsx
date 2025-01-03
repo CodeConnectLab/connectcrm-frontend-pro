@@ -60,8 +60,10 @@ const DropdownNotification = () => {
 
   const updateSeenStatus = async (notificationIds: string[]) => {
     try {
-      const response = await API.postAuthAPI(
+      if (!notificationIds.length) return;
+      const response = await API.PutAuthAPI(
         { notificationIds },
+        null,
         "seenUpdate",
         true
       );

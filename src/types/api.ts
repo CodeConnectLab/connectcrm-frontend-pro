@@ -51,7 +51,7 @@ export interface ApiMethods {
     id: string | number,
     endPoint: string,
     tokenRequired: boolean,
-    body?:any
+    body?: any
     // Token?: string,
     // navigate?: NavigateFunction
   ) => Promise<ApiResponse<T>>;
@@ -68,9 +68,9 @@ export interface ApiMethods {
 
   PutAuthAPI: <T = any>(
     body: any | null,
-    id: string,
+    id: string | null,
     endPoint: string,
-    Token?: string,
-    navigate?: NavigateFunction
+    tokenRequired?: boolean
+    // navigate?: NavigateFunction
   ) => Promise<ApiResponse<T>>;
 }
