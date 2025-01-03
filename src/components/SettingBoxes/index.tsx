@@ -1,4 +1,7 @@
 "use client";
+
+import { Avatar } from "antd";
+
 const SettingBoxes = () => {
   return (
     <>
@@ -241,12 +244,15 @@ const SettingBoxes = () => {
                 <div className="mb-4 flex items-center gap-3">
                   <div className="h-14 w-14 rounded-full">
                     <>
-                      <img
-                        src="/images/user/user-03.png"
-                        width={55}
-                        height={55}
-                        alt="User"
-                        className="overflow-hidden rounded-full"
+                      <Avatar
+                        size={60}
+                        src={"https://api.dicebear.com/7.x/miniavs/svg?seed=1"}
+                        // src={
+                        //   userData?.profilePic
+                        //     ? userData?.profilePic
+                        //     : "https://api.dicebear.com/7.x/miniavs/svg?seed=1"
+                        // }
+                        style={{ background: "lightblue" }}
                       />
                     </>
                   </div>

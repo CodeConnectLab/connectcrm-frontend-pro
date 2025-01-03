@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ClickOutside from "../ClickOutside";
 import { handleLogout } from "../../utils/handleLogOut";
+import AvatarMassao from "../CommonUI/StyledComponent/Avatar";
+import { Avatar } from "antd";
 interface UserData {
   _id: string;
   name: string;
@@ -32,7 +34,6 @@ const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null);
-
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -49,34 +50,18 @@ const DropdownUser = () => {
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
       <Link
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex items-center gap-4"
+        className="flex items-center gap-3"
         to="#"
       >
-        <span className="h-12 w-12 rounded-full">
-          <img
-            width={112}
-            height={112}
-            src="/images/user/user-03.png"
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-            alt="User"
-            className="overflow-hidden rounded-full"
-          />
-          {/* <img
-            width={112}
-            height={112}
-            src="/images/user/user-03.png"
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
-            alt="User"
-            className="overflow-hidden rounded-full"
-          /> */}
-        </span>
-
+        <Avatar
+          size={48}
+          src={
+            userData?.profilePic
+              ? userData?.profilePic
+              : "https://api.dicebear.com/7.x/miniavs/svg?seed=1"
+          }
+          style={{ background: "lightblue" }}
+        />
         <span className="flex items-center gap-2 font-medium text-dark dark:text-dark-6">
           <span className="hidden lg:block">{userData?.name}</span>
 
@@ -107,29 +92,15 @@ const DropdownUser = () => {
         >
           <div className="flex items-center gap-2.5 px-5 pb-5.5 pt-3.5">
             <span className="relative block h-12 w-12 rounded-full">
-              <img
-                width={112}
-                height={112}
-                src="/images/user/user-03.png"
-                style={{
-                  width: "auto",
-                  height: "auto",
-                }}
-                alt="User"
-                className="overflow-hidden rounded-full"
+              <Avatar
+                size={48}
+                src={
+                  userData?.profilePic
+                    ? userData?.profilePic
+                    : "https://api.dicebear.com/7.x/miniavs/svg?seed=1"
+                }
+                style={{ background: "lightblue" }}
               />
-              {/* <img
-                width={112}
-                height={112}
-                src="/images/user/user-03.png"
-                style={{
-                  width: "auto",
-                  height: "auto",
-                }}
-                alt="User"
-                className="overflow-hidden rounded-full"
-              /> */}
-
               <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green dark:border-gray-dark"></span>
             </span>
 
@@ -137,7 +108,7 @@ const DropdownUser = () => {
               <span className="block font-medium text-dark dark:text-white">
                 {userData?.name}
               </span>
-              <span className="block font-medium text-dark-5 dark:text-dark-6">
+              <span className="block w-[190px] font-medium text-dark-5 truncate dark:text-dark-6">
                 {userData?.email}
               </span>
             </span>

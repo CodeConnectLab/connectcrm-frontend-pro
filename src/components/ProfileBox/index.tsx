@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaGithub } from "react-icons/fa";
 import { MdVerified, MdErrorOutline } from "react-icons/md";
+import { Avatar } from "antd";
 interface UserData {
   _id: string;
   name: string;
@@ -103,13 +104,14 @@ const ProfileBox = () => {
         <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
           <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-[176px] sm:p-3">
             <div className="relative drop-shadow-2">
-              <img
-                // src={userData.profilePic || "/images/user/user-03.png"}
-                src={"/images/user/user-03.png"}
-                width={160}
-                height={160}
-                className="overflow-hidden rounded-full"
-                alt="profile"
+              <Avatar
+                size={152}
+                src={
+                  userData?.profilePic
+                    ? userData?.profilePic
+                    : "https://api.dicebear.com/7.x/miniavs/svg?seed=1"
+                }
+                style={{ background: "lightblue" }}
               />
             </div>
 
@@ -202,7 +204,10 @@ const ProfileBox = () => {
                 </h4>
                 <div className="space-y-1 text-gray-600 dark:text-gray-400">
                   <p>Plan Name: {userData.company?.subscription?.plan}</p>
-                  <p>Expires: {formatDate(userData.company?.subscription?.endDate)}</p>
+                  <p>
+                    Expires:{" "}
+                    {formatDate(userData.company?.subscription?.endDate)}
+                  </p>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Tooltip } from "antd";
 import { EditFilled } from "@ant-design/icons";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
@@ -22,6 +22,7 @@ interface Lead {
   leadWonAmount: number;
   addCalender: boolean;
   leadLostReasonId: string;
+  productService: any;
   comment: string;
 }
 
@@ -37,6 +38,7 @@ interface APILead {
   leadWonAmount: number;
   addCalender: boolean;
   leadLostReasonId: string;
+  productService: { name: string } | null;
   comment: string;
 }
 
@@ -65,6 +67,7 @@ const getRowClassName = (record: Lead): string => {
 };
 
 const FollowupLeads = () => {
+  const navigate = useNavigate();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -86,6 +89,7 @@ const FollowupLeads = () => {
       name: `${lead.firstName} ${lead.lastName}`.trim(),
       number: lead.contactNumber,
       leadSource: lead.leadSource?.name || "-",
+      productService: lead.productService?.name || "-",
       agent: lead.assignedAgent?.name || "-",
       followUpDate: new Date(lead.followUpDate),
       // followUpDate: new Date(lead.followUpDate).toLocaleString(),
@@ -249,10 +253,10 @@ const FollowupLeads = () => {
       key: "number",
     },
     {
-      title: "Lead Source",
-      dataIndex: "leadSource",
-      key: "leadSource",
-      minWidth: 123,
+      title: "Product Service",
+      dataIndex: "productService",
+      key: "productService",
+      minWidth: 160,
     },
     {
       title: "Agent",
@@ -265,13 +269,24 @@ const FollowupLeads = () => {
       key: "followUpDate",
       minWidth: 143,
       render: (date: Date) => {
-        const formattedDate = date.toLocaleString();
+        const options: Intl.DateTimeFormatOptions = {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        };
+        const formattedDate = date.toLocaleDateString("en-GB", options);
+        const formattedTime = date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const formattedDateTime = `${formattedDate} - ${formattedTime}`;
+        // const formattedDate = date.toLocaleString();
         const isUpcoming = isWithinNext24Hours(date);
         const isMissed = isWithinPast24Hours(date);
 
         return (
           <div className="flex items-center gap-2">
-            <span>{formattedDate}</span>
+            <span>{formattedDateTime}</span>
             {/* {isUpcoming && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
                 Due Soon
@@ -285,6 +300,12 @@ const FollowupLeads = () => {
           </div>
         );
       },
+    },
+    {
+      title: "Lead Source",
+      dataIndex: "leadSource",
+      key: "leadSource",
+      minWidth: 123,
     },
     {
       title: "Action",
@@ -342,6 +363,10 @@ const FollowupLeads = () => {
     } else {
       setSelectedRowKeys((prev) => prev.filter((key) => key !== value));
     }
+  };
+
+  const handleRowClick = (record: any) => {
+    navigate(`/leads/${record.key}`);
   };
 
   const handleBulkUpdate = async (data: {
@@ -457,6 +482,7 @@ const FollowupLeads = () => {
             cursor: "pointer",
             transition: "all 0.2s",
           },
+          onClick: () => handleRowClick(record),
         })}
         isLoading={loading}
       />
