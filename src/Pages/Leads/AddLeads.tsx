@@ -4,7 +4,6 @@ import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGrou
 import type { CollapseProps } from "antd";
 import AdditionalLeadDetails from "./AdditionalLeadDetails";
 import CustomCollapse from "../../components/FormElements/CustomCollapse";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import InputGroup from "../../components/FormElements/InputGroup";
 import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
@@ -16,6 +15,7 @@ import {
 } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
 import { useNavigate } from "react-router-dom";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface AdditionalDetails {
   fullAddress: string;
@@ -340,7 +340,7 @@ export default function AddLeads() {
 
                 {/* Follow-up Date */}
                 <div className="mb-4.5 w-full">
-                  <DateTimePicker
+                  <AntDateTimePicker
                     label="Follow-up date"
                     onChange={handleDateChange}
                     defaultValue={formData.followUpDate}

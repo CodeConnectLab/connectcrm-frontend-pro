@@ -1,6 +1,5 @@
 import React from "react";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import {
   getStoredAgents,
@@ -9,6 +8,7 @@ import {
   getStoredStatus,
 } from "../../api/commonAPI";
 import dayjs from "dayjs";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface AdvanceFilterUIProps {
   onFilter: (filters: {
@@ -26,7 +26,7 @@ interface AdvanceFilterUIProps {
 const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   onFilter,
   onReset,
-  loading = false
+  loading = false,
 }) => {
   const agentList = getStoredAgents(true);
   const serviceList = getStoredProductsServices(true);
@@ -39,28 +39,28 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
     productService: "",
     leadSource: "",
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
 
   const handleChange = (name: string, value: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleDateChange = (name: string) => (_: Date[], dateStr: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: dateStr
+      [name]: dateStr,
     }));
   };
 
   const handleSubmit = () => {
     const validFilters = Object.entries(filters).reduce((acc, [key, value]) => {
       if (value) {
-        if (key === 'startDate' || key === 'endDate') {
-          acc[key] = dayjs(value).format('YYYY-MM-DD');
+        if (key === "startDate" || key === "endDate") {
+          acc[key] = dayjs(value).format("YYYY-MM-DD");
         } else {
           acc[key] = value;
         }
@@ -78,7 +78,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
       productService: "",
       leadSource: "",
       startDate: "",
-      endDate: ""
+      endDate: "",
     });
     onReset();
   };
@@ -91,7 +91,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Status"
           options={statusList}
           selectedOption={filters.leadStatus}
-          setSelectedOption={(value) => handleChange('leadStatus', value)}
+          setSelectedOption={(value) => handleChange("leadStatus", value)}
           allowClear
         />
         <SelectGroupOne
@@ -99,7 +99,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Employee"
           options={agentList}
           selectedOption={filters.assignedAgent}
-          setSelectedOption={(value) => handleChange('assignedAgent', value)}
+          setSelectedOption={(value) => handleChange("assignedAgent", value)}
           allowClear
         />
         <SelectGroupOne
@@ -107,7 +107,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Product and Service"
           options={serviceList}
           selectedOption={filters.productService}
-          setSelectedOption={(value) => handleChange('productService', value)}
+          setSelectedOption={(value) => handleChange("productService", value)}
           allowClear
         />
         <SelectGroupOne
@@ -115,17 +115,17 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Source"
           options={sourceList}
           selectedOption={filters.leadSource}
-          setSelectedOption={(value) => handleChange('leadSource', value)}
+          setSelectedOption={(value) => handleChange("leadSource", value)}
           allowClear
         />
-        <DateTimePicker 
-          label="Start Date" 
-          onChange={handleDateChange('startDate')}
+        <AntDateTimePicker
+          label="Start Date"
+          onChange={handleDateChange("startDate")}
           defaultValue={filters.startDate}
         />
-        <DateTimePicker 
-          label="End Date" 
-          onChange={handleDateChange('endDate')}
+        <AntDateTimePicker
+          label="End Date"
+          onChange={handleDateChange("endDate")}
           defaultValue={filters.endDate}
         />
       </div>

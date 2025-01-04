@@ -62,7 +62,7 @@ export const ScrollIndicatorButton: React.FC<ScrollIndicatorButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce 
+      className={`absolute bottom-4 left-[45%] -translate-x-1/2 animate-bounce 
         bg-primary text-white rounded-full p-2 shadow-lg transition-all 
         duration-300 hover:bg-primary/90 focus:outline-none focus:ring-2 
         focus:ring-primary/50 ${className}`}

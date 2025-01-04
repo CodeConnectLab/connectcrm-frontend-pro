@@ -7,7 +7,6 @@ import AllDetailsFields from "../Components/AllDetailsFields";
 import AdditionalInformation from "../Components/AdditionalInformation";
 import AttachmentTab from "../Components/AttachmentTab";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import TabPanel from "../../components/TabPanel/TabPanel";
 import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
@@ -15,6 +14,7 @@ import { API } from "../../api";
 import { getStoredAgents } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface LeadHistory {
   _id: string;
@@ -87,6 +87,7 @@ const LeadAction: React.FC = () => {
   const agendList = getStoredAgents(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isFirstCommentClick, setIsFirstCommentClick] = useState(true);
   const [leadData, setLeadData] = useState<{
     lead: LeadData;
     history: LeadHistory[];
@@ -114,6 +115,7 @@ const LeadAction: React.FC = () => {
 
       const { leadDetails } = response?.data;
       setLeadData(leadDetails);
+      setIsFirstCommentClick(true); // Reset first click state
 
       setFormData({
         status: leadDetails?.lead?.leadStatus?._id,
@@ -132,9 +134,17 @@ const LeadAction: React.FC = () => {
     }
   };
 
+  const handleCommentFocus = () => {
+    if (isFirstCommentClick) {
+      setFormData((prev) => ({ ...prev, comment: "" }));
+      setIsFirstCommentClick(false);
+    }
+  };
+
   useEffect(() => {
     if (leadId) {
       fetchLeadData();
+      setIsFirstCommentClick(true); // Reset first click state
     }
   }, [leadId]);
 
@@ -356,7 +366,7 @@ const LeadAction: React.FC = () => {
             lostReasonValue={formData.leadLostReasonId}
           />
 
-          <DateTimePicker
+          <AntDateTimePicker
             label="Followup"
             onChange={handleDateChange}
             defaultValue={formData.followup}
@@ -385,6 +395,7 @@ const LeadAction: React.FC = () => {
               name="comment"
               value={formData.comment}
               onChange={handleInputChange}
+              onFocus={handleCommentFocus}
               placeholder="Add your comment"
               className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
               rows={2}

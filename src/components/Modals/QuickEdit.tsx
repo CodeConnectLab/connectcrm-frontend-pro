@@ -1,10 +1,10 @@
 // components/QuickEditModal.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal } from "antd";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
+import AntDateTimePicker from "../FormElements/DatePicker/AntDateTimePicker";
 
 interface QuickEditModalProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ interface QuickEditModalProps {
     comment: string;
     leadWonAmount: number;
     addCalender: boolean;
+    leadName?: string;
   };
   isLoading?: boolean;
 }
@@ -82,6 +83,17 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
     });
   };
 
+  useEffect(() => {
+    setFormData({
+      status: initialData.status,
+      followup: initialData.followUpDate,
+      leadWonAmount: initialData.leadWonAmount || 0,
+      addCalender: initialData.addCalender || false,
+      comment: initialData.comment || "",
+      leadLostReasonId: initialData.leadLostReasonId,
+    });
+  }, [initialData]);
+
   return (
     <Modal
       title="Quick Edit Lead"
@@ -91,7 +103,11 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
       width={600}
       className="dark:bg-gray-800"
     >
-      <div className="space-y-4 py-4">
+      <div className="space-y-4 py-4 dark:bg-gray-800 dark:text-white">
+        <span className="text-body-sm font-medium text-dark dark:text-white">
+          Name:{" "}
+        </span>
+        <span>{initialData.leadName}</span>
         <LeadStatusUI
           handleInputChange={handleInputChange}
           handleSelectChange={handleSelectChange}
@@ -100,14 +116,12 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
           value={formData.status}
           lostReasonValue={formData.leadLostReasonId}
         />
-
-        <DateTimePicker
+        <AntDateTimePicker
           label="Followup"
           onChange={handleDateChange}
           defaultValue={formData.followup}
           enableTime
         />
-
         <div>
           <label className="mb-3 block text-body-sm font-medium text-dark dark:text-white">
             Comment
@@ -122,7 +136,6 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
             rows={2}
           />
         </div>
-
         <div className="flex items-center">
           <CheckboxTwo
             label="Add to Calendar"
@@ -132,7 +145,6 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
             id={initialData.id + "Add_to_Calendar_QuickEdit"}
           />
         </div>
-
         <div className="flex justify-end gap-3 mt-6">
           <ButtonDefault
             label="Cancel"
