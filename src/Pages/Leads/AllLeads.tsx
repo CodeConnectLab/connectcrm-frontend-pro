@@ -432,6 +432,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
             addCalender: selectedLead.addCalender,
             leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
             comment: selectedLead.comment, // You might want to get this from your lead data
+            leadName: selectedLead.name,
           }}
           isLoading={isUpdating}
         />

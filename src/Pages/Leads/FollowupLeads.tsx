@@ -502,6 +502,7 @@ const FollowupLeads = () => {
             addCalender: selectedLead.addCalender, // You might want to get this from your lead data
             leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
             comment: selectedLead.comment, // You might want to get this from your lead data
+            leadName: selectedLead.name,
           }}
           isLoading={isUpdating}
         />

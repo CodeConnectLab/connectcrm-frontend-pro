@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { DownloadOutlined } from "@ant-design/icons";
 import AudioPlayer from "../../../components/AudioPlayer/AudioPlayer";
-import DateTimePicker from "../../../components/FormElements/DatePicker/DateTimePicker";
 import SelectGroupOne from "../../../components/FormElements/SelectGroup/SelectGroupOne";
 import CustomAntdTable from "../../../components/Tables/CustomAntdTable";
 import DonutSlickDesign from "../../../components/Charts/DonutSlickDesign";
 import ButtonDefault from "../../../components/Buttons/ButtonDefault";
-import Heading from "../../../components/CommonUI/Heading";
+import AntDateTimePicker from "../../../components/FormElements/DatePicker/AntDateTimePicker";
 
 const StorageInsights = () => {
   const data = [
@@ -163,10 +162,13 @@ const StorageInsights = () => {
           />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker label="From Date" onChange={handleFromDateChange} />
+          <AntDateTimePicker
+            label="From Date"
+            onChange={handleFromDateChange}
+          />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker label="To Date" onChange={handleToDateChange} />
+          <AntDateTimePicker label="To Date" onChange={handleToDateChange} />
         </div>
         <ButtonDefault
           label="Apply"
