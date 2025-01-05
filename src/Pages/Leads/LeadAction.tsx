@@ -103,6 +103,7 @@ const LeadAction: React.FC = () => {
     leadWonAmount: 0,
     leadLostReasonId: "",
   });
+  const [initialFormData, setInitialFormData] = useState(formData);
   const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   const navigate = useNavigate();
@@ -118,6 +119,16 @@ const LeadAction: React.FC = () => {
       setIsFirstCommentClick(true); // Reset first click state
 
       setFormData({
+        status: leadDetails?.lead?.leadStatus?._id,
+        description: leadDetails?.lead?.description,
+        addToCalendar: leadDetails?.lead?.addCalender,
+        followup: leadDetails?.lead?.followUpDate,
+        comment: leadDetails?.lead?.comment || "",
+        assignedAgent: leadDetails?.lead?.assignedAgent?._id || "",
+        leadWonAmount: leadDetails?.lead?.leadWonAmount || 0,
+        leadLostReasonId: leadDetails?.lead?.leadLostReasonId || "",
+      });
+      setInitialFormData({
         status: leadDetails?.lead?.leadStatus?._id,
         description: leadDetails?.lead?.description,
         addToCalendar: leadDetails?.lead?.addCalender,
@@ -148,10 +159,17 @@ const LeadAction: React.FC = () => {
     }
   }, [leadId]);
 
+  const hasFormChanged = () => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
   // Add this function to handle navigation
   const handleNavigation = () => {
-    // Check if there are unsaved changes here if needed
-    setShowNavigationModal(true);
+    // Check if there are any changes
+    if ( hasFormChanged()) {
+      setShowNavigationModal(true);
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleNavigationConfirm = () => {
