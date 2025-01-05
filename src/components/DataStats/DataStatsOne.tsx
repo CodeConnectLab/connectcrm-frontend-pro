@@ -1,6 +1,7 @@
 import { dataStats } from "../../types/dataStats";
 import GrowthIconGreen from "../Assets/Icons/DashBoardIcons/GrowthIconGreen";
 import FallIconRed from "../Assets/Icons/DashBoardIcons/FallIconRed";
+import { Link } from "react-router-dom";
 
 interface DataStatsProps {
   dataList: dataStats[];
@@ -10,7 +11,7 @@ const DataStatsOne: React.FC<DataStatsProps> = ({ dataList }) => {
     <>
       <div className="flex w-full gap-4 overflow-auto">
         {dataList.map((item, index) => (
-          <a href={item.webroute} target="_blank" className="min-w-[268px] w-full">
+          <Link to={item.webroute?.split(".in")[1] || ""} className="min-w-[268px] w-full">
             <div
               key={index}
               className="flex w-full  items-center gap-4 rounded-[10px] bg-white p-4 py-1 shadow-1 dark:bg-gray-dark sm:block sm:gap-0 sm:p-6"
@@ -46,7 +47,7 @@ const DataStatsOne: React.FC<DataStatsProps> = ({ dataList }) => {
                 </span>
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </>

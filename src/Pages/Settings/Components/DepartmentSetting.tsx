@@ -9,19 +9,7 @@ import InputGroup from "../../../components/FormElements/InputGroup";
 import { API } from "../../../api";
 import { END_POINT } from "../../../api/UrlProvider";
 import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
-import Heading from "../../../components/CommonUI/Heading";
-
-interface ApiUser {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  phone: string;
-  isActive: boolean;
-  deleted: boolean;
-  createdAt: string;
-  assignedTL?: string;
-}
+import TextAreaCustom from "../../../components/FormElements/TextArea/TextAreaCustom";
 
 interface User {
   key: string;
@@ -41,19 +29,16 @@ interface FormData {
   mobile: string;
   password: string;
   isActive: string;
-  userType: string | number;
-  assignedTL?: string | null;
+  userType: string;
+  assignedTL: string;
 }
 
 export default function DepartmentSetting() {
   const [isLoading, setIsLoading] = useState(false);
-  const [tableLoading, setTableLoading] = useState(false);
   const [tableData, setTableData] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [teamLeads, setTeamLeads] = useState<
-    { value: string; label: string }[]
-  >([]);
+  const [teamLeads, setTeamLeads] = useState<{ value: string; label: string }[]>([]);
 
   const initialFormState: FormData = {
     userName: "",
@@ -62,45 +47,40 @@ export default function DepartmentSetting() {
     password: "",
     isActive: "active",
     userType: "",
-    assignedTL: null,
+    assignedTL: "",
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
 
   const fetchUsers = async () => {
     try {
-      setTableLoading(true);
       const { data, error } = await API.getAuthAPI(END_POINT.USERS, true);
       if (error) throw new Error(error);
 
-      // Transform data for table
-      const transformedData: User[] = data.map(
-        (user: ApiUser, index: number) => ({
-          key: user._id,
-          sNo: index + 1,
-          userName: user.name,
-          email: user.email,
-          mobile: user.phone,
-          roll: user.role,
-          assignTeamLeader: user.assignedTL || "",
-          isActive: user.isActive,
-          assignedTL: user.assignedTL,
-        })
-      );
+      const transformedData = data.map((user: any, index: number) => ({
+        key: user._id,
+        sNo: index + 1,
+        userName: user.name,
+        email: user.email,
+        mobile: user.phone,
+        roll: user.role,
+        assignTeamLeader: user.assignedTL || "",
+        isActive: user.isActive,
+        assignedTL: user.assignedTL,
+      }));
+
       setTableData(transformedData);
 
-      // Filter and set team leads
+      // Set team leads
       const teamLeadsList = data
-        .filter((user: ApiUser) => user.role === "Team Leader" && user.isActive)
-        .map((lead: ApiUser) => ({
+        .filter((user: any) => user.role === "Team Leader" && user.isActive)
+        .map((lead: any) => ({
           value: lead._id,
           label: lead.name,
         }));
       setTeamLeads(teamLeadsList);
     } catch (error: any) {
-      console.error(error.message);
-    } finally {
-      setTableLoading(false);
+      toast.error(error.message || "Failed to fetch users");
     }
   };
 
@@ -109,63 +89,102 @@ export default function DepartmentSetting() {
   }, []);
 
   const validateForm = () => {
-    if (!formData.userName.trim()) return toast.error("Please enter user name");
-    if (!formData.email.trim()) return toast.error("Please enter email");
-    if (!formData.mobile.trim())
-      return toast.error("Please enter mobile number");
-    if (!editingUser && !formData.password.trim())
-      return toast.error("Please enter password");
-    if (!formData.userType) return toast.error("Please select user type");
-    if (formData.userType.toString() === "Employee" && !formData.assignedTL) {
-      return toast.error("Please select a team lead");
+    if (!formData.userName.trim()) {
+      toast.error("Please enter user name");
+      return false;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Please enter email");
+      return false;
+    }
+    if (!formData.mobile.trim()) {
+      toast.error("Please enter mobile number");
+      return false;
+    }
+    if (!editingUser && !formData.password.trim()) {
+      toast.error("Please enter password");
+      return false;
     }
     return true;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string | number) => {
-    if (name === "userType" && value.toString() !== "Employee") {
-      setFormData((prev) => ({ ...prev, [name]: value, assignedTL: null }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEdit = (key: string) => {
+    const user = tableData.find(user => user.key === key);
+    if (user) {
+      setFormData({
+        userName: user.userName,
+        email: user.email,
+        mobile: user.mobile,
+        password: "", // Empty for edit mode
+        isActive: user.isActive ? "active" : "inactive",
+        userType: user.roll,
+        assignedTL: user.assignedTL || "",
+      });
+      setEditingUser(key);
+      setShowForm(true);
     }
   };
 
-  const handleAdd = async () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
       setIsLoading(true);
-      const payload = {
+
+      const basePayload = {
         name: formData.userName,
         email: formData.email,
         phone: formData.mobile,
-        password: formData.password,
-        role: formData.userType,
-        assignedTL: formData.assignedTL || null,
+        isActive: formData.isActive === "active",
+        assignedTL: formData.assignedTL || ""
       };
 
       if (editingUser) {
+        // Update existing user
+        const updatePayload = {
+          ...basePayload,
+          ...(formData.password && { password: formData.password })
+        };
+
         const { error } = await API.updateAuthAPI(
-          payload,
+          updatePayload,
           editingUser,
-          END_POINT.USERS,
+          "updateDepartment",
           true
         );
-        if (error) throw Error(error);
-        toast.success("User updated successfully!");
+
+        if (error) throw new Error(error);
+        toast.success("User updated successfully");
       } else {
+        // Create new user
+        const createPayload = {
+          ...basePayload,
+          password: formData.password,
+          role: formData.userType
+        };
+
         const { error } = await API.postAuthAPI(
-          payload,
+          createPayload,
           END_POINT.USER_REGISTER,
           true
         );
-        if (error) throw Error(error);
-        toast.success("User registered successfully!");
+
+        if (error) throw new Error(error);
+        toast.success("User created successfully");
       }
 
       setFormData(initialFormState);
@@ -173,26 +192,9 @@ export default function DepartmentSetting() {
       setShowForm(false);
       fetchUsers();
     } catch (error: any) {
-      console.error(error.message);
+      toast.error(error.message || "Operation failed");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleEdit = (key: string) => {
-    const user = tableData.find((user) => user.key === key);
-    if (user) {
-      setFormData({
-        userName: user.userName,
-        email: user.email,
-        mobile: user.mobile,
-        password: "",
-        isActive: user.isActive ? "active" : "inactive",
-        userType: user.roll,
-        assignedTL: user.assignedTL || null,
-      });
-      setEditingUser(key);
-      setShowForm(true);
     }
   };
 
@@ -201,16 +203,16 @@ export default function DepartmentSetting() {
       const { error } = await API.updateAuthAPI(
         { isActive: status },
         id,
-        END_POINT.USERS,
+        "updateDepartment",
         true
       );
+      
       if (error) throw new Error(error);
-      toast.success(
-        `User ${status ? "activated" : "deactivated"} successfully`
-      );
+      
+      toast.success(`User ${status ? "activated" : "deactivated"} successfully`);
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to update status");
     }
   };
 
@@ -219,74 +221,68 @@ export default function DepartmentSetting() {
       title: "S.No.",
       dataIndex: "sNo",
       key: "sNo",
-      sorter: (a: User, b: User) => a.sNo - b.sNo,
+      width: 80
     },
     {
       title: "User Name",
       dataIndex: "userName",
-      key: "userName",
-      sorter: (a: User, b: User) => a.userName.localeCompare(b.userName),
+      key: "userName"
     },
     {
       title: "Email",
       dataIndex: "email",
-      key: "email",
+      key: "email"
     },
     {
       title: "Mobile",
       dataIndex: "mobile",
-      key: "mobile",
+      key: "mobile"
     },
     {
       title: "Role",
       dataIndex: "roll",
-      key: "roll",
+      key: "roll"
     },
     {
       title: "Team Leader",
       dataIndex: "assignTeamLeader",
       key: "assignTeamLeader",
-      render: (teamLead: string, record: User) => {
-        const lead = teamLeads.find((l) => l.value === record.assignedTL);
-        return lead ? lead.label : "-";
-      },
+      render: (_: any, record: User) => {
+        const lead = teamLeads.find(l => l.value === record.assignedTL);
+        return lead?.label || "-";
+      }
     },
     {
       title: "Action",
-      dataIndex: "key",
       key: "action",
-      render: (key: string, record: User) => (
-        <div className="flex justify-start items-center gap-2">
+      render: (_: any, record: User) => (
+        <div className="flex items-center gap-2">
           <SwitcherTwo
-            id={key}
+            id={record.key}
             defaultChecked={record.isActive}
-            onChange={(checked: boolean) => handleStatusChange(key, checked)}
+            onChange={(id: string, checked: boolean) => handleStatusChange(id, checked)}
           />
           <Button
             icon={<EditOutlined />}
             className="bg-primary text-white"
-            onClick={() => handleEdit(key)}
+            onClick={() => handleEdit(record.key)}
           />
         </div>
-      ),
-    },
+      )
+    }
   ];
 
   return (
     <div className="w-full">
-      <div className="flex flex-col justify-start items-start mb-4">
-        <div className="w-full">
-          <Heading title="Manage Your Department" />
-        </div>
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Department Management</h2>
         {!showForm && (
           <ButtonDefault
-            label={showForm ? "Hide Form" : "Add New User"}
+            label="Add New User"
             onClick={() => {
-              setShowForm(!showForm);
-              if (!showForm) {
-                setFormData(initialFormState);
-                setEditingUser(null);
-              }
+              setShowForm(true);
+              setFormData(initialFormState);
+              setEditingUser(null);
             }}
             icon={<PlusOutlined />}
           />
@@ -294,103 +290,99 @@ export default function DepartmentSetting() {
       </div>
 
       {showForm && (
-        <>
-          <div className="mb-4 grid grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <InputGroup
               label="User Name"
               name="userName"
               type="text"
-              placeholder="User Name"
+              placeholder="Enter user name"
               value={formData.userName}
               onChange={handleInputChange}
+              required
             />
+
             <InputGroup
               label="Email"
               name="email"
               type="email"
-              placeholder="Email"
+              placeholder="Enter email"
               value={formData.email}
               onChange={handleInputChange}
+              required
             />
+
             <InputGroup
               label="Mobile"
               name="mobile"
-              type="text"
-              placeholder="Mobile"
+              type="tel"
+              placeholder="Enter mobile number"
               value={formData.mobile}
               onChange={handleInputChange}
+              required
             />
+
             <InputGroup
               label="Password"
               name="password"
               type="password"
-              placeholder={
-                editingUser ? "Leave blank to keep unchanged" : "Password"
-              }
+              placeholder={editingUser ? "Leave blank to keep unchanged" : "Enter password"}
               value={formData.password}
               onChange={handleInputChange}
+              required={!editingUser}
             />
-          </div>
 
-          <div className="mb-4 grid grid-cols-3 gap-4">
             <SelectGroupOne
               label="Status"
               options={[
                 { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
+                { value: "inactive", label: "Inactive" }
               ]}
               selectedOption={formData.isActive}
-              setSelectedOption={(value) =>
-                handleSelectChange("isActive", value)
-              }
+              setSelectedOption={(value) => handleSelectChange("isActive", value)}
             />
-            <SelectGroupOne
-              label="User Role"
-              options={[
-                { value: "Team Leader", label: "Team Leader" },
-                { value: "Employee", label: "Employee" },
-              ]}
-              placeholder="Select User Role"
-              selectedOption={formData.userType}
-              setSelectedOption={(value) =>
-                handleSelectChange("userType", value)
-              }
-            />
+
+            {!editingUser && (
+              <SelectGroupOne
+                label="Role"
+                options={[
+                  { value: "Team Leader", label: "Team Leader" },
+                  { value: "Employee", label: "Employee" }
+                ]}
+                selectedOption={formData.userType}
+                setSelectedOption={(value) => handleSelectChange("userType", value)}
+                required
+              />
+            )}
+
             {formData.userType === "Employee" && (
               <SelectGroupOne
-                label="Assign Team Leader (TL)"
+                label="Assign Team Leader"
                 options={teamLeads}
-                placeholder={
-                  teamLeads.length
-                    ? "Select Team Leader"
-                    : "No team leaders available"
-                }
                 selectedOption={formData.assignedTL}
-                setSelectedOption={(value) =>
-                  handleSelectChange("assignedTL", value)
-                }
-                disabled={!teamLeads.length}
+                setSelectedOption={(value) => handleSelectChange("assignedTL", value)}
+                placeholder="Select Team Leader"
               />
             )}
           </div>
 
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3">
             <ButtonDefault
-              label={
-                isLoading ? "Processing..." : editingUser ? "Update" : "Add"
-              }
-              onClick={handleAdd}
+              label={isLoading ? "Processing..." : editingUser ? "Update" : "Add"}
+              onClick={handleSubmit}
               disabled={isLoading}
             />
             <ButtonDefault
-              label={"Cancel"}
+              label="Cancel"
               onClick={() => {
-                setShowForm(!showForm);
+                setShowForm(false);
+                setFormData(initialFormState);
+                setEditingUser(null);
               }}
-              disabled={isLoading}
+              variant="outline"
             />
           </div>
-        </>
+        </div>
       )}
 
       <CustomAntdTable
@@ -398,11 +390,8 @@ export default function DepartmentSetting() {
         dataSource={tableData}
         pagination={{
           pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
+          showSizeChanger: true
         }}
-        className="w-full"
-        loading={tableLoading}
       />
     </div>
   );

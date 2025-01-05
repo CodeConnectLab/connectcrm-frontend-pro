@@ -186,7 +186,7 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
           <SelectGroupOne
             label="Service"
             options={serviceList}
-            selectedOption={formData.productServiceName}
+            selectedOption={formData.productService}
             setSelectedOption={(value) =>
               handleSelectChange("productService", value)
             }
@@ -206,7 +206,7 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
           <SelectGroupOne
             label="Lead Source"
             options={sourceLis}
-            selectedOption={formData.leadSourceName}
+            selectedOption={formData.leadSource}
             setSelectedOption={(value) =>
               handleSelectChange("leadSource", value)
             }
