@@ -35,7 +35,7 @@ const TargetStats: React.FC<DataStatsProps> = ({ dataList }) => {
               <div
                 className={`flex items-center ${item.positiveSentiment ? "text-green" : "text-red"}`}
               >
-                <PiCurrencyInrBold />{" "}
+                {/* <PiCurrencyInrBold />{" "} */}
                 <span>{`${item.value} ( ${item.salesValue} )`} </span>
               </div>
 
