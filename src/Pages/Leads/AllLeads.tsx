@@ -276,7 +276,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       dataIndex: "key",
       key: "checkbox",
       render: (key: string) => (
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <CheckboxTwo
             id={key}
             onChange={({ value: checkboxValue, isChecked }) =>
@@ -380,7 +380,9 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
   };
 
   const handleRowClick = (record: any) => {
-    navigate(`/leads/${record.key}`);
+    setSelectedLead(record);
+    setIsQuickEditOpen(true);
+    // navigate(`/leads/${record.key}`);
   };
 
   useEffect(() => {
