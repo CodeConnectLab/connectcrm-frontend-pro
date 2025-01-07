@@ -7,15 +7,12 @@ interface DataStatsProps {
 }
 
 const StatusStats: React.FC<DataStatsProps> = ({ dataList }) => {
-  console.log({ dataList });
-
   return (
     <>
       <div className="flex w-full gap-4 overflow-auto">
         {dataList.map((item, index) => (
-          <Link to={"/leads/all"}>
+          <Link key={item.title || "StatusStats" + index} to={"/leads/all"}>
             <div
-              key={index}
               className="flex w-full min-w-[268px] items-center gap-4 rounded-[10px] bg-white p-4 shadow-1 dark:bg-gray-dark sm:block sm:gap-0 sm:p-6"
             >
               <div

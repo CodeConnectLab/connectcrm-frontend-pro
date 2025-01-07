@@ -5,6 +5,7 @@ import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
 import AntDateTimePicker from "../FormElements/DatePicker/AntDateTimePicker";
+import LeadAction from "../../Pages/Leads/LeadAction";
 
 interface QuickEditModalProps {
   isOpen: boolean;
@@ -96,14 +97,15 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
 
   return (
     <Modal
-      title="Quick Edit Lead"
+      // title="Quick Edit Lead"
       open={isOpen}
       onCancel={onClose}
       footer={null}
-      width={600}
+      width={"auto"}
+      centered
       className="dark:bg-gray-800"
     >
-      <div className="space-y-4 py-4 dark:bg-gray-800 dark:text-white">
+      {/* <div className="space-y-4 py-4 dark:bg-gray-800 dark:text-white">
         <span className="text-body-sm font-medium text-dark dark:text-white">
           Name:{" "}
         </span>
@@ -160,7 +162,8 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
             customClasses="bg-primary hover:bg-primary/90 text-white"
           />
         </div>
-      </div>
+      </div> */}
+      <LeadAction leadIdProp={initialData.id} isModalView={true} onClose={onClose} />
     </Modal>
   );
 };

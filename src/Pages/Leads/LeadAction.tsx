@@ -82,8 +82,16 @@ interface GeoLocation {
   createdAt: string;
 }
 
-const LeadAction: React.FC = () => {
-  const { leadId } = useParams<{ leadId: string }>();
+const LeadAction = ({
+  isModalView = false,
+  leadIdProp = "",
+  onClose = () => {},
+}: any) => {
+  const { leadId } = isModalView
+    ? { leadId: leadIdProp }
+    : useParams<{ leadId: string }>();
+  console.log({ leadId, leadIdProp, isModalView });
+
   const agendList = getStoredAgents(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -152,6 +160,11 @@ const LeadAction: React.FC = () => {
   const handleNavigation = () => {
     // Check if there are unsaved changes here if needed
     setShowNavigationModal(true);
+  };
+
+  const handleEditMore = () => {
+    onClose();
+    navigate(`/leads/${leadId}`);
   };
 
   const handleNavigationConfirm = () => {
@@ -285,41 +298,45 @@ const LeadAction: React.FC = () => {
       ]
     : [];
 
-  const tabsData = [
-    {
-      tabName: "History",
-      component: (
-        <CustomAntdTable
-          columns={historyColumns}
-          dataSource={leadData?.history || []}
-        />
-      ),
-    },
-    {
-      tabName: "All Details",
-      component: (
-        <AllDetailsFields
-          leadData={leadData?.lead}
-          onUpdate={handleUpdateLead}
-          leadStatus={formData.status}
-        />
-      ),
-    },
-    {
-      tabName: "Additional Information",
-      component: (
-        <AdditionalInformation
-          leadData={leadData?.lead}
-          onUpdate={handleUpdateLead}
-          leadStatus={formData.status}
-        />
-      ),
-    },
-    {
-      tabName: "Geo-Location Record",
-      component: <AttachmentTab geoLocations={leadData?.geoLocation || []} />,
-    },
-  ];
+  const tabsData = isModalView
+    ? []
+    : [
+        {
+          tabName: "History",
+          component: (
+            <CustomAntdTable
+              columns={historyColumns}
+              dataSource={leadData?.history || []}
+            />
+          ),
+        },
+        {
+          tabName: "All Details",
+          component: (
+            <AllDetailsFields
+              leadData={leadData?.lead}
+              onUpdate={handleUpdateLead}
+              leadStatus={formData.status}
+            />
+          ),
+        },
+        {
+          tabName: "Additional Information",
+          component: (
+            <AdditionalInformation
+              leadData={leadData?.lead}
+              onUpdate={handleUpdateLead}
+              leadStatus={formData.status}
+            />
+          ),
+        },
+        {
+          tabName: "Geo-Location Record",
+          component: (
+            <AttachmentTab geoLocations={leadData?.geoLocation || []} />
+          ),
+        },
+      ];
 
   if (isLoading) {
     return <MiniLoader />;
@@ -420,20 +437,39 @@ const LeadAction: React.FC = () => {
           variant="primary"
           disabled={isUpdating}
         />
-        <ButtonDefault
-          onClick={handleNavigation}
-          label={"Go Back"}
-          variant="primary"
-          disabled={isUpdating}
-        />
+        {isModalView ? (
+          <>
+            <ButtonDefault
+              onClick={handleEditMore}
+              label={"Edit More"}
+              variant="secondary"
+              disabled={isUpdating}
+            />
+            <ButtonDefault
+              onClick={onClose}
+              label={"Cancel"}
+              variant="primary"
+              customClasses="bg-red-500"
+              disabled={isUpdating}
+            />
+          </>
+        ) : (
+          <ButtonDefault
+            onClick={handleNavigation}
+            label={"Go Back"}
+            variant="primary"
+            disabled={isUpdating}
+          />
+        )}
       </div>
-
-      <TabPanel
-        tabsData={tabsData}
-        type="card"
-        defaultActiveKey="1"
-        customClassName="mt-6"
-      />
+      {isModalView ? null : (
+        <TabPanel
+          tabsData={tabsData}
+          type="card"
+          defaultActiveKey="1"
+          customClassName="mt-6"
+        />
+      )}
 
       <ConfirmationModal
         isOpen={showNavigationModal}

@@ -134,14 +134,14 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           label={loading ? "Filtering..." : "Apply Filters"}
           onClick={handleSubmit}
           variant="primary"
-          customClasses="bg-blue-500 text-white w-full"
+          customClasses="bg-blue-500 text-white"
           disabled={loading}
         />
         <ButtonDefault
           label="Reset"
           onClick={handleReset}
           variant="secondary"
-          customClasses="bg-black text-white w-full"
+          customClasses="bg-black text-white "
           disabled={loading}
         />
       </div>
