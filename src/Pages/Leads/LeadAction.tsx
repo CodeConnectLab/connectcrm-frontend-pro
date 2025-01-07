@@ -15,6 +15,8 @@ import { getStoredAgents } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import { isEqual } from "lodash";
+import { IoCaretBackOutline } from "react-icons/io5";
 
 interface LeadHistory {
   _id: string;
@@ -90,7 +92,6 @@ const LeadAction = ({
   const { leadId } = isModalView
     ? { leadId: leadIdProp }
     : useParams<{ leadId: string }>();
-  console.log({ leadId, leadIdProp, isModalView });
 
   const agendList = getStoredAgents(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,6 +102,16 @@ const LeadAction = ({
     history: LeadHistory[];
     geoLocation: GeoLocation[];
   } | null>(null);
+  const [initialFormData, setInitialFormData] = useState({
+    status: "",
+    description: "",
+    addToCalendar: false,
+    followup: "",
+    comment: "",
+    assignedAgent: "",
+    leadWonAmount: 0,
+    leadLostReasonId: "",
+  });
   const [formData, setFormData] = useState({
     status: "",
     description: "",
@@ -115,6 +126,22 @@ const LeadAction = ({
 
   const navigate = useNavigate();
 
+  const hasFormChanges = () => {
+    const relevantFormData = {
+      ...formData,
+      // Exclude comment from comparison if it's the first click
+      ...(isFirstCommentClick ? {} : { comment: formData.comment }),
+    };
+
+    const relevantInitialData = {
+      ...initialFormData,
+      // Exclude comment from comparison if it's the first click
+      ...(isFirstCommentClick ? {} : { comment: initialFormData.comment }),
+    };
+
+    return !isEqual(relevantFormData, relevantInitialData);
+  };
+
   const fetchLeadData = async () => {
     try {
       setIsLoading(true);
@@ -125,7 +152,7 @@ const LeadAction = ({
       setLeadData(leadDetails);
       setIsFirstCommentClick(true); // Reset first click state
 
-      setFormData({
+      const newFormData = {
         status: leadDetails?.lead?.leadStatus?._id,
         description: leadDetails?.lead?.description,
         addToCalendar: leadDetails?.lead?.addCalender,
@@ -134,7 +161,10 @@ const LeadAction = ({
         assignedAgent: leadDetails?.lead?.assignedAgent?._id || "",
         leadWonAmount: leadDetails?.lead?.leadWonAmount || 0,
         leadLostReasonId: leadDetails?.lead?.leadLostReasonId || "",
-      });
+      };
+
+      setFormData(newFormData);
+      setInitialFormData(newFormData); // Store initial form data
     } catch (error: any) {
       console.error(error.message || "Failed to fetch lead details");
     } finally {
@@ -186,7 +216,11 @@ const LeadAction = ({
       if (response.error) return;
 
       toast.success(response.message || "Lead updated successfully");
-      fetchLeadData(); // Refresh data after update
+      if (isModalView) {
+        onClose();
+      } else {
+        navigate(-1);
+      }
     } catch (error: any) {
       console.error(error.message || "Failed to update lead");
     } finally {
@@ -343,9 +377,23 @@ const LeadAction = ({
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-dark">
+    <div
+      className={`rounded-lg bg-white ${
+        isModalView ? "" : "p-6 shadow-md"
+      } dark:bg-gray-dark`}
+    >
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-dark dark:text-white">
+        <h2 className="text-2xl font-semibold text-dark dark:text-white flex gap-2">
+          {!isModalView && (
+            <span
+              className="flex self-center cursor-pointer"
+              onClick={() => {
+                navigate(-1);
+              }}
+            >
+              <IoCaretBackOutline className="inline" />{" "}
+            </span>
+          )}
           Basic Details
         </h2>
       </div>
@@ -366,7 +414,7 @@ const LeadAction = ({
           <SelectGroupOne
             label="Agent Name"
             options={agendList}
-            selectedOption={leadData?.lead?.assignedAgent?._id || ""}
+            selectedOption={formData?.assignedAgent}
             setSelectedOption={(value) =>
               handleSelectChange("assignedAgent", value)
             }
@@ -435,7 +483,7 @@ const LeadAction = ({
           onClick={handleMainFormSubmit}
           label={isUpdating ? "Updating..." : "Update Lead"}
           variant="primary"
-          disabled={isUpdating}
+          disabled={isUpdating || !hasFormChanges()}
         />
         {isModalView ? (
           <>
@@ -453,14 +501,13 @@ const LeadAction = ({
               disabled={isUpdating}
             />
           </>
-        ) : (
-          <ButtonDefault
-            onClick={handleNavigation}
-            label={"Go Back"}
-            variant="primary"
-            disabled={isUpdating}
-          />
-        )}
+        ) : // <ButtonDefault
+        //   onClick={handleNavigation}
+        //   label={"Go Back"}
+        //   variant="primary"
+        //   disabled={isUpdating}
+        // />
+        null}
       </div>
       {isModalView ? null : (
         <TabPanel
