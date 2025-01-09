@@ -159,7 +159,7 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
           />
         </div>
       </div> */}
-      <LeadAction leadIdProp={initialData.id} isModalView={true} onClose={onClose} onModalSubmit={onSubmit} />
+      <LeadAction leadIdProp={initialData.id} isModalView={true} onClose={onClose} />
     </Modal>
   );
 };

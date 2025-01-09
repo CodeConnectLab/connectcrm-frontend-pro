@@ -50,8 +50,8 @@ const isWithinNext24Hours = (date: Date): boolean => {
 
 const isWithinPast24Hours = (date: Date): boolean => {
   const now = new Date();
-  const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-  return date < now && date >= past;
+  // const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  return date < now;
 };
 
 const getRowClassName = (record: Lead): string => {
