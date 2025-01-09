@@ -107,9 +107,11 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
-        search: debouncedSearchTerm,
         ...advancedFilters,
       };
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
 
       const { data, error, options } = await API.getAuthAPI(
         `${END_POINT.LEADS_DATA}${derivativeEndpoint}`,
@@ -422,10 +424,10 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         <QuickEditModal
           isOpen={isQuickEditOpen}
           onClose={() => {
+            fetchLeads();
             setIsQuickEditOpen(false);
             setSelectedLead(null);
           }}
-          onSubmit={handleQuickUpdate}
           initialData={{
             id: selectedLead.key,
             status: selectedLead.statusData?._id || "",

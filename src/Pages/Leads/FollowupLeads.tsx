@@ -50,8 +50,8 @@ const isWithinNext24Hours = (date: Date): boolean => {
 
 const isWithinPast24Hours = (date: Date): boolean => {
   const now = new Date();
-  const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-  return date < now && date >= past;
+  // const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  return date < now;
 };
 
 const getRowClassName = (record: Lead): string => {
@@ -107,10 +107,13 @@ const FollowupLeads = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
-        search: debouncedSearchTerm,
         type: "followup", // Add type parameter to get only followup leads
         ...advancedFilters,
       };
+
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
 
       const { data, error, options } = await API.getAuthAPI(
         END_POINT.LEADS_FOLLOWUP_DATA,
@@ -492,6 +495,7 @@ const FollowupLeads = () => {
         <QuickEditModal
           isOpen={isQuickEditOpen}
           onClose={() => {
+            fetchLeads();
             setIsQuickEditOpen(false);
             setSelectedLead(null);
           }}

@@ -1,16 +1,12 @@
 // components/QuickEditModal.tsx
 import React, { useEffect, useState } from "react";
 import { Modal } from "antd";
-import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
-import ButtonDefault from "../../components/Buttons/ButtonDefault";
-import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
-import AntDateTimePicker from "../FormElements/DatePicker/AntDateTimePicker";
 import LeadAction from "../../Pages/Leads/LeadAction";
 
 interface QuickEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => Promise<void>;
+  onSubmit?: (formData: any) => Promise<void>;
   initialData: {
     id: string;
     status: string;
@@ -74,14 +70,14 @@ const QuickEditModal: React.FC<QuickEditModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    await onSubmit({
-      leadStatus: formData.status,
-      followUpDate: formData.followup,
-      addCalender: formData.addCalender,
-      comment: formData.comment,
-      leadLostReasonId: formData.leadLostReasonId,
-      leadWonAmount: formData.leadWonAmount,
-    });
+    // await onSubmit({
+    //   leadStatus: formData.status,
+    //   followUpDate: formData.followup,
+    //   addCalender: formData.addCalender,
+    //   comment: formData.comment,
+    //   leadLostReasonId: formData.leadLostReasonId,
+    //   leadWonAmount: formData.leadWonAmount,
+    // });
   };
 
   useEffect(() => {
