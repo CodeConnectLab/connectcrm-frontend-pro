@@ -231,7 +231,7 @@ const FollowupLeads = () => {
       dataIndex: "key",
       key: "checkbox",
       render: (key: string) => (
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <CheckboxTwo
             id={key}
             onChange={({ value: checkboxValue, isChecked }) =>
@@ -366,7 +366,9 @@ const FollowupLeads = () => {
   };
 
   const handleRowClick = (record: any) => {
-    navigate(`/leads/${record.key}`);
+    setSelectedLead(record);
+    setIsQuickEditOpen(true);
+    // navigate(`/leads/${record.key}`);
   };
 
   const handleBulkUpdate = async (data: {

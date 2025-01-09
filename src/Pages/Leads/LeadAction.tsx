@@ -15,6 +15,8 @@ import { getStoredAgents } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import { isEqual } from "lodash";
+import { IoCaretBackOutline } from "react-icons/io5";
 
 interface LeadHistory {
   _id: string;
@@ -82,8 +84,15 @@ interface GeoLocation {
   createdAt: string;
 }
 
-const LeadAction: React.FC = () => {
-  const { leadId } = useParams<{ leadId: string }>();
+const LeadAction = ({
+  isModalView = false,
+  leadIdProp = "",
+  onClose = () => {},
+}: any) => {
+  const { leadId } = isModalView
+    ? { leadId: leadIdProp }
+    : useParams<{ leadId: string }>();
+
   const agendList = getStoredAgents(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -93,6 +102,16 @@ const LeadAction: React.FC = () => {
     history: LeadHistory[];
     geoLocation: GeoLocation[];
   } | null>(null);
+  const [initialFormData, setInitialFormData] = useState({
+    status: "",
+    description: "",
+    addToCalendar: false,
+    followup: "",
+    comment: "",
+    assignedAgent: "",
+    leadWonAmount: 0,
+    leadLostReasonId: "",
+  });
   const [formData, setFormData] = useState({
     status: "",
     description: "",
@@ -108,6 +127,22 @@ const LeadAction: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const hasFormChanges = () => {
+    const relevantFormData = {
+      ...formData,
+      // Exclude comment from comparison if it's the first click
+      ...(isFirstCommentClick ? {} : { comment: formData.comment }),
+    };
+
+    const relevantInitialData = {
+      ...initialFormData,
+      // Exclude comment from comparison if it's the first click
+      ...(isFirstCommentClick ? {} : { comment: initialFormData.comment }),
+    };
+
+    return !isEqual(relevantFormData, relevantInitialData);
+  };
+
   const fetchLeadData = async () => {
     try {
       setIsLoading(true);
@@ -118,7 +153,7 @@ const LeadAction: React.FC = () => {
       setLeadData(leadDetails);
       setIsFirstCommentClick(true); // Reset first click state
 
-      setFormData({
+      const newFormData = {
         status: leadDetails?.lead?.leadStatus?._id,
         description: leadDetails?.lead?.description,
         addToCalendar: leadDetails?.lead?.addCalender,
@@ -127,17 +162,10 @@ const LeadAction: React.FC = () => {
         assignedAgent: leadDetails?.lead?.assignedAgent?._id || "",
         leadWonAmount: leadDetails?.lead?.leadWonAmount || 0,
         leadLostReasonId: leadDetails?.lead?.leadLostReasonId || "",
-      });
-      setInitialFormData({
-        status: leadDetails?.lead?.leadStatus?._id,
-        description: leadDetails?.lead?.description,
-        addToCalendar: leadDetails?.lead?.addCalender,
-        followup: leadDetails?.lead?.followUpDate,
-        comment: leadDetails?.lead?.comment || "",
-        assignedAgent: leadDetails?.lead?.assignedAgent?._id || "",
-        leadWonAmount: leadDetails?.lead?.leadWonAmount || 0,
-        leadLostReasonId: leadDetails?.lead?.leadLostReasonId || "",
-      });
+      };
+
+      setFormData(newFormData);
+      setInitialFormData(newFormData); // Store initial form data
     } catch (error: any) {
       console.error(error.message || "Failed to fetch lead details");
     } finally {
@@ -164,12 +192,13 @@ const LeadAction: React.FC = () => {
   };
   // Add this function to handle navigation
   const handleNavigation = () => {
-    // Check if there are any changes
-    if ( hasFormChanged()) {
-      setShowNavigationModal(true);
-    } else {
-      navigate(-1);
-    }
+    // Check if there are unsaved changes here if needed
+    setShowNavigationModal(true);
+  };
+
+  const handleEditMore = () => {
+    onClose();
+    navigate(`/leads/${leadId}`);
   };
 
   const handleNavigationConfirm = () => {
@@ -191,7 +220,11 @@ const LeadAction: React.FC = () => {
       if (response.error) return;
 
       toast.success(response.message || "Lead updated successfully");
-      fetchLeadData(); // Refresh data after update
+      if (isModalView) {
+        onClose();
+      } else {
+        navigate(-1);
+      }
     } catch (error: any) {
       console.error(error.message || "Failed to update lead");
     } finally {
@@ -303,50 +336,68 @@ const LeadAction: React.FC = () => {
       ]
     : [];
 
-  const tabsData = [
-    {
-      tabName: "History",
-      component: (
-        <CustomAntdTable
-          columns={historyColumns}
-          dataSource={leadData?.history || []}
-        />
-      ),
-    },
-    {
-      tabName: "All Details",
-      component: (
-        <AllDetailsFields
-          leadData={leadData?.lead}
-          onUpdate={handleUpdateLead}
-          leadStatus={formData.status}
-        />
-      ),
-    },
-    {
-      tabName: "Additional Information",
-      component: (
-        <AdditionalInformation
-          leadData={leadData?.lead}
-          onUpdate={handleUpdateLead}
-          leadStatus={formData.status}
-        />
-      ),
-    },
-    {
-      tabName: "Geo-Location Record",
-      component: <AttachmentTab geoLocations={leadData?.geoLocation || []} />,
-    },
-  ];
+  const tabsData = isModalView
+    ? []
+    : [
+        {
+          tabName: "History",
+          component: (
+            <CustomAntdTable
+              columns={historyColumns}
+              dataSource={leadData?.history || []}
+            />
+          ),
+        },
+        {
+          tabName: "All Details",
+          component: (
+            <AllDetailsFields
+              leadData={leadData?.lead}
+              onUpdate={handleUpdateLead}
+              leadStatus={formData.status}
+            />
+          ),
+        },
+        {
+          tabName: "Additional Information",
+          component: (
+            <AdditionalInformation
+              leadData={leadData?.lead}
+              onUpdate={handleUpdateLead}
+              leadStatus={formData.status}
+            />
+          ),
+        },
+        {
+          tabName: "Geo-Location Record",
+          component: (
+            <AttachmentTab geoLocations={leadData?.geoLocation || []} />
+          ),
+        },
+      ];
 
   if (isLoading) {
     return <MiniLoader />;
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-dark">
+    <div
+      className={`rounded-lg bg-white ${
+        isModalView ? "" : "p-6 shadow-md"
+      } dark:bg-gray-dark`}
+    >
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-dark dark:text-white">
+        <h2 className="text-2xl font-semibold text-dark dark:text-white flex gap-2">
+          {!isModalView && (
+            <span
+              className="flex self-center cursor-pointer"
+              onClick={() => {
+                navigate(-1);
+              }}
+            >
+              <IoCaretBackOutline className="inline" />{" "}
+            </span>
+          )}
           Basic Details
         </h2>
       </div>
@@ -367,7 +418,7 @@ const LeadAction: React.FC = () => {
           <SelectGroupOne
             label="Agent Name"
             options={agendList}
-            selectedOption={leadData?.lead?.assignedAgent?._id || ""}
+            selectedOption={formData?.assignedAgent}
             setSelectedOption={(value) =>
               handleSelectChange("assignedAgent", value)
             }
@@ -436,22 +487,40 @@ const LeadAction: React.FC = () => {
           onClick={handleMainFormSubmit}
           label={isUpdating ? "Updating..." : "Update Lead"}
           variant="primary"
-          disabled={isUpdating}
+          disabled={isUpdating || !hasFormChanges()}
         />
-        <ButtonDefault
-          onClick={handleNavigation}
-          label={"Go Back"}
-          variant="primary"
-          disabled={isUpdating}
-        />
+        {isModalView ? (
+          <>
+            <ButtonDefault
+              onClick={handleEditMore}
+              label={"Edit More"}
+              variant="secondary"
+              disabled={isUpdating}
+            />
+            <ButtonDefault
+              onClick={onClose}
+              label={"Cancel"}
+              variant="primary"
+              customClasses="bg-red-500"
+              disabled={isUpdating}
+            />
+          </>
+        ) : // <ButtonDefault
+        //   onClick={handleNavigation}
+        //   label={"Go Back"}
+        //   variant="primary"
+        //   disabled={isUpdating}
+        // />
+        null}
       </div>
-
-      <TabPanel
-        tabsData={tabsData}
-        type="card"
-        defaultActiveKey="1"
-        customClassName="mt-6"
-      />
+      {isModalView ? null : (
+        <TabPanel
+          tabsData={tabsData}
+          type="card"
+          defaultActiveKey="1"
+          customClassName="mt-6"
+        />
+      )}
 
       <ConfirmationModal
         isOpen={showNavigationModal}
