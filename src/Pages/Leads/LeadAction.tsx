@@ -102,16 +102,16 @@ const LeadAction = ({
     history: LeadHistory[];
     geoLocation: GeoLocation[];
   } | null>(null);
-  const [initialFormData, setInitialFormData] = useState({
-    status: "",
-    description: "",
-    addToCalendar: false,
-    followup: "",
-    comment: "",
-    assignedAgent: "",
-    leadWonAmount: 0,
-    leadLostReasonId: "",
-  });
+  // const [initialFormData, setInitialFormData] = useState({
+  //   status: "",
+  //   description: "",
+  //   addToCalendar: false,
+  //   followup: "",
+  //   comment: "",
+  //   assignedAgent: "",
+  //   leadWonAmount: 0,
+  //   leadLostReasonId: "",
+  // });
   const [formData, setFormData] = useState({
     status: "",
     description: "",
@@ -122,6 +122,7 @@ const LeadAction = ({
     leadWonAmount: 0,
     leadLostReasonId: "",
   });
+  const [initialFormData, setInitialFormData] = useState(formData);
   const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   const navigate = useNavigate();
@@ -186,6 +187,9 @@ const LeadAction = ({
     }
   }, [leadId]);
 
+  const hasFormChanged = () => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
   // Add this function to handle navigation
   const handleNavigation = () => {
     // Check if there are unsaved changes here if needed
@@ -388,7 +392,12 @@ const LeadAction = ({
             <span
               className="flex self-center cursor-pointer"
               onClick={() => {
-                navigate(-1);
+                 if(hasFormChanged()){
+                  setShowNavigationModal(true); 
+                 }else{
+                  navigate(-1);
+                 }
+               
               }}
             >
               <IoCaretBackOutline className="inline" />{" "}
