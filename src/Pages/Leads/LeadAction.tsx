@@ -102,16 +102,6 @@ const LeadAction = ({
     history: LeadHistory[];
     geoLocation: GeoLocation[];
   } | null>(null);
-  // const [initialFormData, setInitialFormData] = useState({
-  //   status: "",
-  //   description: "",
-  //   addToCalendar: false,
-  //   followup: "",
-  //   comment: "",
-  //   assignedAgent: "",
-  //   leadWonAmount: 0,
-  //   leadLostReasonId: "",
-  // });
   const [formData, setFormData] = useState({
     status: "",
     description: "",

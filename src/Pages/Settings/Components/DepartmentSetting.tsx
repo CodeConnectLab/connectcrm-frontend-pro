@@ -38,7 +38,9 @@ export default function DepartmentSetting() {
   const [tableData, setTableData] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [teamLeads, setTeamLeads] = useState<{ value: string; label: string }[]>([]);
+  const [teamLeads, setTeamLeads] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   const initialFormState: FormData = {
     userName: "",
@@ -80,7 +82,7 @@ export default function DepartmentSetting() {
         }));
       setTeamLeads(teamLeadsList);
     } catch (error: any) {
-      toast.error(error.message || "Failed to fetch users");
+      console.error(error.message || "Failed to fetch users");
     }
   };
 
@@ -110,20 +112,20 @@ export default function DepartmentSetting() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEdit = (key: string) => {
-    const user = tableData.find(user => user.key === key);
+    const user = tableData.find((user) => user.key === key);
     if (user) {
       setFormData({
         userName: user.userName,
@@ -150,14 +152,15 @@ export default function DepartmentSetting() {
         email: formData.email,
         phone: formData.mobile,
         isActive: formData.isActive === "active",
-        assignedTL: formData.assignedTL || ""
+        assignedTL:
+          formData.userType === "Employee" ? formData.assignedTL || null : null,
       };
 
       if (editingUser) {
         // Update existing user
         const updatePayload = {
           ...basePayload,
-          ...(formData.password && { password: formData.password })
+          ...(formData.password && { password: formData.password }),
         };
 
         const { error } = await API.updateAuthAPI(
@@ -174,7 +177,7 @@ export default function DepartmentSetting() {
         const createPayload = {
           ...basePayload,
           password: formData.password,
-          role: formData.userType
+          role: formData.userType,
         };
 
         const { error } = await API.postAuthAPI(
@@ -192,7 +195,7 @@ export default function DepartmentSetting() {
       setShowForm(false);
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.message || "Operation failed");
+      console.error(error.message || "Operation failed");
     } finally {
       setIsLoading(false);
     }
@@ -206,13 +209,15 @@ export default function DepartmentSetting() {
         "updateDepartment",
         true
       );
-      
+
       if (error) throw new Error(error);
-      
-      toast.success(`User ${status ? "activated" : "deactivated"} successfully`);
+
+      toast.success(
+        `User ${status ? "activated" : "deactivated"} successfully`
+      );
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
+      console.error(error.message || "Failed to update status");
     }
   };
 
@@ -221,36 +226,36 @@ export default function DepartmentSetting() {
       title: "S.No.",
       dataIndex: "sNo",
       key: "sNo",
-      width: 80
+      width: 80,
     },
     {
       title: "User Name",
       dataIndex: "userName",
-      key: "userName"
+      key: "userName",
     },
     {
       title: "Email",
       dataIndex: "email",
-      key: "email"
+      key: "email",
     },
     {
       title: "Mobile",
       dataIndex: "mobile",
-      key: "mobile"
+      key: "mobile",
     },
     {
       title: "Role",
       dataIndex: "roll",
-      key: "roll"
+      key: "roll",
     },
     {
       title: "Team Leader",
       dataIndex: "assignTeamLeader",
       key: "assignTeamLeader",
       render: (_: any, record: User) => {
-        const lead = teamLeads.find(l => l.value === record.assignedTL);
+        const lead = teamLeads.find((l) => l.value === record.assignedTL);
         return lead?.label || "-";
-      }
+      },
     },
     {
       title: "Action",
@@ -260,7 +265,9 @@ export default function DepartmentSetting() {
           <SwitcherTwo
             id={record.key}
             defaultChecked={record.isActive}
-            onChange={(id: string, checked: boolean) => handleStatusChange(id, checked)}
+            onChange={(id: string, checked: boolean) =>
+              handleStatusChange(id, checked)
+            }
           />
           <Button
             icon={<EditOutlined />}
@@ -268,8 +275,8 @@ export default function DepartmentSetting() {
             onClick={() => handleEdit(record.key)}
           />
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -326,7 +333,9 @@ export default function DepartmentSetting() {
               label="Password"
               name="password"
               type="password"
-              placeholder={editingUser ? "Leave blank to keep unchanged" : "Enter password"}
+              placeholder={
+                editingUser ? "Leave blank to keep unchanged" : "Enter password"
+              }
               value={formData.password}
               onChange={handleInputChange}
               required={!editingUser}
@@ -336,10 +345,12 @@ export default function DepartmentSetting() {
               label="Status"
               options={[
                 { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" }
+                { value: "inactive", label: "Inactive" },
               ]}
               selectedOption={formData.isActive}
-              setSelectedOption={(value) => handleSelectChange("isActive", value)}
+              setSelectedOption={(value) =>
+                handleSelectChange("isActive", value)
+              }
             />
 
             {!editingUser && (
@@ -347,10 +358,12 @@ export default function DepartmentSetting() {
                 label="Role"
                 options={[
                   { value: "Team Leader", label: "Team Leader" },
-                  { value: "Employee", label: "Employee" }
+                  { value: "Employee", label: "Employee" },
                 ]}
                 selectedOption={formData.userType}
-                setSelectedOption={(value) => handleSelectChange("userType", value)}
+                setSelectedOption={(value) =>
+                  handleSelectChange("userType", value)
+                }
                 required
               />
             )}
@@ -360,7 +373,9 @@ export default function DepartmentSetting() {
                 label="Assign Team Leader"
                 options={teamLeads}
                 selectedOption={formData.assignedTL}
-                setSelectedOption={(value) => handleSelectChange("assignedTL", value)}
+                setSelectedOption={(value) =>
+                  handleSelectChange("assignedTL", value)
+                }
                 placeholder="Select Team Leader"
               />
             )}
@@ -368,7 +383,9 @@ export default function DepartmentSetting() {
 
           <div className="flex gap-3">
             <ButtonDefault
-              label={isLoading ? "Processing..." : editingUser ? "Update" : "Add"}
+              label={
+                isLoading ? "Processing..." : editingUser ? "Update" : "Add"
+              }
               onClick={handleSubmit}
               disabled={isLoading}
             />
@@ -390,7 +407,7 @@ export default function DepartmentSetting() {
         dataSource={tableData}
         pagination={{
           pageSize: 10,
-          showSizeChanger: true
+          showSizeChanger: true,
         }}
       />
     </div>
