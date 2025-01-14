@@ -123,6 +123,7 @@ export default function AddLeads() {
       | "productService"
       | "assignedAgent"
       | "leadStatus"
+      | "firstName"
     >;
     const requiredFields: RequiredFieldKey[] = [
       // "email",
@@ -131,6 +132,7 @@ export default function AddLeads() {
       "productService",
       "assignedAgent",
       "leadStatus",
+      "firstName",
     ];
 
     const missingFields = requiredFields.filter((field) => !formData[field]);
@@ -139,6 +141,11 @@ export default function AddLeads() {
       toast.error(
         `Please fill in required fields: ${missingFields.join(", ")}`
       );
+      return false;
+    }
+
+    if (!/^\d{10}$/.test(formData.contactNumber)) {
+      toast.error("Contact number must be 10 digits");
       return false;
     }
 
@@ -199,7 +206,7 @@ export default function AddLeads() {
         navigate(-1);
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to create lead");
+      console.error(error.message || "Failed to create lead");
     } finally {
       setIsLoading(false);
     }
@@ -244,16 +251,16 @@ export default function AddLeads() {
                 {/* Name Fields */}
                 <div className="mb-4.5 flex flex-col gap-4.5 xl:flex-row">
                   <InputGroup
-                    label="First name"
+                    label="Full name"
                     name="firstName"
                     type="text"
-                    placeholder="Enter lead's first name"
-                    customClasses="w-full xl:w-1/2"
+                    placeholder="Enter lead's full name"
+                    customClasses="w-full "
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
                   />
-                  <InputGroup
+                  {/* <InputGroup
                     label="Last name"
                     name="lastName"
                     type="text"
@@ -261,7 +268,7 @@ export default function AddLeads() {
                     customClasses="w-full xl:w-1/2"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                  />
+                  /> */}
                 </div>
 
                 {/* Contact Fields */}
@@ -331,6 +338,7 @@ export default function AddLeads() {
                       handleInputChange={handleInputChange}
                       handleSelectChange={handleSelectChange}
                       formData={formData}
+                      required
                       statusFieldName="leadStatus"
                       // lostReasonValue={formData.leadLostReasonId}
                       value={formData.leadStatus}

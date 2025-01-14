@@ -7,6 +7,7 @@ export default function LeadStatusUI({
   handleInputChange,
   handleSelectChange = () => {},
   formData,
+  required = false,
   defaultValue,
   value,
   lostReasonValue,
@@ -63,6 +64,7 @@ export default function LeadStatusUI({
     <>
       <SelectGroupOne
         label="Lead status"
+        required={required}
         options={leadStatusList}
         // setSelectedOption={(value) => handleSelectChange(value)}
         setSelectedOption={(value) =>
