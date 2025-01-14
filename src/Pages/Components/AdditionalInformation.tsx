@@ -87,14 +87,14 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
   const validateForm = () => {
     const errors: string[] = [];
 
-    if (!formData.country) errors.push("Country is required");
-    if (!formData.fullAddress.trim()) errors.push("Full address is required");
-    if (!formData.state) errors.push("State is required");
-    if (!formData.city.trim()) errors.push("City is required");
-    if (!formData.pinCode.trim()) errors.push("Pincode is required");
-    if (formData.pinCode && !/^\d{6}$/.test(formData.pinCode)) {
-      errors.push("Pincode must be 6 digits");
-    }
+    // if (!formData.country) errors.push("Country is required");
+    // if (!formData.fullAddress.trim()) errors.push("Full address is required");
+    // if (!formData.state) errors.push("State is required");
+    // if (!formData.city.trim()) errors.push("City is required");
+    // if (!formData.pinCode.trim()) errors.push("Pincode is required");
+    // if (formData.pinCode && !/^\d{6}$/.test(formData.pinCode)) {
+    //   errors.push("Pincode must be 6 digits");
+    // }
 
     if (errors.length > 0) {
       errors.forEach((error) => toast.error(error));
@@ -157,7 +157,7 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
             options={countryOptions}
             selectedOption={formData.country}
             setSelectedOption={(value) => handleSelectChange("country", value)}
-            required
+            
           />
 
           <div>
@@ -171,7 +171,7 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
               placeholder="Enter complete address"
               className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5 py-3 text-dark outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-gray-2 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
               rows={3}
-              required
+              
             />
           </div>
 
@@ -180,7 +180,7 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
             options={stateOptions}
             selectedOption={formData.state}
             setSelectedOption={(value) => handleSelectChange("state", value)}
-            required
+            
             // isLoading={stateOptions.length === 0}
           />
         </div>
@@ -194,7 +194,7 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
             value={formData.city}
             onChange={handleInputChange}
             placeholder="Enter city name"
-            required
+            
           />
 
           <InputGroup
@@ -206,7 +206,7 @@ const AdditionalInformation: React.FC<AdditionalInformationProps> = ({
             placeholder="Enter 6-digit pincode"
             maxLength={6}
             pattern="\d*"
-            required
+            
           />
         </div>
       </div>

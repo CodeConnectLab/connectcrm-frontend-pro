@@ -78,12 +78,12 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
   const validateForm = () => {
     const errors: string[] = [];
 
-    if (!formData.firstName.trim()) errors.push("First name is required");
-    if (!formData.lastName.trim()) errors.push("Last name is required");
-    if (!formData.email.trim()) errors.push("Email is required");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.push("Please enter a valid email address");
-    }
+    if (!formData.firstName.trim()) errors.push("Name is required");
+    // if (!formData.lastName.trim()) errors.push("Last name is required");
+    // if (!formData.email.trim()) errors.push("Email is required");
+    // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    //   errors.push("Please enter a valid email address");
+    // }
     if (!formData.contactNumber.trim())
       errors.push("Contact number is required");
     if (!/^\d{10}$/.test(formData.contactNumber)) {
@@ -155,16 +155,16 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
         <div className="flex w-full flex-col gap-4 sm:border-r-2 sm:pr-8 border-r-0 pr-0 text-dark dark:text-white">
           {/* Left Fields */}
           <InputGroup
-            label="First Name"
+            label="Full Name"
             name="firstName"
             type="text"
             value={formData.firstName}
             onChange={handleInputChange}
             required
-            placeholder="Enter first name"
+            placeholder="Enter full name"
           />
 
-          <InputGroup
+          {/* <InputGroup
             label="Last Name"
             name="lastName"
             type="text"
@@ -172,7 +172,7 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
             onChange={handleInputChange}
             required
             placeholder="Enter last name"
-          />
+          /> */}
 
           <InputGroup
             label="Company Name"
@@ -222,7 +222,6 @@ const AllDetailsFields: React.FC<AllDetailsFieldsProps> = ({
             type="email"
             value={formData.email}
             onChange={handleInputChange}
-            required
             placeholder="Enter email address"
           />
 
