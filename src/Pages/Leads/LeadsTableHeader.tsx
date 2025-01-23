@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
@@ -22,6 +22,7 @@ interface LeadsTableHeaderProps {
   onAdvancedFilter: (filters: any) => void;
   onResetFilters: () => void;
   loading?: boolean;
+  initialFilterData?: any;
 }
 
 export default function LeadsTableHeader({
@@ -34,10 +35,13 @@ export default function LeadsTableHeader({
   onAdvancedFilter,
   onResetFilters,
   loading = false,
+  initialFilterData = {},
 }: LeadsTableHeaderProps) {
   // Get stored data
   const statusList = getStoredStatus(true);
   const agentList = getStoredAgents(true);
+  const { filterType, statusId } = initialFilterData;
+
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -171,6 +175,14 @@ export default function LeadsTableHeader({
     );
   };
 
+  useEffect(() => {
+    if (!filterType && !statusId ) {
+      setIsAdvanceFilterEnable(false);
+    } else {
+      setIsAdvanceFilterEnable(true);
+    }
+  }, [filterType, statusId ]);
+
   return (
     <>
       <div className="mb-4 hidden justify-between sm:flex">
@@ -233,6 +245,8 @@ export default function LeadsTableHeader({
           onFilter={onAdvancedFilter}
           onReset={onResetFilters}
           loading={loading}
+          initialFilterData={initialFilterData}
+          setIsAdvanceFilterEnable={setIsAdvanceFilterEnable}
         />
       )}
       <div className="mb-4 hidden justify-between sm:flex">

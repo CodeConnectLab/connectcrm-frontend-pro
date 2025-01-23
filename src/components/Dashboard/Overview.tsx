@@ -161,6 +161,7 @@ const Overview: React.FC = () => {
       value: metric.today,
       nextValue: metric.tomorrow,
       growthRate: 0, // Not provided in new API response
+      statusId: metric.leadStatus, // Not provided in new API response
     })) || [];
 
   // Transform performanceMetrics for TargetStats

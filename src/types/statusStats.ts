@@ -9,4 +9,5 @@ export type statusStatsType = {
   growthRate?: number;
   percent?: number;
   webroute?: string;
+  statusId?: string;
 };
