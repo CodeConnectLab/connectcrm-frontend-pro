@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import {
@@ -21,17 +21,40 @@ interface AdvanceFilterUIProps {
   }) => void;
   onReset: () => void;
   loading?: boolean;
+  initialFilterData?: any;
+  setIsAdvanceFilterEnable?: any;
+}
+
+interface FilterState {
+  leadStatus: string;
+  assignedAgent: string;
+  productService: string;
+  leadSource: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface FilterValidFields {
+  leadStatus?: string;
+  assignedAgent?: string;
+  productService?: string;
+  leadSource?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   onFilter,
   onReset,
   loading = false,
+  initialFilterData = {},
+  setIsAdvanceFilterEnable = () => {},
 }) => {
   const agentList = getStoredAgents(true);
   const serviceList = getStoredProductsServices(true);
   const sourceList = getStoredSources(true);
   const statusList = getStoredStatus(true);
+  const { filterType, statusId } = initialFilterData;
 
   const [filters, setFilters] = React.useState({
     leadStatus: "",
@@ -41,7 +64,6 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
     startDate: "",
     endDate: "",
   });
-
   const handleChange = (name: string, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -56,19 +78,30 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
     }));
   };
 
-  const handleSubmit = () => {
-    const validFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-      if (value) {
-        if (key === "startDate" || key === "endDate") {
-          acc[key] = dayjs(value).format("YYYY-MM-DD");
-        } else {
-          acc[key] = value;
-        }
-      }
-      return acc;
-    }, {} as any);
+  // Memoized filter submission logic
+  const submitFilters = useCallback(
+    (currentFilters: FilterState) => {
+      const validFilters = Object.entries(currentFilters).reduce(
+        (acc, [key, value]) => {
+          if (value) {
+            if (key === "startDate" || key === "endDate") {
+              acc[key] = dayjs(value).format("YYYY-MM-DD");
+            } else {
+              acc[key] = value;
+            }
+          }
+          return acc;
+        },
+        {} as any
+      );
 
-    onFilter(validFilters);
+      onFilter(validFilters);
+    },
+    [onFilter]
+  );
+
+  const handleSubmit = () => {
+    submitFilters(filters);
   };
 
   const handleReset = () => {
@@ -82,6 +115,20 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
     });
     onReset();
   };
+
+  // Effect to handle initial filter data
+  useEffect(() => {
+    const { filterType, statusId } = initialFilterData;
+
+    if (filterType && statusId) {
+      const newFilters = {
+        ...filters,
+        [filterType]: statusId,
+      };
+      setFilters(newFilters);
+      submitFilters(newFilters);
+    }
+  }, [filterType, statusId, submitFilters]);
 
   return (
     <div className="rounded-lg bg-white p-6 mb-4 shadow-md dark:bg-gray-800">

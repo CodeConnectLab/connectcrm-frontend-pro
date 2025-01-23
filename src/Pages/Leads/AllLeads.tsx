@@ -4,7 +4,7 @@ import { EditFilled } from "@ant-design/icons";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import LeadsTableHeader from "./LeadsTableHeader";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
@@ -45,6 +45,8 @@ interface APILead {
 
 const AllLeads = ({ derivativeEndpoint = "" }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const {statusId, filterType} = location.state || {};  
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -403,6 +405,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         onAdvancedFilter={handleAdvancedFilter}
         onResetFilters={handleResetFilters}
         loading={loading}
+        initialFilterData={{statusId, filterType}}
       />
 
       <CustomAntdTable

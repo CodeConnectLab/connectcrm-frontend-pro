@@ -26,13 +26,13 @@ const Settings: React.FC = () => {
     {
       tabName: "Permission Settings",
       component: (
-        <BlurScreenOverlay
-          title="Permission Settings Coming Soon!"
-          message="We're working hard to bring you Permission Settings features."
-          submessage="Track and manage your permission settings in the next update."
-        >
-          <RolePermissions /> ¸
-        </BlurScreenOverlay>
+        // <BlurScreenOverlay
+        //   title="Permission Settings Coming Soon!"
+        //   message="We're working hard to bring you Permission Settings features."
+        //   submessage="Track and manage your permission settings in the next update."
+        // >
+          <RolePermissions />
+        // </BlurScreenOverlay>
       ),
     },
     {
