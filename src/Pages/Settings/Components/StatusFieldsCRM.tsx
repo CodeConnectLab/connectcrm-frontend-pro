@@ -16,6 +16,7 @@ interface StatusField {
   showDashboard?: boolean;
   showFollowUp?: boolean;
   showImported?: boolean;
+  showOutSourced?: boolean;
   isActive?: boolean;
   sendNotification?: boolean;
   lossStatus?: false;
@@ -279,7 +280,7 @@ export default function StatusFieldsCRM() {
                 <SwitcherTwo
                   id={key + "outSourcedLeads"}
                   idForAPI={key}
-                  defaultChecked={record.showImported}
+                  defaultChecked={record.showOutSourced}
                   onChange={(key: string, currentStatus: boolean) =>
                     handleFollowUpToggle(key, currentStatus, "showOutSourced")
                   }
@@ -361,6 +362,7 @@ export default function StatusFieldsCRM() {
           showDashboard: item.showDashboard,
           showFollowUp: item.showFollowUp,
           showImported: item.showImported,
+          showOutSourced: item.showOutSourced,
           isActive: item.isActive,
           sendNotification: item.sendNotification,
           lossStatus: item.lossStatus,

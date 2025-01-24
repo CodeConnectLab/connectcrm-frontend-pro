@@ -23,6 +23,9 @@ interface LeadsTableHeaderProps {
   onResetFilters: () => void;
   loading?: boolean;
   initialFilterData?: any;
+  showExportButtons?: any;
+  onExportPDF: () => Promise<void>;
+  onExportExcel: () => Promise<void>;
 }
 
 export default function LeadsTableHeader({
@@ -36,12 +39,14 @@ export default function LeadsTableHeader({
   onResetFilters,
   loading = false,
   initialFilterData = {},
+  showExportButtons = false,
+  onExportPDF,
+  onExportExcel,
 }: LeadsTableHeaderProps) {
   // Get stored data
   const statusList = getStoredStatus(true);
   const agentList = getStoredAgents(true);
   const { filterType, statusId } = initialFilterData;
-
 
   // States
   const [isLoading, setIsLoading] = useState(false);
@@ -90,11 +95,53 @@ export default function LeadsTableHeader({
     }
   };
 
+  const handleExportPDF = async () => {
+    await onExportPDF();
+  };
+
+  const handleExportExcel = async () => {
+    await onExportExcel();
+  };
+
+  const exportButtons = (
+    <>
+      <ButtonDefault
+        label="Export PDF"
+        variant="outline"
+        customClasses="bg-black text-white w-full sm:w-fit"
+        onClick={handleExportPDF}
+        disabled={loading}
+      />
+      <ButtonDefault
+        label="Export Excel" 
+        variant="outline"
+        customClasses="bg-black text-white w-full sm:w-fit"
+        onClick={handleExportExcel}
+        disabled={loading}
+      />
+    </>
+  );
+
+  // Update the export buttons section in both desktop and mobile views
+  const renderDesktopExportButtons = () => (
+    <div className="flex space-x-2">
+      {showExportButtons && exportButtons}
+      {deleteButtons}
+    </div>
+  );
+
+  const renderMobileExportButtons = () => (
+    <div className="mb-4 flex justify-center gap-2">
+      {showExportButtons && exportButtons}
+      {deleteButtons}
+    </div>
+  );
+
   const deleteButtons = (
     <ButtonDefault
       label="Delete"
       variant="outline"
-      customClasses="bg-red-500 text-white"
+      customClasses="bg-red-500 text-white w-full sm:w-fit"
       disabled={selectedCount === 0}
       onClick={showDeleteConfirmation}
     />
@@ -158,30 +205,18 @@ export default function LeadsTableHeader({
             </div>
           </div>
         )}
-        <div className="mb-4 flex justify-center gap-2">
-          <ButtonDefault
-            label="Export PDF"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Export Excel"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          {deleteButtons}
-        </div>
+        {renderMobileExportButtons()}
       </>
     );
   };
 
   useEffect(() => {
-    if (!filterType && !statusId ) {
+    if (!filterType && !statusId) {
       setIsAdvanceFilterEnable(false);
     } else {
       setIsAdvanceFilterEnable(true);
     }
-  }, [filterType, statusId ]);
+  }, [filterType, statusId]);
 
   return (
     <>
@@ -258,19 +293,7 @@ export default function LeadsTableHeader({
             placeholder="Search leads..."
           />
         </div>
-        <div className="flex space-x-2">
-          <ButtonDefault
-            label="Export PDF"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Export Excel"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          {deleteButtons}
-        </div>
+        {renderDesktopExportButtons()}
       </div>
       {deviceType === "mobile" && renderMobileView()}
       {/* // Delete confirmation */}
