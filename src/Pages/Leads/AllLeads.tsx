@@ -4,13 +4,13 @@ import { EditFilled } from "@ant-design/icons";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import LeadsTableHeader from "./LeadsTableHeader";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
 import QuickEditModal from "../../components/Modals/QuickEdit";
 import { toast } from "react-toastify";
-
+import { handleExportExcel, handleExportPDF } from "../../api/commonAPI/exportApi";
 interface Lead {
   key: string;
   name: string;
@@ -43,10 +43,9 @@ interface APILead {
   comment: string;
 }
 
-const AllLeads = ({ derivativeEndpoint = "" }) => {
-  const navigate = useNavigate();
+const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
   const location = useLocation();
-  const {statusId, filterType} = location.state || {};  
+  const { statusId, filterType } = location.state || {};
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -386,7 +385,24 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
   const handleRowClick = (record: any) => {
     setSelectedLead(record);
     setIsQuickEditOpen(true);
-    // navigate(`/leads/${record.key}`);
+  };
+
+  const handleExportPDFLogic = async () => {
+    setLoading(true);
+    try {
+      await handleExportPDF();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportExcelLogic = async () => {
+    setLoading(true);
+    try {
+      await handleExportExcel();
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -405,7 +421,10 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         onAdvancedFilter={handleAdvancedFilter}
         onResetFilters={handleResetFilters}
         loading={loading}
-        initialFilterData={{statusId, filterType}}
+        initialFilterData={{ statusId, filterType }}
+        showExportButtons={showExportButtons}
+        onExportPDF={handleExportPDFLogic}
+        onExportExcel={handleExportExcelLogic}
       />
 
       <CustomAntdTable

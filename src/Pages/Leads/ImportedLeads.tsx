@@ -1,7 +1,5 @@
-import AllLeads from './AllLeads'
+import AllLeads from "./AllLeads";
 
 export default function ImportedLeads() {
-  return (
-   <AllLeads derivativeEndpoint="/imported"/>
-  )
+  return <AllLeads derivativeEndpoint="/imported" showExportButtons={false} />;
 }
