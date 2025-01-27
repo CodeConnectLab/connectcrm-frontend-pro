@@ -256,10 +256,26 @@ const FollowupLeads = () => {
       key: "number",
     },
     {
+      title: "Comment",
+      dataIndex: "comment",
+      key: "comment",
+      minWidth: 123,
+      render: (record: any) =>
+        record?.length ? (
+          <span>
+            {record.length > 75 ? (
+              <Tooltip title={record}>{`${record.slice(0, 75)}...`}</Tooltip>
+            ) : (
+              record
+            )}
+          </span>
+        ) : null,
+    },
+    {
       title: "Product Service",
       dataIndex: "productService",
       key: "productService",
-      minWidth: 160,
+      minWidth: 100,
     },
     {
       title: "Agent",
