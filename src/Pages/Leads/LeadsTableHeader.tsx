@@ -24,8 +24,8 @@ interface LeadsTableHeaderProps {
   loading?: boolean;
   initialFilterData?: any;
   showExportButtons?: any;
-  onExportPDF: () => Promise<void>;
-  onExportExcel: () => Promise<void>;
+  onExportPDF?: () => any;
+  onExportExcel?: () => any;
 }
 
 export default function LeadsTableHeader({
@@ -40,8 +40,8 @@ export default function LeadsTableHeader({
   loading = false,
   initialFilterData = {},
   showExportButtons = false,
-  onExportPDF,
-  onExportExcel,
+  onExportPDF=()=>{},
+  onExportExcel=()=>{},
 }: LeadsTableHeaderProps) {
   // Get stored data
   const statusList = getStoredStatus(true);
