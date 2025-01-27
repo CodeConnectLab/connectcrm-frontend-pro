@@ -10,7 +10,10 @@ import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
 import QuickEditModal from "../../components/Modals/QuickEdit";
 import { toast } from "react-toastify";
-import { handleExportExcel, handleExportPDF } from "../../api/commonAPI/exportApi";
+import {
+  handleExportExcel,
+  handleExportPDF,
+} from "../../api/commonAPI/exportApi";
 interface Lead {
   key: string;
   name: string;
@@ -302,25 +305,44 @@ const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
       key: "number",
     },
     {
-      title: "Lead Source",
-      dataIndex: "leadSource",
-      key: "leadSource",
+      title: "Comment",
+      dataIndex: "comment",
+      key: "comment",
       minWidth: 123,
+      render: (record: any) =>
+        record?.length ? (
+          <span>
+            {record.length > 75 ? (
+              <Tooltip title={record}>{`${record.slice(0, 75)}...`}</Tooltip>
+            ) : (
+              record
+            )}
+          </span>
+        ) : null,
     },
     {
       title: "Agent",
       dataIndex: "agent",
       key: "agent",
+      minWidth: 123,
+
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      minWidth: 103,
     },
     {
       title: "Service",
       dataIndex: "service",
       key: "service",
+    },
+    {
+      title: "Lead Source",
+      dataIndex: "leadSource",
+      key: "leadSource",
+      minWidth: 123,
     },
     {
       title: "Action",
