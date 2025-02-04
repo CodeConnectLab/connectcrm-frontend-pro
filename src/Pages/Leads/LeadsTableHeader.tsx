@@ -8,6 +8,7 @@ import useScreenHook from "../../hooks/useScreenHook";
 import SearchForm from "../../components/Header/SearchForm";
 import { getStoredAgents, getStoredStatus } from "../../api/commonAPI";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
+import ColumnSelector from "../../components/Utils/TableColumnSelector";
 
 interface LeadsTableHeaderProps {
   handleSearch: (value: string) => void;
@@ -26,6 +27,10 @@ interface LeadsTableHeaderProps {
   showExportButtons?: any;
   onExportPDF?: () => any;
   onExportExcel?: () => any;
+  // Add these new props
+  columns?: any[];
+  selectedColumns?: string[];
+  onColumnChange?: (columns: string[]) => void;
 }
 
 export default function LeadsTableHeader({
@@ -40,8 +45,11 @@ export default function LeadsTableHeader({
   loading = false,
   initialFilterData = {},
   showExportButtons = false,
-  onExportPDF=()=>{},
-  onExportExcel=()=>{},
+  onExportPDF = () => {},
+  onExportExcel = () => {},
+  columns = [],
+  selectedColumns = [],
+  onColumnChange,
 }: LeadsTableHeaderProps) {
   // Get stored data
   const statusList = getStoredStatus(true);
@@ -113,7 +121,7 @@ export default function LeadsTableHeader({
         disabled={loading}
       />
       <ButtonDefault
-        label="Export Excel" 
+        label="Export Excel"
         variant="outline"
         customClasses="bg-black text-white w-full sm:w-fit"
         onClick={handleExportExcel}
@@ -125,6 +133,14 @@ export default function LeadsTableHeader({
   // Update the export buttons section in both desktop and mobile views
   const renderDesktopExportButtons = () => (
     <div className="flex space-x-2">
+       {columns && selectedColumns && onColumnChange && (
+        <ColumnSelector
+          allColumns={columns}
+          selectedColumns={selectedColumns}
+          onColumnChange={onColumnChange}
+          disabled={loading}
+        />
+      )}
       {showExportButtons && exportButtons}
       {deleteButtons}
     </div>
