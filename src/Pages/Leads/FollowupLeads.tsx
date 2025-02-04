@@ -10,6 +10,10 @@ import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
 import { toast } from "react-toastify";
 import QuickEditModal from "../../components/Modals/QuickEdit";
+import {
+  isWithinNext24Hours,
+  isWithinPast24Hours,
+} from "../../utils/useFullFunctions";
 
 interface Lead {
   key: string;
@@ -41,30 +45,6 @@ interface APILead {
   productService: { name: string } | null;
   comment: string;
 }
-
-const isWithinNext24Hours = (date: Date): boolean => {
-  const now = new Date();
-  const future = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  return date > now && date <= future;
-};
-
-const isWithinPast24Hours = (date: Date): boolean => {
-  const now = new Date();
-  // const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-  return date < now;
-};
-
-const getRowClassName = (record: Lead): string => {
-  const followUpDate = new Date(record.followUpDate);
-
-  if (isWithinNext24Hours(followUpDate)) {
-    return "upcoming-followup pulse-green";
-  }
-  if (isWithinPast24Hours(followUpDate)) {
-    return "missed-followup pulse-red";
-  }
-  return "";
-};
 
 const FollowupLeads = () => {
   const navigate = useNavigate();
