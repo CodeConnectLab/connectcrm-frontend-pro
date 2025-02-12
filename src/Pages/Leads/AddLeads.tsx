@@ -4,7 +4,6 @@ import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGrou
 import type { CollapseProps } from "antd";
 import AdditionalLeadDetails from "./AdditionalLeadDetails";
 import CustomCollapse from "../../components/FormElements/CustomCollapse";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import InputGroup from "../../components/FormElements/InputGroup";
 import LeadStatusUI from "../../components/CommonUI/LeadStatus/LeadStatus";
@@ -15,6 +14,8 @@ import {
   getStoredSources,
 } from "../../api/commonAPI";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
+import { useNavigate } from "react-router-dom";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface AdditionalDetails {
   fullAddress: string;
@@ -39,6 +40,7 @@ interface LeadFormData {
   leadStatus: string;
   followUpDate: string;
   description: string;
+  // leadLostReasonId: string;
   additionalDetails?: AdditionalDetails;
 }
 
@@ -53,6 +55,7 @@ const initialFormState: LeadFormData = {
   leadStatus: "",
   followUpDate: "",
   description: "",
+  // leadLostReasonId: "",
   additionalDetails: {
     fullAddress: "",
     country: "",
@@ -69,6 +72,7 @@ const initialFormState: LeadFormData = {
 export default function AddLeads() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(initialFormState);
+  const navigate = useNavigate();
 
   // Get stored data for dropdowns
   const agentList = getStoredAgents(true);
@@ -113,20 +117,22 @@ export default function AddLeads() {
     // Explicitly define which fields we can access with string index
     type RequiredFieldKey = keyof Pick<
       LeadFormData,
-      | "email"
+      // | "email"
       | "contactNumber"
       | "leadSource"
       | "productService"
       | "assignedAgent"
       | "leadStatus"
+      | "firstName"
     >;
     const requiredFields: RequiredFieldKey[] = [
-      "email",
+      // "email",
       "contactNumber",
       "leadSource",
       "productService",
       "assignedAgent",
       "leadStatus",
+      "firstName",
     ];
 
     const missingFields = requiredFields.filter((field) => !formData[field]);
@@ -138,7 +144,12 @@ export default function AddLeads() {
       return false;
     }
 
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    if (!/^\d{10}$/.test(formData.contactNumber)) {
+      toast.error("Contact number must be 10 digits");
+      return false;
+    }
+
+    if (formData.email && !formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       toast.error("Please enter a valid email address");
       return false;
     }
@@ -146,7 +157,10 @@ export default function AddLeads() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSave = async (
+    e: React.FormEvent,
+    saveAndAdd: boolean = false
+  ) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -156,17 +170,14 @@ export default function AddLeads() {
     try {
       setIsLoading(true);
 
-      // Prepare API payload
       const payload = {
         ...formData,
         ...(formData.additionalDetails || {}),
-        // Convert string amounts to numbers where needed
         leadCost: formData.additionalDetails?.leadCost
           ? Number(formData.additionalDetails.leadCost)
           : undefined,
       };
 
-      // Remove nested additionalDetails since we've spread it
       delete payload.additionalDetails;
 
       const { data, error, message } = await API.postAuthAPI(
@@ -176,13 +187,24 @@ export default function AddLeads() {
       );
 
       if (error || !data) {
-        return;
+        throw new Error(error);
       }
 
       toast.success(message || "Lead created successfully!");
 
-      // Reset form
-      setFormData(initialFormState);
+      if (saveAndAdd) {
+        // Reset form for new entry but keep some fields like leadSource, productService, assignedAgent
+        setFormData((prev) => ({
+          ...initialFormState,
+          leadSource: prev.leadSource,
+          productService: prev.productService,
+          assignedAgent: prev.assignedAgent,
+          leadStatus: prev.leadStatus,
+        }));
+      } else {
+        // Navigate back
+        navigate(-1);
+      }
     } catch (error: any) {
       console.error(error.message || "Failed to create lead");
     } finally {
@@ -224,21 +246,21 @@ export default function AddLeads() {
               <ButtonDefault label="↓ Import" mode="link" link="/import" />
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <form>
               <div className="w-full p-6.5">
                 {/* Name Fields */}
                 <div className="mb-4.5 flex flex-col gap-4.5 xl:flex-row">
                   <InputGroup
-                    label="First name"
+                    label="Full name"
                     name="firstName"
                     type="text"
-                    placeholder="Enter lead's first name"
-                    customClasses="w-full xl:w-1/2"
+                    placeholder="Enter lead's full name"
+                    customClasses="w-full "
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
                   />
-                  <InputGroup
+                  {/* <InputGroup
                     label="Last name"
                     name="lastName"
                     type="text"
@@ -246,7 +268,7 @@ export default function AddLeads() {
                     customClasses="w-full xl:w-1/2"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                  />
+                  /> */}
                 </div>
 
                 {/* Contact Fields */}
@@ -257,7 +279,6 @@ export default function AddLeads() {
                     type="email"
                     placeholder="Enter lead's email address"
                     customClasses="w-full xl:w-1/2"
-                    required
                     value={formData.email}
                     onChange={handleInputChange}
                   />
@@ -317,17 +338,21 @@ export default function AddLeads() {
                       handleInputChange={handleInputChange}
                       handleSelectChange={handleSelectChange}
                       formData={formData}
+                      required
                       statusFieldName="leadStatus"
+                      // lostReasonValue={formData.leadLostReasonId}
+                      value={formData.leadStatus}
                     />
                   </div>
                 </div>
 
                 {/* Follow-up Date */}
                 <div className="mb-4.5 w-full">
-                  <DateTimePicker
+                  <AntDateTimePicker
                     label="Follow-up date"
                     onChange={handleDateChange}
-                    defaultValue={new Date().toISOString()}
+                    defaultValue={formData.followUpDate}
+                    enableTime
                   />
                 </div>
 
@@ -352,13 +377,24 @@ export default function AddLeads() {
                 </div>
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex w-full justify-center rounded-[7px] bg-primary p-[13px] font-medium text-white hover:bg-opacity-90 disabled:opacity-50"
-                >
-                  {isLoading ? "Creating lead..." : "Add lead"}
-                </button>
+                <div className="flex gap-4 item-center w-full">
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={(e) => handleSave(e, false)}
+                    className="flex w-full justify-center rounded-[7px] bg-primary p-[13px] font-medium text-white hover:bg-opacity-90 disabled:opacity-50"
+                  >
+                    {isLoading ? "Creating lead..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={(e) => handleSave(e, true)}
+                    className="flex w-full justify-center rounded-[7px] bg-primary p-[13px] font-medium text-white hover:bg-opacity-90 disabled:opacity-50"
+                  >
+                    {isLoading ? "Creating lead..." : "Save & Add Another Lead"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

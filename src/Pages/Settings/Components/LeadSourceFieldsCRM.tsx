@@ -71,7 +71,6 @@ export default function LeadSourceFieldsCRM() {
       dataIndex: "isApiRequired",
       key: "isApiRequired",
       render: (value: any, record: any) => {
-        console.log({ record });
 
         return (
           <Tooltip title="Do you want to use this entry for API integeration ? If yes you can enable the toggle.">

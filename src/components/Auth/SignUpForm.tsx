@@ -40,7 +40,6 @@ export default function SignUpForm({
     initialValues: initialValue,
     validationSchema,
     onSubmit: (values, { setSubmitting }) => {
-      console.log("Form values:", values);
       // Handle form submission here
       setSignUpData(values);
       setIsFinalStep(true);

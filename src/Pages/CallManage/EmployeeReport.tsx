@@ -5,12 +5,12 @@ import AnalysisReport from "./components/AnalysisReport";
 import Summary from "./components/Summary";
 import TabPanel from "../../components/TabPanel/TabPanel";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import { getStoredAgents } from "../../api/commonAPI";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface CallListResponse {
   calls: any[];
@@ -304,14 +304,14 @@ const EmployeeReport: React.FC = () => {
           />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker
+          <AntDateTimePicker
             label="From Date"
             onChange={handleFromDateChange}
             defaultValue={fromDate.toISOString()}
           />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker
+          <AntDateTimePicker
             label="To Date"
             onChange={handleToDateChange}
             defaultValue={toDate.toISOString()}

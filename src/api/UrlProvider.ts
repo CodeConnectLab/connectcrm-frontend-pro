@@ -12,7 +12,6 @@ declare global {
   }
 }
 const env = import.meta.env;
-console.log({ env });
 
 export const BASE_URL: string = env.VITE_API_URL;
 
@@ -35,6 +34,7 @@ export const END_POINT: EndPointType = {
   BULK_UPDATE: "bulkUpdate",
   BULK_DELETE: "bulkDelete",
   USERS: "users",
+  UPDATE_NOTIFICATION: "updateNotification",
   Funnel: "survey",
   Crefunel: "survey",
   SubscrPlane: "v1/subscription",

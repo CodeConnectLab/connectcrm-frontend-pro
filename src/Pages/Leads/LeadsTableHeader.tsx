@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
@@ -7,6 +7,8 @@ import AdvanceFilterUI from "../Components/AdvanceFilterUI";
 import useScreenHook from "../../hooks/useScreenHook";
 import SearchForm from "../../components/Header/SearchForm";
 import { getStoredAgents, getStoredStatus } from "../../api/commonAPI";
+import ConfirmationModal from "../../components/Modals/ConfirmationModal";
+import ColumnSelector from "../../components/Utils/TableColumnSelector";
 
 interface LeadsTableHeaderProps {
   handleSearch: (value: string) => void;
@@ -21,6 +23,14 @@ interface LeadsTableHeaderProps {
   onAdvancedFilter: (filters: any) => void;
   onResetFilters: () => void;
   loading?: boolean;
+  initialFilterData?: any;
+  showExportButtons?: any;
+  onExportPDF?: () => any;
+  onExportExcel?: () => any;
+  // Add these new props
+  columns?: any[];
+  selectedColumns?: string[];
+  onColumnChange?: (columns: string[]) => void;
 }
 
 export default function LeadsTableHeader({
@@ -33,19 +43,37 @@ export default function LeadsTableHeader({
   onAdvancedFilter,
   onResetFilters,
   loading = false,
+  initialFilterData = {},
+  showExportButtons = false,
+  onExportPDF = () => {},
+  onExportExcel = () => {},
+  columns = [],
+  selectedColumns = [],
+  onColumnChange,
 }: LeadsTableHeaderProps) {
   // Get stored data
   const statusList = getStoredStatus(true);
   const agentList = getStoredAgents(true);
+  const { filterType, statusId } = initialFilterData;
 
   // States
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [isAdvanceFilterEnable, setIsAdvanceFilterEnable] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Hooks
   const { deviceType } = useScreenHook();
+
+  const showDeleteConfirmation = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setIsDeleteModalOpen(false);
+    handleDelete();
+  };
 
   const handleSubmit = async () => {
     if (!selectedStatus && !selectedAgent) {
@@ -74,6 +102,66 @@ export default function LeadsTableHeader({
       setIsLoading(false);
     }
   };
+
+  const handleExportPDF = async () => {
+    await onExportPDF();
+  };
+
+  const handleExportExcel = async () => {
+    await onExportExcel();
+  };
+
+  const exportButtons = (
+    <>
+      <ButtonDefault
+        label="Export PDF"
+        variant="outline"
+        customClasses="bg-black text-white w-full sm:w-fit"
+        onClick={handleExportPDF}
+        disabled={loading}
+      />
+      <ButtonDefault
+        label="Export Excel"
+        variant="outline"
+        customClasses="bg-black text-white w-full sm:w-fit"
+        onClick={handleExportExcel}
+        disabled={loading}
+      />
+    </>
+  );
+
+  // Update the export buttons section in both desktop and mobile views
+  const renderDesktopExportButtons = () => (
+    <div className="flex space-x-2">
+       {columns && selectedColumns && onColumnChange && (
+        <ColumnSelector
+          allColumns={columns}
+          selectedColumns={selectedColumns}
+          onColumnChange={onColumnChange}
+          disabled={loading}
+        />
+      )}
+      {showExportButtons && exportButtons}
+      {deleteButtons}
+    </div>
+  );
+
+  const renderMobileExportButtons = () => (
+    <div className="mb-4 flex justify-center gap-2">
+      {showExportButtons && exportButtons}
+      {deleteButtons}
+    </div>
+  );
+
+  const deleteButtons = (
+    <ButtonDefault
+      label="Delete"
+      variant="outline"
+      customClasses="bg-red-500 text-white w-full sm:w-fit"
+      disabled={selectedCount === 0}
+      onClick={showDeleteConfirmation}
+    />
+  );
 
   const renderMobileView = () => {
     return (
@@ -133,26 +221,18 @@ export default function LeadsTableHeader({
             </div>
           </div>
         )}
-        <div className="mb-4 flex justify-center gap-2">
-          <ButtonDefault
-            label="Export PDF"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Export Excel"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Delete"
-            variant="outline"
-            customClasses="bg-red-500 text-white"
-          />
-        </div>
+        {renderMobileExportButtons()}
       </>
     );
   };
+
+  useEffect(() => {
+    if (!filterType && !statusId) {
+      setIsAdvanceFilterEnable(false);
+    } else {
+      setIsAdvanceFilterEnable(true);
+    }
+  }, [filterType, statusId]);
 
   return (
     <>
@@ -211,12 +291,13 @@ export default function LeadsTableHeader({
           </div>
         </div>
       </div>
-
       {isAdvanceFilterEnable && deviceType !== "mobile" && (
         <AdvanceFilterUI
           onFilter={onAdvancedFilter}
           onReset={onResetFilters}
           loading={loading}
+          initialFilterData={initialFilterData}
+          setIsAdvanceFilterEnable={setIsAdvanceFilterEnable}
         />
       )}
       <div className="mb-4 hidden justify-between sm:flex">
@@ -228,28 +309,20 @@ export default function LeadsTableHeader({
             placeholder="Search leads..."
           />
         </div>
-        <div className="flex space-x-2">
-          <ButtonDefault
-            label="Export PDF"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Export Excel"
-            variant="outline"
-            customClasses="bg-black text-white"
-          />
-          <ButtonDefault
-            label="Delete"
-            variant="outline"
-            customClasses="bg-red-500 text-white"
-            disabled={selectedCount === 0}
-            onClick={handleDelete}
-          />
-        </div>
+        {renderDesktopExportButtons()}
       </div>
-
       {deviceType === "mobile" && renderMobileView()}
+      {/* // Delete confirmation */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        type="delete"
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${selectedCount} item`}
+        count={selectedCount}
+        confirmLabel="Delete"
+      />
     </>
   );
 }

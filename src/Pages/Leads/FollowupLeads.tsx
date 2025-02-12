@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Tooltip } from "antd";
 import { EditFilled } from "@ant-design/icons";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
@@ -10,6 +10,10 @@ import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
 import { toast } from "react-toastify";
 import QuickEditModal from "../../components/Modals/QuickEdit";
+import {
+  isWithinNext24Hours,
+  isWithinPast24Hours,
+} from "../../utils/useFullFunctions";
 
 interface Lead {
   key: string;
@@ -21,6 +25,9 @@ interface Lead {
   statusData: any;
   leadWonAmount: number;
   addCalender: boolean;
+  leadLostReasonId: string;
+  productService: any;
+  comment: string;
 }
 
 interface APILead {
@@ -34,33 +41,13 @@ interface APILead {
   leadStatus: any;
   leadWonAmount: number;
   addCalender: boolean;
+  leadLostReasonId: string;
+  productService: { name: string } | null;
+  comment: string;
 }
 
-const isWithinNext24Hours = (date: Date): boolean => {
-  const now = new Date();
-  const future = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  return date > now && date <= future;
-};
-
-const isWithinPast24Hours = (date: Date): boolean => {
-  const now = new Date();
-  const past = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-  return date < now && date >= past;
-};
-
-const getRowClassName = (record: Lead): string => {
-  const followUpDate = new Date(record.followUpDate);
-
-  if (isWithinNext24Hours(followUpDate)) {
-    return "upcoming-followup pulse-green";
-  }
-  if (isWithinPast24Hours(followUpDate)) {
-    return "missed-followup pulse-red";
-  }
-  return "";
-};
-
 const FollowupLeads = () => {
+  const navigate = useNavigate();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,12 +69,15 @@ const FollowupLeads = () => {
       name: `${lead.firstName} ${lead.lastName}`.trim(),
       number: lead.contactNumber,
       leadSource: lead.leadSource?.name || "-",
+      productService: lead.productService?.name || "-",
       agent: lead.assignedAgent?.name || "-",
       followUpDate: new Date(lead.followUpDate),
       // followUpDate: new Date(lead.followUpDate).toLocaleString(),
       statusData: lead.leadStatus || {},
       leadWonAmount: lead.leadWonAmount,
       addCalender: lead.addCalender,
+      leadLostReasonId: lead.leadLostReasonId,
+      comment: lead.comment,
     }));
   };
 
@@ -97,10 +87,13 @@ const FollowupLeads = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
-        search: debouncedSearchTerm,
         type: "followup", // Add type parameter to get only followup leads
         ...advancedFilters,
       };
+
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
 
       const { data, error, options } = await API.getAuthAPI(
         END_POINT.LEADS_FOLLOWUP_DATA,
@@ -221,7 +214,7 @@ const FollowupLeads = () => {
       dataIndex: "key",
       key: "checkbox",
       render: (key: string) => (
-        <div>
+        <div onClick={(e) => e.stopPropagation()}>
           <CheckboxTwo
             id={key}
             onChange={({ value: checkboxValue, isChecked }) =>
@@ -243,10 +236,26 @@ const FollowupLeads = () => {
       key: "number",
     },
     {
-      title: "Lead Source",
-      dataIndex: "leadSource",
-      key: "leadSource",
+      title: "Comment",
+      dataIndex: "comment",
+      key: "comment",
       minWidth: 123,
+      render: (record: any) =>
+        record?.length ? (
+          <span>
+            {record.length > 75 ? (
+              <Tooltip title={record}>{`${record.slice(0, 75)}...`}</Tooltip>
+            ) : (
+              record
+            )}
+          </span>
+        ) : null,
+    },
+    {
+      title: "Product Service",
+      dataIndex: "productService",
+      key: "productService",
+      minWidth: 100,
     },
     {
       title: "Agent",
@@ -259,18 +268,29 @@ const FollowupLeads = () => {
       key: "followUpDate",
       minWidth: 143,
       render: (date: Date) => {
-        const formattedDate = date.toLocaleString();
+        const options: Intl.DateTimeFormatOptions = {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        };
+        const formattedDate = date.toLocaleDateString("en-GB", options);
+        const formattedTime = date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const formattedDateTime = `${formattedDate} - ${formattedTime}`;
+        // const formattedDate = date.toLocaleString();
         const isUpcoming = isWithinNext24Hours(date);
         const isMissed = isWithinPast24Hours(date);
 
         return (
           <div className="flex items-center gap-2">
-            <span>{formattedDate}</span>
-            {isUpcoming && (
+            <span>{formattedDateTime}</span>
+            {/* {isUpcoming && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
                 Due Soon
               </span>
-            )}
+            )} */}
             {isMissed && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
                 Overdue
@@ -279,6 +299,12 @@ const FollowupLeads = () => {
           </div>
         );
       },
+    },
+    {
+      title: "Lead Source",
+      dataIndex: "leadSource",
+      key: "leadSource",
+      minWidth: 123,
     },
     {
       title: "Action",
@@ -336,6 +362,12 @@ const FollowupLeads = () => {
     } else {
       setSelectedRowKeys((prev) => prev.filter((key) => key !== value));
     }
+  };
+
+  const handleRowClick = (record: any) => {
+    setSelectedLead(record);
+    setIsQuickEditOpen(true);
+    // navigate(`/leads/${record.key}`);
   };
 
   const handleBulkUpdate = async (data: {
@@ -437,10 +469,12 @@ const FollowupLeads = () => {
         }}
         rowClassName={(record: Lead) => {
           if (isWithinNext24Hours(record.followUpDate)) {
-            return "bg-green-50 hover:bg-green-100 transition-colors duration-200 animate-in-range";
+            // return "bg-green-50 hover:bg-green-100 transition-colors duration-200 animate-in-range";
+            return "bg-green-50 hover:bg-green-100 transition-colors duration-200";
           }
           if (isWithinPast24Hours(record.followUpDate)) {
-            return "bg-red-50 hover:bg-red-100 transition-colors duration-200 animate-in-range";
+            return "bg-red-50 hover:bg-red-100 transition-colors duration-200";
+            // return "bg-red-50 hover:bg-red-100 transition-colors duration-200 animate-in-range";
           }
           return "animate-slide-in";
         }}
@@ -449,6 +483,7 @@ const FollowupLeads = () => {
             cursor: "pointer",
             transition: "all 0.2s",
           },
+          onClick: () => handleRowClick(record),
         })}
         isLoading={loading}
       />
@@ -456,6 +491,7 @@ const FollowupLeads = () => {
         <QuickEditModal
           isOpen={isQuickEditOpen}
           onClose={() => {
+            fetchLeads();
             setIsQuickEditOpen(false);
             setSelectedLead(null);
           }}
@@ -466,6 +502,9 @@ const FollowupLeads = () => {
             followUpDate: selectedLead.followUpDate,
             leadWonAmount: selectedLead.leadWonAmount,
             addCalender: selectedLead.addCalender, // You might want to get this from your lead data
+            leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
+            comment: selectedLead.comment, // You might want to get this from your lead data
+            leadName: selectedLead.name,
           }}
           isLoading={isUpdating}
         />

@@ -73,14 +73,14 @@ export const postAuthAPI1 = async <T>(
 ): Promise<ApiResponse<T>> => {
   try {
     const response = await axios({
-      method: 'post',
+      method: "post",
       url: `${BASE_URL}${endPoint}`,
       data: body,
       headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        'Authorization': Token,
-        ...config.headers
-      }
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
+        Authorization: Token,
+        ...config.headers,
+      },
     });
 
     const { data, message, error } = response?.data;
@@ -150,18 +150,19 @@ export const updateAuthAPI = async <T>(
 
 export const PutAuthAPI = async <T>(
   body: any | null,
-  id: string,
+  id: string | null,
   endPoint: string,
-  Token: string = "",
-  navigate?: NavigateFunction
+  tokenRequired: boolean = false
+  // navigate?: NavigateFunction
 ): Promise<ApiResponse<T>> => {
+  const header = tokenRequired ? await getAuthHeader() : "";
   const config: ApiConfig = {
     method: "put",
     maxBodyLength: Infinity,
-    url: `${BASE_URL}${endPoint}/${id}`,
+    url: `${BASE_URL}${endPoint}${id ? "/" + id : ""}`,
     headers: {
       "Content-Type": "application/json",
-      Authorization: Token || "",
+      Authorization: header,
     },
   };
 

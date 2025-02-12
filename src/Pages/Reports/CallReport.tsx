@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import CallDetails from "../CallManage/components/CallDetails";
 import { API } from "../../api";
@@ -9,6 +8,7 @@ import { toast } from "react-toastify";
 import { getStoredAgents } from "../../api/commonAPI";
 import dayjs from "dayjs";
 import Heading from "../../components/CommonUI/Heading";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface CallListResponse {
   calls: any[];
@@ -231,14 +231,14 @@ export default function CallReport() {
           />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker
+          <AntDateTimePicker
             label="From Date"
             onChange={handleFromDateChange}
             defaultValue={fromDate.toISOString()}
           />
         </div>
         <div className="w-full lg:w-1/4">
-          <DateTimePicker
+          <AntDateTimePicker
             label="To Date"
             onChange={handleToDateChange}
             defaultValue={toDate.toISOString()}

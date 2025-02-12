@@ -5,6 +5,7 @@ import DynamicDataManagement from "../../../components/DynamicDataManagement/Dyn
 import { API } from "../../../api";
 import { END_POINT } from "../../../api/UrlProvider";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 interface StatusField {
   key: string;
@@ -14,6 +15,8 @@ interface StatusField {
   color?: string;
   showDashboard?: boolean;
   showFollowUp?: boolean;
+  showImported?: boolean;
+  showOutSourced?: boolean;
   isActive?: boolean;
   sendNotification?: boolean;
   lossStatus?: false;
@@ -141,62 +144,152 @@ export default function StatusFieldsCRM() {
       },
     },
     {
-      title: "Select for",
+      // title: "Select for",
+      // children: [
+      //   {
+      title: (
+        <span className="text-center">
+          Show on <br /> Dashboard
+        </span>
+      ),
+      dataIndex: "key",
+      key: "key",
+      // minWidth: 166,
+      render: (key: string, record: StatusField) => (
+        <Tooltip title="You can toggle the status field that you want to show on your Dashboard.">
+          <div className="flex justify-start">
+            <SwitcherTwo
+              id={key}
+              defaultChecked={record.showDashboard}
+              onChange={handleDashboardToggle}
+            />
+          </div>
+        </Tooltip>
+      ),
+      // },
+      // {
+      //   title: "Notification",
+      //   dataIndex: "key",
+      //   key: "key",
+      //   // minWidth: 166,
+      //   render: (key: string, record: StatusField) => (
+      //     <Tooltip title="You can toggle the status field that you want to show on your Dashboard.">
+      //       <div className="flex justify-start">
+      //         <SwitcherTwo
+      //           id={key + "Notification"}
+      //           idForAPI={key}
+      //           defaultChecked={record.showDashboard}
+      //           onChange={handleDashboardToggle}
+      //         />
+      //       </div>
+      //     </Tooltip>
+      //   ),
+      // },
+      // ],
+    },
+    {
+      title: "Filter for following lead pages",
       children: [
         {
-          title: "Dashboard",
+          title: "Follow-Up",
           dataIndex: "key",
           key: "key",
           // minWidth: 166,
           render: (key: string, record: StatusField) => (
-            <Tooltip title="You can toggle the status field that you want to show on your Dashboard.">
+            <Tooltip
+              title={
+                <span>
+                  All those fields whose toggle is enabled will not be shown in{" "}
+                  <Link
+                    to="/leads/followup"
+                    className="text-green-light hover:text-orange-light "
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Follow Up leads page.
+                  </Link>
+                </span>
+              }
+            >
               <div className="flex justify-start">
                 <SwitcherTwo
-                  id={key}
-                  defaultChecked={record.showDashboard}
-                  onChange={handleDashboardToggle}
+                  id={key + "followupFilter"}
+                  idForAPI={key}
+                  defaultChecked={record.showFollowUp}
+                  onChange={(key: string, currentStatus: boolean) =>
+                    handleFollowUpToggle(key, currentStatus, "showFollowUp")
+                  }
                 />
               </div>
             </Tooltip>
           ),
         },
         {
-          title: "Notification",
+          title: "Imported",
           dataIndex: "key",
           key: "key",
           // minWidth: 166,
           render: (key: string, record: StatusField) => (
-            <Tooltip title="You can toggle the status field that you want to show on your Dashboard.">
+            <Tooltip
+              title={
+                <span>
+                  All those fields whose toggle is enabled will not be shown in{" "}
+                  <Link
+                    to="/leads/imported-leads"
+                    className="text-green-light hover:text-orange-light "
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Imported Leads page.
+                  </Link>
+                </span>
+              }
+            >
               <div className="flex justify-start">
                 <SwitcherTwo
-                  id={key + "Notification"}
+                  id={key + "importedLeads"}
                   idForAPI={key}
-                  defaultChecked={record.showDashboard}
-                  onChange={handleDashboardToggle}
+                  defaultChecked={record.showImported}
+                  onChange={(key: string, currentStatus: boolean) =>
+                    handleFollowUpToggle(key, currentStatus, "showImported")
+                  }
+                />
+              </div>
+            </Tooltip>
+          ),
+        },
+        {
+          title: "Out-Sourced",
+          dataIndex: "key",
+          key: "key",
+          // minWidth: 166,
+          render: (key: string, record: StatusField) => (
+            <Tooltip
+              title={
+                <span>
+                  All those fields whose toggle is enabled will not be shown in{" "}
+                  <Link
+                    to="/leads/outsourced-leads"
+                    className="text-green-light hover:text-orange-light "
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Outsourced Leads page.
+                  </Link>
+                </span>
+              }
+            >
+              <div className="flex justify-start">
+                <SwitcherTwo
+                  id={key + "outSourcedLeads"}
+                  idForAPI={key}
+                  defaultChecked={record.showOutSourced}
+                  onChange={(key: string, currentStatus: boolean) =>
+                    handleFollowUpToggle(key, currentStatus, "showOutSourced")
+                  }
                 />
               </div>
             </Tooltip>
           ),
         },
       ],
-    },
-    {
-      title: "Follow-Up Filter",
-      dataIndex: "key",
-      key: "key",
-      // minWidth: 166,
-      render: (key: string, record: StatusField) => (
-        <Tooltip title="All those fields whose toggle is enabled will not be shown in follow up dashboard.">
-          <div className="flex justify-start">
-            <SwitcherTwo
-              id={key + "followupFilter"}
-              idForAPI={key}
-              defaultChecked={record.showFollowUp}
-              onChange={handleFollowUpToggle}
-            />
-          </div>
-        </Tooltip>
-      ),
     },
     {
       title: "Treat it as",
@@ -268,6 +361,8 @@ export default function StatusFieldsCRM() {
           color: item.color,
           showDashboard: item.showDashboard,
           showFollowUp: item.showFollowUp,
+          showImported: item.showImported,
+          showOutSourced: item.showOutSourced,
           isActive: item.isActive,
           sendNotification: item.sendNotification,
           lossStatus: item.lossStatus,
@@ -289,12 +384,10 @@ export default function StatusFieldsCRM() {
   const handleAdd = async (newItem: any) => {
     try {
       setIsLoading(true);
-      console.log({ newItem });
-
       const payload = {
         displayName: newItem.display,
         name: newItem.status,
-        color: newItem.color, // Default color
+        color: newItem.color || "#5750F1", // Default color
       };
 
       const { error } = await API.postAuthAPI(
@@ -303,7 +396,7 @@ export default function StatusFieldsCRM() {
         true
       );
 
-      if (error) return;
+      if (error) throw new Error(error);
 
       toast.success("Status field added successfully!");
       fetchStatusFields();
@@ -401,10 +494,14 @@ export default function StatusFieldsCRM() {
     }
   };
 
-  const handleFollowUpToggle = async (key: string, currentStatus: boolean) => {
+  const handleFollowUpToggle = async (
+    key: string,
+    currentStatus: boolean,
+    field: string
+  ) => {
     try {
       const payload = {
-        showFollowUp: currentStatus,
+        [field]: currentStatus,
       };
 
       const { error } = await API.updateAuthAPI(

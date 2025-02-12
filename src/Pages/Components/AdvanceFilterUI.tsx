@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import {
   getStoredAgents,
@@ -9,6 +8,7 @@ import {
   getStoredStatus,
 } from "../../api/commonAPI";
 import dayjs from "dayjs";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface AdvanceFilterUIProps {
   onFilter: (filters: {
@@ -21,17 +21,40 @@ interface AdvanceFilterUIProps {
   }) => void;
   onReset: () => void;
   loading?: boolean;
+  initialFilterData?: any;
+  setIsAdvanceFilterEnable?: any;
+}
+
+interface FilterState {
+  leadStatus: string;
+  assignedAgent: string;
+  productService: string;
+  leadSource: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface FilterValidFields {
+  leadStatus?: string;
+  assignedAgent?: string;
+  productService?: string;
+  leadSource?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   onFilter,
   onReset,
-  loading = false
+  loading = false,
+  initialFilterData = {},
+  setIsAdvanceFilterEnable = () => {},
 }) => {
   const agentList = getStoredAgents(true);
   const serviceList = getStoredProductsServices(true);
   const sourceList = getStoredSources(true);
   const statusList = getStoredStatus(true);
+  const { filterType, statusId } = initialFilterData;
 
   const [filters, setFilters] = React.useState({
     leadStatus: "",
@@ -39,36 +62,46 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
     productService: "",
     leadSource: "",
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
-
   const handleChange = (name: string, value: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleDateChange = (name: string) => (_: Date[], dateStr: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: dateStr
+      [name]: dateStr,
     }));
   };
 
-  const handleSubmit = () => {
-    const validFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-      if (value) {
-        if (key === 'startDate' || key === 'endDate') {
-          acc[key] = dayjs(value).format('YYYY-MM-DD');
-        } else {
-          acc[key] = value;
-        }
-      }
-      return acc;
-    }, {} as any);
+  // Memoized filter submission logic
+  const submitFilters = useCallback(
+    (currentFilters: FilterState) => {
+      const validFilters = Object.entries(currentFilters).reduce(
+        (acc, [key, value]) => {
+          if (value) {
+            if (key === "startDate" || key === "endDate") {
+              acc[key] = dayjs(value).format("YYYY-MM-DD");
+            } else {
+              acc[key] = value;
+            }
+          }
+          return acc;
+        },
+        {} as any
+      );
 
-    onFilter(validFilters);
+      onFilter(validFilters);
+    },
+    [onFilter]
+  );
+
+  const handleSubmit = () => {
+    submitFilters(filters);
   };
 
   const handleReset = () => {
@@ -78,10 +111,24 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
       productService: "",
       leadSource: "",
       startDate: "",
-      endDate: ""
+      endDate: "",
     });
     onReset();
   };
+
+  // Effect to handle initial filter data
+  useEffect(() => {
+    const { filterType, statusId } = initialFilterData;
+
+    if (filterType && statusId) {
+      const newFilters = {
+        ...filters,
+        [filterType]: statusId,
+      };
+      setFilters(newFilters);
+      submitFilters(newFilters);
+    }
+  }, [filterType, statusId, submitFilters]);
 
   return (
     <div className="rounded-lg bg-white p-6 mb-4 shadow-md dark:bg-gray-800">
@@ -91,7 +138,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Status"
           options={statusList}
           selectedOption={filters.leadStatus}
-          setSelectedOption={(value) => handleChange('leadStatus', value)}
+          setSelectedOption={(value) => handleChange("leadStatus", value)}
           allowClear
         />
         <SelectGroupOne
@@ -99,7 +146,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Employee"
           options={agentList}
           selectedOption={filters.assignedAgent}
-          setSelectedOption={(value) => handleChange('assignedAgent', value)}
+          setSelectedOption={(value) => handleChange("assignedAgent", value)}
           allowClear
         />
         <SelectGroupOne
@@ -107,7 +154,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Product and Service"
           options={serviceList}
           selectedOption={filters.productService}
-          setSelectedOption={(value) => handleChange('productService', value)}
+          setSelectedOption={(value) => handleChange("productService", value)}
           allowClear
         />
         <SelectGroupOne
@@ -115,17 +162,17 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           placeholder="Select Source"
           options={sourceList}
           selectedOption={filters.leadSource}
-          setSelectedOption={(value) => handleChange('leadSource', value)}
+          setSelectedOption={(value) => handleChange("leadSource", value)}
           allowClear
         />
-        <DateTimePicker 
-          label="Start Date" 
-          onChange={handleDateChange('startDate')}
+        <AntDateTimePicker
+          label="Start Date"
+          onChange={handleDateChange("startDate")}
           defaultValue={filters.startDate}
         />
-        <DateTimePicker 
-          label="End Date" 
-          onChange={handleDateChange('endDate')}
+        <AntDateTimePicker
+          label="End Date"
+          onChange={handleDateChange("endDate")}
           defaultValue={filters.endDate}
         />
       </div>
@@ -134,14 +181,14 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           label={loading ? "Filtering..." : "Apply Filters"}
           onClick={handleSubmit}
           variant="primary"
-          customClasses="bg-blue-500 text-white w-full"
+          customClasses="bg-blue-500 text-white"
           disabled={loading}
         />
         <ButtonDefault
           label="Reset"
           onClick={handleReset}
           variant="secondary"
-          customClasses="bg-black text-white w-full"
+          customClasses="bg-black text-white "
           disabled={loading}
         />
       </div>

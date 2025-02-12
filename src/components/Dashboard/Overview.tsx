@@ -109,13 +109,13 @@ const getLastMonthDateRange = () => {
 
   // First day of last month
   const firstDay = new Date(currentYear, currentMonth - 1, 1);
-  
+
   // Last day of last month
   const lastDay = new Date(currentYear, currentMonth, 0);
 
   // Format dates as YYYY-MM-DD
-  const startDate = firstDay.toISOString().split('T')[0];
-  const endDate = lastDay.toISOString().split('T')[0];
+  const startDate = firstDay.toISOString().split("T")[0];
+  const endDate = lastDay.toISOString().split("T")[0];
 
   return { startDate, endDate };
 };
@@ -124,7 +124,6 @@ const Overview: React.FC = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const dateRange = getLastMonthDateRange();
-
 
   const fetchDashboardMetrics = async () => {
     try {
@@ -149,6 +148,7 @@ const Overview: React.FC = () => {
       color: metric.color,
       title: metric.title,
       value: metric.value.toString(),
+      webroute: metric.webroute,
       growthRate: parseFloat(metric.change),
     })) || [];
 
@@ -161,6 +161,7 @@ const Overview: React.FC = () => {
       value: metric.today,
       nextValue: metric.tomorrow,
       growthRate: 0, // Not provided in new API response
+      statusId: metric.leadStatus, // Not provided in new API response
     })) || [];
 
   // Transform performanceMetrics for TargetStats

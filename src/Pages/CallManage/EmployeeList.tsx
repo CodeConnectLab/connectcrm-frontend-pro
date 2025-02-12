@@ -6,8 +6,8 @@ import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
-import DateTimePicker from "../../components/FormElements/DatePicker/DateTimePicker";
 import Heading from "../../components/CommonUI/Heading";
+import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 
 interface EmployeeData {
   key: string;
@@ -159,7 +159,7 @@ const EmployeeList: React.FC = () => {
       <div className="mb-6 flex flex-col gap-4 items-center justify-between sm:flex-row">
         <div className="flex flex-col w-full items-center gap-4 sm:flex-row">
           <div className="w-full lg:w-1/4">
-            <DateTimePicker
+            <AntDateTimePicker
               label="From Date"
               onChange={handleStartDateChange}
               defaultValue={startDate}
@@ -167,7 +167,7 @@ const EmployeeList: React.FC = () => {
             />
           </div>
           <div className="w-full lg:w-1/4">
-            <DateTimePicker
+            <AntDateTimePicker
               label="To Date"
               onChange={handleEndDateChange}
               defaultValue={endDate}

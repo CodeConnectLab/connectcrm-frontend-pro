@@ -1,42 +1,63 @@
+// AttachmentTab.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Spin, message, Tooltip } from "antd";
-import {
-  DeleteFilled,
-  EditFilled,
-} from "@ant-design/icons";
+import { DeleteFilled, EditFilled } from "@ant-design/icons";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import InputGroup from "../../components/FormElements/InputGroup";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import FileUploadFillType from "../../components/FormElements/FileUpload/FileUploadFillType";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import useGetLocation from "../../hooks/useGetLocation";
+
 interface Location {
   latitude: number;
   longitude: number;
 }
-interface FileData {
-  key: string;
-  serial: number;
-  file: string;
+
+interface GeoLocation {
+  _id: string;
   fileName: string;
-  location: Location | null;
-  created: string;
+  originalName: string;
+  s3Url: string;
+  coordinates: string;
+  createdAt: string;
 }
 
-const AttachmentTab: React.FC = () => {
+interface AttachmentTabProps {
+  geoLocations: GeoLocation[];
+}
+
+const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [getLocationToggle, setGetLocationToggle] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const {
-    error,
-    location: locationValue,
-    loading,
-  } = useGetLocation({
+  
+  const { error, location: locationValue, loading } = useGetLocation({
     getLocationToggle,
     setGetLocationToggle,
   });
+
+  useEffect(() => {
+    // Transform geoLocation data to match table format
+    const transformedFiles = geoLocations?.map((item, index) => {
+      const [lat, lng] = item.coordinates.split(",");
+      return {
+        key: item._id,
+        serial: index + 1,
+        file: item.originalName,
+        fileName: item.fileName,
+        fileUrl: item.s3Url,
+        location: {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng)
+        },
+        created: new Date(item.createdAt).toLocaleString()
+      };
+    }) || [];
+    setUploadedFiles(transformedFiles);
+  }, [geoLocations]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -51,13 +72,13 @@ const AttachmentTab: React.FC = () => {
 
   const handleUpload = () => {
     if (selectedFile) {
-      const newFile: FileData = {
+      const newFile = {
         key: Date.now().toString(),
         serial: uploadedFiles.length + 1,
         file: selectedFile.name,
         fileName: fileName || selectedFile.name,
-        location: locationValue, // You might want to get this dynamically
-        created: new Date().toLocaleString(),
+        location: locationValue,
+        created: new Date().toLocaleString()
       };
       setUploadedFiles([...uploadedFiles, newFile]);
       setSelectedFile(null);
@@ -76,7 +97,16 @@ const AttachmentTab: React.FC = () => {
 
   const columns = [
     { title: "Serial", dataIndex: "serial", key: "serial" },
-    { title: "File", dataIndex: "file", key: "file" },
+    { 
+      title: "File", 
+      dataIndex: "file", 
+      key: "file",
+      render: (text: string, record: any) => (
+        <a href={record.fileUrl} target="_blank" rel="noopener noreferrer">
+          {text}
+        </a>
+      )
+    },
     { title: "File Name", dataIndex: "fileName", key: "fileName" },
     {
       title: "Location",
@@ -84,11 +114,9 @@ const AttachmentTab: React.FC = () => {
       key: "location",
       render: (value: Location) => (
         <span>
-          {value
-            ? `${value?.latitude}, ${value?.longitude}`
-            : "No location available."}
+          {value ? `${value.latitude}, ${value.longitude}` : "No location available"}
         </span>
-      ),
+      )
     },
     { title: "Created", dataIndex: "created", key: "created" },
     {
@@ -101,30 +129,28 @@ const AttachmentTab: React.FC = () => {
             href={`https://www.google.com/maps?q=${record?.latitude},${record?.longitude}`}
             target="_blank"
           >
-            <Tooltip title="Click to Reveal location on Google Maps.">
+            <Tooltip title="Click to Reveal location on Google Maps">
               <Button
-                icon={
-                  <FaMapMarkedAlt className="text-xl text-blue-light dark:text-blue-light-2" />
-                }
+                icon={<FaMapMarkedAlt className="text-xl text-blue-light dark:text-blue-light-2" />}
                 size="middle"
                 className="dark:text-white"
               />
             </Tooltip>
           </a>
-          <Tooltip title="Edit this record.">
+          {/* <Tooltip title="Edit this record">
             <Button
               icon={<EditFilled className="text-xl text-green" />}
               size="middle"
               className="dark:text-white"
             />
           </Tooltip>
-          <Tooltip title="Delete this record.">
+          <Tooltip title="Delete this record">
             <Button
               icon={<DeleteFilled className="text-xl text-red-500" />}
               size="middle"
               className="dark:text-white"
             />
-          </Tooltip>
+          </Tooltip> */}
         </div>
       ),
     },
@@ -152,19 +178,16 @@ const AttachmentTab: React.FC = () => {
                 Fetching location...
               </div>
             ) : (
-              // <div className="flex w-full items-center gap-4">
               <InputGroup
                 placeholder="Upload file to fetch your current location."
                 customClasses="w-full"
                 value={
                   locationValue
-                    ? `${locationValue?.latitude}, ${locationValue?.longitude}`
+                    ? `${locationValue.latitude}, ${locationValue.longitude}`
                     : "Upload file to fetch your current location."
                 }
                 readOnly
               />
-
-              // </div>
             )}
             <InputGroup
               placeholder="Enter File Name"

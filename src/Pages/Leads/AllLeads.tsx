@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
-import { Button, Tooltip } from "antd";
-import { EditFilled } from "@ant-design/icons";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
-import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import LeadsTableHeader from "./LeadsTableHeader";
-import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
 import { debounce } from "lodash";
 import QuickEditModal from "../../components/Modals/QuickEdit";
 import { toast } from "react-toastify";
+import {
+  handleExportExcel,
+  handleExportPDF,
+} from "../../api/commonAPI/exportApi";
+import { getTableColumns } from "./Columns";
 
 interface Lead {
   key: string;
@@ -23,6 +25,22 @@ interface Lead {
   addCalender: boolean;
   followUpDate: any;
   statusData: any;
+  leadLostReasonId: string;
+  comment: string;
+  leadCost: number;
+  companyName: string;
+  fullAddress: string;
+  city: string;
+  website: string;
+  createdAt: string;
+  pinCode: string;
+  email: string;
+  description: string;
+  updatedAt: string;
+  leadAddType: string;
+  alternatePhone: string;
+  state: string;
+  country: string;
 }
 
 interface APILead {
@@ -37,9 +55,27 @@ interface APILead {
   leadWonAmount: number;
   addCalender: boolean;
   followUpDate: any;
+  leadLostReasonId: string;
+  comment: string;
+  leadCost: number;
+  companyName: string;
+  fullAddress: string;
+  city: string;
+  website: string;
+  createdAt: string;
+  pinCode: string;
+  email: string;
+  description: string;
+  updatedAt: string;
+  leadAddType: string;
+  alternatePhone: string;
+  state: string;
+  country: string;
 }
 
-const AllLeads = ({ derivativeEndpoint = "" }) => {
+const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
+  const location = useLocation();
+  const { statusId, filterType } = location.state || {};
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,11 +91,36 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
     total: 0,
   });
 
+   // Initialize columns configuration
+   const columns = useMemo(
+    () =>
+      getTableColumns(
+        handleSelectAll,
+        areAllVisibleRowsSelected,
+        rowSelection,
+        selectedRowKeys,
+        setSelectedLead,
+        setIsQuickEditOpen
+      ),
+    [selectedRowKeys, leads]
+  );
+
+  // Initialize visible columns state after columns are defined
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const savedColumns = localStorage.getItem("tableColumns");
+    if (savedColumns) {
+      return JSON.parse(savedColumns);
+    }
+    return columns
+      .map((col) => col.key)
+      .filter((key) => key !== "checkbox" && key !== "action");
+  });
+
   const transformLeadData = (apiLeads: APILead[]): Lead[] => {
     return apiLeads.map((lead) => ({
       key: lead?._id,
-      name: `${lead?.firstName} ${lead?.lastName}`.trim(),
-      number: lead?.contactNumber,
+      name: `${lead?.firstName || ""} ${lead?.lastName || ""}`.trim() || "-",
+      number: lead?.contactNumber || "-",
       leadSource: lead?.leadSource?.name || "-",
       agent: lead?.assignedAgent?.name || "-",
       status: lead?.leadStatus?.name || "-",
@@ -68,6 +129,22 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       leadWonAmount: lead?.leadWonAmount,
       addCalender: lead?.addCalender,
       followUpDate: new Date(lead?.followUpDate),
+      leadLostReasonId: lead?.leadLostReasonId || "-",
+      comment: lead?.comment || "-",
+      leadCost: lead?.leadCost,
+      companyName: lead?.companyName || "-",
+      fullAddress: lead?.fullAddress || "-",
+      city: lead?.city || "-",
+      createdAt: lead?.createdAt || "-",
+      website: lead?.website || "-",
+      pinCode: lead?.pinCode || "-",
+      email: lead?.email || "-",
+      description: lead?.description || "-",
+      updatedAt: lead?.updatedAt || "-",
+      leadAddType: lead?.leadAddType || "-",
+      alternatePhone: lead?.alternatePhone || "-",
+      state: lead?.state || "-",
+      country: lead?.country || "-",
     }));
   };
 
@@ -100,9 +177,11 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
-        search: debouncedSearchTerm,
-        ...advancedFilters
+        ...advancedFilters,
       };
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
 
       const { data, error, options } = await API.getAuthAPI(
         `${END_POINT.LEADS_DATA}${derivativeEndpoint}`,
@@ -127,16 +206,21 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
 
   useEffect(() => {
     fetchLeads();
-  }, [pagination.current, pagination.pageSize, debouncedSearchTerm, advancedFilters]);
+  }, [
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearchTerm,
+    advancedFilters,
+  ]);
 
   const handleAdvancedFilter = useCallback((filters: any) => {
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
     setAdvancedFilters(filters);
   }, []);
 
   const handleResetFilters = useCallback(() => {
     setAdvancedFilters({});
-    setPagination(prev => ({ ...prev, current: 1 }));
+    setPagination((prev) => ({ ...prev, current: 1 }));
   }, []);
 
   const handleTableChange = (page: number, pageSize: number) => {
@@ -161,7 +245,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
   };
 
   // Handle select all checkbox
-  const handleSelectAll = ({ isChecked }: { isChecked: boolean }) => {
+  function handleSelectAll({ isChecked }: { isChecked: boolean }) {
     if (isChecked) {
       const visibleKeys = leads.map((lead) => lead.key);
       setSelectedRowKeys((prevSelected) => {
@@ -174,7 +258,7 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         prevSelected.filter((key) => !visibleKeys.has(key))
       );
     }
-  };
+  }
 
   const handleBulkUpdate = async (data: {
     agentId?: string;
@@ -244,127 +328,61 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
     }
   };
 
-  const areAllVisibleRowsSelected = () => {
-    if (leads.length === 0) return false;
-    return leads.every((lead) => selectedRowKeys.includes(lead.key));
+  // Add this function to handle column visibility changes
+  const handleColumnChange = (newColumns: string[]) => {
+    setVisibleColumns(newColumns);
+    localStorage.setItem("tableColumns", JSON.stringify(newColumns));
   };
 
-  const columns = [
-    {
-      title: (
-        <div>
-          <CheckboxTwo
-            id="selectAllLeads"
-            onChange={handleSelectAll}
-            checked={areAllVisibleRowsSelected()}
-            // name="selectAllLeads"
-          />
-        </div>
-      ),
-      dataIndex: "key",
-      key: "checkbox",
-      render: (key: string) => (
-        <div>
-          <CheckboxTwo
-            id={key}
-            onChange={({ value: checkboxValue, isChecked }) =>
-              rowSelection({ value: checkboxValue, isChecked })
-            }
-            checked={selectedRowKeys.includes(key)}
-            // name={`checkbox-${key}`}
-          />
-        </div>
-      ),
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Number",
-      dataIndex: "number",
-      key: "number",
-    },
-    {
-      title: "Lead Source",
-      dataIndex: "leadSource",
-      key: "leadSource",
-      minWidth: 123,
-    },
-    {
-      title: "Agent",
-      dataIndex: "agent",
-      key: "agent",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-    },
-    {
-      title: "Service",
-      dataIndex: "service",
-      key: "service",
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (record: any) => {
-        console.log({ record });
-        return (
-          <div className="flex space-x-2">
-            <Link to={`/leads/${record.key}`}>
-              <Button
-                icon={<EditFilled />}
-                className="bg-transparent text-primary dark:text-blue-400"
-              />
-            </Link>
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedLead(record);
-                setIsQuickEditOpen(true);
-              }}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              Quick Edit
-            </Button>
-            {record?.statusData?.name && (
-              <Tooltip title={`Stands for : ${record?.statusData?.name}`}>
-                <Button
-                  icon={record?.statusData?.name[0]}
-                  className={`text-sm font-semibold text-white`}
-                  style={{
-                    background: record?.statusData?.color
-                      ? record?.statusData?.color
-                      : "green",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedLead(record);
-                    setIsQuickEditOpen(true);
-                  }}
-                />
-              </Tooltip>
-            )}
-          </div>
-        );
-      },
-    },
-  ];
+  // Filter columns based on visibility
+  const getVisibleColumns = () => {
+    return columns.filter(
+      (col) =>
+        col.key === "checkbox" ||
+        col.key === "action" ||
+        visibleColumns.includes(col.key)
+    );
+  };
 
-  const rowSelection = ({
+  function areAllVisibleRowsSelected() {
+    if (leads.length === 0) return false;
+    return leads.every((lead) => selectedRowKeys.includes(lead.key));
+  }
+
+  function rowSelection({
     value,
     isChecked,
   }: {
     value: string;
     isChecked: boolean;
-  }) => {
+  }) {
     if (isChecked) {
       setSelectedRowKeys((prev) => [...prev, value]);
     } else {
       setSelectedRowKeys((prev) => prev.filter((key) => key !== value));
+    }
+  }
+
+  const handleRowClick = (record: any) => {
+    setSelectedLead(record);
+    setIsQuickEditOpen(true);
+  };
+
+  const handleExportPDFLogic = async () => {
+    setLoading(true);
+    try {
+      await handleExportPDF();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportExcelLogic = async () => {
+    setLoading(true);
+    try {
+      await handleExportExcel();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -384,10 +402,17 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
         onAdvancedFilter={handleAdvancedFilter}
         onResetFilters={handleResetFilters}
         loading={loading}
+        initialFilterData={{ statusId, filterType }}
+        showExportButtons={showExportButtons}
+        onExportPDF={handleExportPDFLogic}
+        onExportExcel={handleExportExcelLogic}
+        columns={columns}
+        selectedColumns={visibleColumns}
+        onColumnChange={handleColumnChange}
       />
 
       <CustomAntdTable
-        columns={columns}
+        columns={getVisibleColumns()}
         dataSource={leads}
         pagination={{
           current: pagination.current,
@@ -398,22 +423,26 @@ const AllLeads = ({ derivativeEndpoint = "" }) => {
           showSizeChanger: true,
         }}
         isLoading={loading}
+        onRow={(record: any) => ({ onClick: () => handleRowClick(record) })}
       />
 
       {selectedLead && (
         <QuickEditModal
           isOpen={isQuickEditOpen}
           onClose={() => {
+            fetchLeads();
             setIsQuickEditOpen(false);
             setSelectedLead(null);
           }}
-          onSubmit={handleQuickUpdate}
           initialData={{
             id: selectedLead.key,
             status: selectedLead.statusData?._id || "",
             followUpDate: selectedLead.followUpDate,
             leadWonAmount: selectedLead.leadWonAmount,
-            addCalender: selectedLead.addCalender, // You might want to get this from your lead data
+            addCalender: selectedLead.addCalender,
+            leadLostReasonId: selectedLead.leadLostReasonId, // You might want to get this from your lead data
+            comment: selectedLead.comment, // You might want to get this from your lead data
+            leadName: selectedLead.name,
           }}
           isLoading={isUpdating}
         />

@@ -1,38 +1,117 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ClickOutside from "../ClickOutside";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import {
+  MdOutlineNotifications,
+  MdCalendarToday,
+  MdPersonAdd,
+} from "react-icons/md";
+import { FiBell, FiAlertCircle } from "react-icons/fi";
+import { toast } from "react-toastify";
+import { API } from "../../api";
 
-const notificationList = [
-  {
-    image: "/images/user/user-15.png",
-    title: "Piter Joined the Team!",
-    subTitle: "Congratulate him",
-  },
-  {
-    image: "/images/user/user-02.png",
-    title: "New message received",
-    subTitle: "Devid sent you new message",
-  },
-  {
-    image: "/images/user/user-26.png",
-    title: "New Payment received",
-    subTitle: "Check your earnings",
-  },
-  {
-    image: "/images/user/user-28.png",
-    title: "Jolly completed tasks",
-    subTitle: "Assign her newtasks",
-  },
-  {
-    image: "/images/user/user-27.png",
-    title: "Roman Joined the Team!",
-    subTitle: "Congratulate him",
-  },
-];
+dayjs.extend(relativeTime);
+
+interface Notification {
+  _id: string;
+  companyId: string;
+  userId: string;
+  titleTemplate: string;
+  bodyTemplate: string;
+  seenStatus: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifying, setNotifying] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [unSeenNotifIds, setUnSeenNotifIds] = useState([]);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const response = await API.getAuthAPI("getNotification", true);
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      setNotifications(response.data || []);
+      const unseenIds =
+        response.data
+          ?.filter((notification: Notification) => !notification.seenStatus)
+          .map((notification: Notification) => notification._id) || [];
+
+      // Update seen status if there are unseen notifications
+      if (unseenIds.length > 0) {
+        setUnSeenNotifIds(unseenIds);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch notifications");
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateSeenStatus = async (notificationIds: string[]) => {
+    try {
+      if (!notificationIds.length) return;
+      const response = await API.PutAuthAPI(
+        { notificationIds },
+        null,
+        "seenUpdate",
+        true
+      );
+
+      if (response.error) throw new Error(response.error);
+
+      // // Update local state
+      // setNotifications((prev) =>
+      //   prev.map((notification) =>
+      //     notificationIds.includes(notification._id)
+      //       ? { ...notification, seenStatus: true }
+      //       : notification
+      //   )
+      // );
+    } catch (error: any) {
+      console.error("Failed to update notification status:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (dropdownOpen && unSeenNotifIds) updateSeenStatus(unSeenNotifIds);
+  }, [dropdownOpen]);
+
+  // Calculate number of unseen notifications
+  const unseenCount = notifications.filter(
+    (notification) => !notification.seenStatus
+  ).length;
+
+  const handleNotificationClick = (notificationId: string) => {
+    // Update local state
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification._id === notificationId
+          ? { ...notification, seenStatus: true }
+          : notification
+      )
+    );
+
+    // Here you could also make an API call to update the seenStatus on the server
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    return dayjs(dateString).fromNow();
+  };
 
   return (
     <ClickOutside
@@ -41,10 +120,7 @@ const DropdownNotification = () => {
     >
       <li>
         <Link
-          onClick={() => {
-            setNotifying(false);
-            setDropdownOpen(!dropdownOpen);
-          }}
+          onClick={() => setDropdownOpen(!dropdownOpen)}
           to="#"
           className="relative flex h-12 w-12 items-center justify-center rounded-full border border-stroke bg-gray-2 text-dark hover:text-primary dark:border-dark-4 dark:bg-dark-3 dark:text-white dark:hover:text-white"
         >
@@ -65,68 +141,108 @@ const DropdownNotification = () => {
               />
             </svg>
 
-            <span
-              className={`absolute -top-0.5 right-0 z-1 h-2.5 w-2.5 rounded-full border-2 border-gray-2 bg-red-light dark:border-dark-3 ${
-                !notifying ? "hidden" : "inline"
-              }`}
-            >
-              <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-red-light opacity-75"></span>
-            </span>
+            {unseenCount > 0 && (
+              <span className="absolute -top-0.5 right-0 z-1 h-2.5 w-2.5 rounded-full border-2 border-gray-2 bg-red-light dark:border-dark-3">
+                <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-red-light opacity-75"></span>
+              </span>
+            )}
           </span>
         </Link>
 
         {dropdownOpen && (
-          <div
-            className={`absolute -right-27 mt-7.5 flex h-[550px] w-75 flex-col rounded-xl border-[0.5px] border-stroke bg-white px-5.5 pb-5.5 pt-5 shadow-default dark:border-dark-3 dark:bg-gray-dark sm:right-0 sm:w-[364px]`}
-          >
-            <div className="mb-5 flex items-center justify-between">
+          <div className="absolute -right-27 mt-7.5 flex h-[550px] w-75 flex-col rounded-xl border-[0.5px] border-stroke bg-white px-5.5 pb-5.5 pt-5 shadow-default dark:border-dark-3 dark:bg-gray-dark sm:right-0 sm:w-[364px]">
+            <div className="mb-3 flex items-center justify-between">
               <h5 className="text-lg font-medium text-dark dark:text-white">
                 Notifications
               </h5>
-              <span className="rounded-md bg-primary px-2 py-0.5 text-body-xs font-medium text-white">
-                5 new
-              </span>
+              {unseenCount > 0 && (
+                <span className="rounded-md bg-primary px-2 py-0.5 text-body-xs font-medium text-white">
+                  {unseenCount} new
+                </span>
+              )}
             </div>
 
-            <ul className="no-scrollbar mb-5 flex h-auto flex-col gap-1 overflow-y-auto">
-              {notificationList.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
-                    to="#"
+            <ul className="no-scrollbar mb-0 flex h-auto flex-col gap-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary"></div>
+                </div>
+              ) : notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <li
+                    key={notification._id}
+                    className={`transition-all duration-300 ${
+                      !notification.seenStatus
+                        ? "bg-blue-50 dark:bg-blue-900/10"
+                        : ""
+                    }`}
                   >
-                    <span className="block h-14 w-14 rounded-full">
-                      <img
-                        width={112}
-                        height={112}
-                        src={item.image}
-                        style={{
-                          width: "auto",
-                          height: "auto",
-                        }}
-                        alt="User"
-                      />
-                    </span>
+                    <Link
+                      className="flex items-center gap-4 rounded-[10px] p-2.5 hover:bg-gray-2 dark:hover:bg-dark-3"
+                      to="#"
+                      onClick={() => handleNotificationClick(notification._id)}
+                    >
+                      {/* Icon container with background */}
+                      <div
+                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
+                          !notification.seenStatus
+                            ? "bg-primary/10 text-primary dark:bg-primary/20"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        }`}
+                      >
+                        {notification.titleTemplate
+                          .toLowerCase()
+                          .includes("follow-up") ? (
+                          <MdCalendarToday size={20} />
+                        ) : notification.titleTemplate
+                            .toLowerCase()
+                            .includes("new lead") ? (
+                          <MdPersonAdd size={20} />
+                        ) : notification.titleTemplate
+                            .toLowerCase()
+                            .includes("notification") ? (
+                          <MdOutlineNotifications size={20} />
+                        ) : (
+                          <FiAlertCircle size={20} />
+                        )}
+                      </div>
 
-                    <span className="block">
-                      <span className="block font-medium text-dark dark:text-white">
-                        {item.title}
-                      </span>
-                      <span className="block text-body-sm font-medium text-dark-5 dark:text-dark-6">
-                        {item.subTitle}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
+                      <div className="flex w-full flex-col">
+                        <div className="flex items-center justify-between">
+                          <span className="block font-medium text-dark dark:text-white">
+                            {notification.titleTemplate}
+                          </span>
+                          {!notification.seenStatus && (
+                            <span className="h-2 w-2 rounded-full bg-primary"></span>
+                          )}
+                        </div>
+                        <span className="block text-sm text-dark-5 dark:text-dark-6">
+                          {notification.bodyTemplate}
+                        </span>
+                        <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {formatTimeAgo(notification.createdAt)}
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <div>No notifications</div>
+              )}
             </ul>
 
-            <Link
-              className="flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
+            {notifications.length === 0 && (
+              <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">
+                No notifications yet
+              </div>
+            )}
+
+            {/* <Link
+              className="mt-auto flex items-center justify-center rounded-[7px] border border-primary p-2.5 font-medium text-primary hover:bg-blue-light-5 dark:border-dark-4 dark:text-dark-6 dark:hover:border-primary dark:hover:bg-blue-light-3 dark:hover:text-primary"
               to="#"
             >
               See all notifications
-            </Link>
+            </Link> */}
           </div>
         )}
       </li>

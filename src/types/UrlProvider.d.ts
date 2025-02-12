@@ -18,6 +18,7 @@ export interface EndPointType {
   USERS: string;
   BULK_UPDATE: string;
   BULK_DELETE: string;
+  UPDATE_NOTIFICATION: string;
   Funnel: string;
   Crefunel: string;
   SubscrPlane: string;

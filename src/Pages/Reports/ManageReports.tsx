@@ -81,7 +81,7 @@ const ManageReports: React.FC = () => {
       minWidth: 80,
     },
     {
-      title: "Client Name",
+      title: "Employee Name",
       dataIndex: "clientName",
       key: "clientName",
       minWidth: 115,
@@ -93,21 +93,6 @@ const ManageReports: React.FC = () => {
       minWidth: 113,
     },
   ];
-
-  // useEffect(() => {
-  //   if (
-  //     agentList.length &&
-  //     serviceList.length &&
-  //     sourceList.length &&
-  //     statusList.length
-  //   ) {
-  //     setSelectedAgent(agentList[0]?.value);
-  //     setSelectedProduct(serviceList[0]?.value);
-  //     setSelectedSource(sourceList[0]?.value);
-  //     setSelectedStatus(statusList[0]?.value);
-  //     // fetchReportData();
-  //   }
-  // }, []);
 
   const handleDateRangeChange = (
     _dates: any,
@@ -150,6 +135,10 @@ const ManageReports: React.FC = () => {
   const handleSubmit = () => {
     fetchReportData();
   };
+
+  useEffect(() => {
+    fetchReportData();
+  }, []);
 
   return (
     <div className="rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
