@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Tooltip } from "antd";
 import { EditFilled } from "@ant-design/icons";
@@ -14,6 +14,7 @@ import {
   isWithinNext24Hours,
   isWithinPast24Hours,
 } from "../../utils/useFullFunctions";
+import { DEFAULT_VISIBLE_COLUMNS, getTableColumns } from "./Columns";
 
 interface Lead {
   key: string;
@@ -28,6 +29,20 @@ interface Lead {
   leadLostReasonId: string;
   productService: any;
   comment: string;
+  leadCost: number;
+  companyName: string;
+  fullAddress: string;
+  city: string;
+  website: string;
+  createdAt: string;
+  pinCode: string;
+  email: string;
+  description: string;
+  updatedAt: string;
+  leadAddType: string;
+  alternatePhone: string;
+  state: string;
+  country: string;
 }
 
 interface APILead {
@@ -44,6 +59,20 @@ interface APILead {
   leadLostReasonId: string;
   productService: { name: string } | null;
   comment: string;
+  leadCost: number;
+  companyName: string;
+  fullAddress: string;
+  city: string;
+  website: string;
+  createdAt: string;
+  pinCode: string;
+  email: string;
+  description: string;
+  updatedAt: string;
+  leadAddType: string;
+  alternatePhone: string;
+  state: string;
+  country: string;
 }
 
 const FollowupLeads = () => {
@@ -63,6 +92,29 @@ const FollowupLeads = () => {
     total: 0,
   });
 
+  // Initialize columns configuration
+  const columns = useMemo(
+    () =>
+      getTableColumns(
+        handleSelectAll,
+        areAllVisibleRowsSelected,
+        rowSelection,
+        selectedRowKeys,
+        setSelectedLead,
+        setIsQuickEditOpen
+      ),
+    [selectedRowKeys, leads]
+  );
+
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const savedColumns = localStorage.getItem("tableColumns");
+    if (savedColumns) {
+      const parsed = JSON.parse(savedColumns);
+      return parsed.length > 0 ? parsed : DEFAULT_VISIBLE_COLUMNS;
+    }
+    return DEFAULT_VISIBLE_COLUMNS;
+  });
+
   const transformLeadData = (apiLeads: APILead[]): Lead[] => {
     return apiLeads.map((lead) => ({
       key: lead._id,
@@ -74,10 +126,26 @@ const FollowupLeads = () => {
       followUpDate: new Date(lead.followUpDate),
       // followUpDate: new Date(lead.followUpDate).toLocaleString(),
       statusData: lead.leadStatus || {},
+      status: lead?.leadStatus?.name || "-",
+      service: lead?.productService?.name || "-",
       leadWonAmount: lead.leadWonAmount,
       addCalender: lead.addCalender,
       leadLostReasonId: lead.leadLostReasonId,
       comment: lead.comment,
+      leadCost: lead?.leadCost,
+      companyName: lead?.companyName || "-",
+      fullAddress: lead?.fullAddress || "-",
+      city: lead?.city || "-",
+      createdAt: lead?.createdAt || "-",
+      website: lead?.website || "-",
+      pinCode: lead?.pinCode || "-",
+      email: lead?.email || "-",
+      description: lead?.description || "-",
+      updatedAt: lead?.updatedAt || "-",
+      leadAddType: lead?.leadAddType || "-",
+      alternatePhone: lead?.alternatePhone || "-",
+      state: lead?.state || "-",
+      country: lead?.country || "-",
     }));
   };
 
@@ -180,7 +248,7 @@ const FollowupLeads = () => {
   };
 
   // Handle select all checkbox
-  const handleSelectAll = ({ isChecked }: { isChecked: boolean }) => {
+  function handleSelectAll({ isChecked }: { isChecked: boolean }) {
     if (isChecked) {
       const visibleKeys = leads.map((lead) => lead.key);
       setSelectedRowKeys((prevSelected) => {
@@ -193,176 +261,26 @@ const FollowupLeads = () => {
         prevSelected.filter((key) => !visibleKeys.has(key))
       );
     }
-  };
+  }
 
-  const areAllVisibleRowsSelected = () => {
+  function areAllVisibleRowsSelected() {
     if (leads.length === 0) return false;
     return leads.every((lead) => selectedRowKeys.includes(lead.key));
-  };
+  }
 
-  const columns = [
-    {
-      title: (
-        <div>
-          <CheckboxTwo
-            id="selectAllFollowupLeads"
-            onChange={handleSelectAll}
-            checked={areAllVisibleRowsSelected()}
-          />
-        </div>
-      ),
-      dataIndex: "key",
-      key: "checkbox",
-      render: (key: string) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <CheckboxTwo
-            id={key}
-            onChange={({ value: checkboxValue, isChecked }) =>
-              rowSelection({ value: checkboxValue, isChecked })
-            }
-            checked={selectedRowKeys.includes(key)}
-          />
-        </div>
-      ),
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "Number",
-      dataIndex: "number",
-      key: "number",
-    },
-    {
-      title: "Comment",
-      dataIndex: "comment",
-      key: "comment",
-      minWidth: 123,
-      render: (record: any) =>
-        record?.length ? (
-          <span>
-            {record.length > 75 ? (
-              <Tooltip title={record}>{`${record.slice(0, 75)}...`}</Tooltip>
-            ) : (
-              record
-            )}
-          </span>
-        ) : null,
-    },
-    {
-      title: "Product Service",
-      dataIndex: "productService",
-      key: "productService",
-      minWidth: 100,
-    },
-    {
-      title: "Agent",
-      dataIndex: "agent",
-      key: "agent",
-    },
-    {
-      title: "Follow-Up Date",
-      dataIndex: "followUpDate",
-      key: "followUpDate",
-      minWidth: 143,
-      render: (date: Date) => {
-        const options: Intl.DateTimeFormatOptions = {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        };
-        const formattedDate = date.toLocaleDateString("en-GB", options);
-        const formattedTime = date.toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        const formattedDateTime = `${formattedDate} - ${formattedTime}`;
-        // const formattedDate = date.toLocaleString();
-        const isUpcoming = isWithinNext24Hours(date);
-        const isMissed = isWithinPast24Hours(date);
-
-        return (
-          <div className="flex items-center gap-2">
-            <span>{formattedDateTime}</span>
-            {/* {isUpcoming && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
-                Due Soon
-              </span>
-            )} */}
-            {isMissed && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
-                Overdue
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      title: "Lead Source",
-      dataIndex: "leadSource",
-      key: "leadSource",
-      minWidth: 123,
-    },
-    {
-      title: "Action",
-      key: "action",
-      render: (record: any) => (
-        <div className="flex space-x-2">
-          <Link to={`/leads/${record.key}`}>
-            <Button
-              icon={<EditFilled />}
-              className="bg-transparent text-primary dark:text-blue-400"
-            />
-          </Link>
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedLead(record);
-              setIsQuickEditOpen(true);
-            }}
-            className="bg-primary text-white hover:bg-primary/90"
-          >
-            Quick Edit
-          </Button>
-          {record?.statusData?.name && (
-            <Tooltip title={`Stands for : ${record?.statusData?.name}`}>
-              <Button
-                icon={record?.statusData?.name[0]}
-                className={`text-sm font-semibold text-white`}
-                style={{
-                  background: record?.statusData?.color
-                    ? record?.statusData?.color
-                    : "green",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedLead(record);
-                  setIsQuickEditOpen(true);
-                }}
-              />
-            </Tooltip>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const rowSelection = ({
+  function rowSelection({
     value,
     isChecked,
   }: {
     value: string;
     isChecked: boolean;
-  }) => {
+  }) {
     if (isChecked) {
       setSelectedRowKeys((prev) => [...prev, value]);
     } else {
       setSelectedRowKeys((prev) => prev.filter((key) => key !== value));
     }
-  };
+  }
 
   const handleRowClick = (record: any) => {
     setSelectedLead(record);
@@ -442,6 +360,20 @@ const FollowupLeads = () => {
     console.log("Selected rows:", selectedRowKeys);
   }, [selectedRowKeys]);
 
+  const handleColumnChange = (newColumns: string[]) => {
+    setVisibleColumns(newColumns);
+    localStorage.setItem("tableColumns", JSON.stringify(newColumns));
+  };
+
+  const getVisibleColumns = () => {
+    return columns.filter(
+      (col) =>
+        col.key === "checkbox" ||
+        col.key === "action" ||
+        visibleColumns.includes(col.key)
+    );
+  };
+
   return (
     <div className="space-y-4">
       <LeadsTableHeader
@@ -454,10 +386,13 @@ const FollowupLeads = () => {
         onAdvancedFilter={handleAdvancedFilter}
         onResetFilters={handleResetFilters}
         loading={loading}
+        columns={columns}
+        selectedColumns={visibleColumns}
+        onColumnChange={handleColumnChange}
       />
 
       <CustomAntdTable
-        columns={columns}
+        columns={getVisibleColumns()}
         dataSource={leads}
         pagination={{
           current: pagination.current,

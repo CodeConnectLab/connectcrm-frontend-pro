@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "antd";
+import { useState, useEffect } from "react";
 import { SettingOutlined } from "@ant-design/icons";
 import ButtonDefault from "../Buttons/ButtonDefault";
 
