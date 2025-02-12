@@ -12,6 +12,7 @@ import {
   handleExportPDF,
 } from "../../api/commonAPI/exportApi";
 import { getTableColumns } from "./Columns";
+import { DEFAULT_VISIBLE_COLUMNS } from './Columns';
 
 interface Lead {
   key: string;
@@ -109,11 +110,10 @@ const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const savedColumns = localStorage.getItem("tableColumns");
     if (savedColumns) {
-      return JSON.parse(savedColumns);
+      const parsed = JSON.parse(savedColumns);
+      return parsed.length > 0 ? parsed : DEFAULT_VISIBLE_COLUMNS;
     }
-    return columns
-      .map((col) => col.key)
-      .filter((key) => key !== "checkbox" && key !== "action");
+    return DEFAULT_VISIBLE_COLUMNS;
   });
 
   const transformLeadData = (apiLeads: APILead[]): Lead[] => {

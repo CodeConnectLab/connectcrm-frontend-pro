@@ -8,6 +8,17 @@ import {
   isWithinPast24Hours,
 } from "../../utils/useFullFunctions";
 
+export const DEFAULT_VISIBLE_COLUMNS = [
+  "checkbox",
+  "name",
+  "number",
+  "comment",
+  "followUpDate",
+  "agent",
+  "status",
+  "action",
+];
+
 const getRowClassName = (record: any): string => {
   const followUpDate = new Date(record.followUpDate);
 
@@ -199,7 +210,7 @@ export const getTableColumns = (
     dataIndex: "country",
     key: "country",
   },
- 
+
   {
     title: "Lead Cost",
     dataIndex: "leadCost",
@@ -215,6 +226,16 @@ export const getTableColumns = (
     title: "Address",
     dataIndex: "fullAddress",
     key: "fullAddress",
+    render: (record: any) =>
+      record?.length ? (
+        <span>
+          {record.length > 56 ? (
+            <Tooltip title={record}>{`${record.slice(0, 56)}...`}</Tooltip>
+          ) : (
+            record
+          )}
+        </span>
+      ) : null,
   },
   {
     title: "City",
