@@ -7,12 +7,11 @@ import { PrivateRoute } from "./components/Utils/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import SignUp from "./components/Auth/SignUp";
 import Signin from "./components/Auth/Signin";
- import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css";
 import UniversalLoader from "./components/CommonUI/Loader";
 import { useEffect, useState } from "react";
 import ForgotPassword from "./Pages/ForgotPassword/ForgotPassword";
-import NotificationSetup from "./components/Notification/NotificationSetup";
-// Import the NotificationSetup
+
 export default function App() {
   const [loaderTime, setLoaderTime] = useState(true);
   //   const [loginState, setLoginState] = useState(false);
@@ -50,7 +49,6 @@ export default function App() {
         pauseOnHover
         theme="dark"
       />
-      <NotificationSetup/>
       <Router>
         <Routes>
           {/* Define your routes here */}

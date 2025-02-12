@@ -4,6 +4,7 @@ import DefaultLayout from "../../layouts/DefaultLayout";
 import { Outlet } from "react-router-dom";
 import UniversalLoader from "../../components/CommonUI/Loader";
 import { fetchGeneralData } from "../../api/commonAPI";
+import NotificationSetup from "../../components/Notification/NotificationSetup";
 // import Footer from "../../components/common/footer/Footer";
 // import Sidebar from "../../components/common/sidebar/Sidebar";
 // import ResponsiveSidebar from "../../components/mobileUI/ResponsiveSidebar";
@@ -18,6 +19,7 @@ export default function Dashboard() {
   return (
     <>
       <DefaultLayout>
+        <NotificationSetup />
         <Outlet />
       </DefaultLayout>
     </>
