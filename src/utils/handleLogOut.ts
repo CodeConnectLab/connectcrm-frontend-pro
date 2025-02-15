@@ -12,6 +12,7 @@ export const handleLogout = () => {
     localStorage.removeItem("crm_lostReason");
     localStorage.removeItem("crm_products_services");
     localStorage.removeItem("crm_countries");
+    localStorage.removeItem("fcmWebToken");
     toast.success("Logout successfully");
     window.location.href = "/login";
   } catch (err: any) {
