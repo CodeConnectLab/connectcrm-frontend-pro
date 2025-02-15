@@ -8,6 +8,7 @@ import {
 } from "firebase/messaging";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../Modals/ConfirmationModal";
+import { API } from "../../api";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCozUySs4wmujXlY_NZl8MKkIu8rZkpgic",
@@ -31,9 +32,6 @@ const NotificationSetup: React.FC = () => {
 
       if (permission === "granted") {
         await initializeFirebaseMessaging();
-        new Notification(
-          "Hi there! You will recieve notification like these from now on."
-        );
       } else {
         toast.error("Notifications are disabled");
       }
@@ -67,12 +65,37 @@ const NotificationSetup: React.FC = () => {
         throw new Error("Failed to retrieve FCM Token.");
       }
 
+      if (localStorage.getItem("fcmWebToken") === token) {
+        return;
+      }
+      // Update token in backend
+      try {
+        const { error, message } = await API.PutAuthAPI(
+          { fcmWebToken: token },
+          null,
+          "update-token",
+          true
+        );
+
+        if (error) {
+          throw new Error(error);
+        }
+
+        localStorage.setItem("fcmWebToken", token);
+      } catch (error) {
+        console.error("Failed to update FCM token:", error);
+      }
+
       onMessage(messaging, (payload) => {
         if (payload.notification) {
-          new Notification(payload.notification.title || "New Notification", {
-            body: payload.notification.body,
-            icon: payload.notification.icon,
-          });
+          new Notification(
+            payload.notification.title || "Connect CRM Notification",
+            {
+              body: payload.notification.body || "",
+              icon: payload.notification.icon || "/images/logo/LogoIcon.png",
+              badge: "/images/logo/LogoIcon.png",
+            }
+          );
         }
       });
     } catch (err) {
@@ -94,19 +117,21 @@ const NotificationSetup: React.FC = () => {
   }, []);
 
   return (
-    <ConfirmationModal
-      isOpen={showConfirmation}
-      onClose={() => setShowConfirmation(false)}
-      onConfirm={() => {
-        setShowConfirmation(false);
-        requestNotificationPermission();
-      }}
-      type="info"
-      title="Enable Notifications"
-      message="Would you like to receive notifications to stay updated with the latest updates?"
-      confirmLabel="Enable"
-      cancelLabel="Not Now"
-    />
+    <>
+      <ConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        onConfirm={() => {
+          setShowConfirmation(false);
+          requestNotificationPermission();
+        }}
+        type="info"
+        title="Enable Notifications"
+        message="Would you like to receive notifications to stay updated with the latest updates?"
+        confirmLabel="Enable"
+        cancelLabel="Not Now"
+      />
+    </>
   );
 };
 
