@@ -88,6 +88,19 @@ const EmployeeReport: React.FC = () => {
   });
 
   const employeeList = useMemo(() => getStoredAgents() || [], []);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const data = JSON.parse(userStr);
+        setUserRole(data?.role);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
+  
 
   const fetchCallList = useCallback(
     async (
@@ -268,23 +281,32 @@ const EmployeeReport: React.FC = () => {
   );
 
   const tabsData = useMemo(
-    () => [
-      {
-        tabName: "Summary",
-        component: <Summary data={reportData?.summary} isLoading={isLoading} />,
-      },
-      {
-        tabName: "Analysis",
-        component: (
-          <AnalysisReport data={reportData?.analysis} isLoading={isLoading} />
-        ),
-      },
-      {
-        tabName: "Call Details",
-        component: memoizedCallDetails,
-      },
-    ],
-    [reportData, isLoading, memoizedCallDetails]
+    () => {
+      const allTabs = [
+        {
+          tabName: "Summary",
+          component: <Summary data={reportData?.summary} isLoading={isLoading} />,
+        },
+        {
+          tabName: "Analysis",
+          component: (
+            <AnalysisReport data={reportData?.analysis} isLoading={isLoading} />
+          ),
+        },
+        {
+          tabName: "Call Details",
+          component: memoizedCallDetails,
+        },
+      ];
+
+      // Filter out Analysis and Call Details tabs for Super Admin
+      if (userRole !== "Super Admin") {
+        return allTabs.filter(tab => tab.tabName === "Summary");
+      }
+
+      return allTabs;
+    },
+    [reportData, isLoading, memoizedCallDetails, userRole]
   );
 
   return (
