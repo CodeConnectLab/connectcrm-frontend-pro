@@ -361,14 +361,15 @@ const LeadAction = ({
         {
           tabName: "Geo-Location Record",
           component: (
-            <AttachmentTab geoLocations={leadData?.geoLocation || []} />
+            <AttachmentTab geoLocations={leadData?.geoLocation || []} leadId={leadData?.lead?._id}
+            />
           ),
         },
       ];
 
   if (isLoading) {
     return <MiniLoader />;
-  }
+  }  
 
   return (
     <div
