@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import ClickOutside from "../ClickOutside";
@@ -13,11 +13,28 @@ import { GrDocumentUpload } from "react-icons/gr";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { IoBriefcaseOutline } from "react-icons/io5";
 import { PiPlugCharging } from "react-icons/pi";
+import { IoCalendarNumberOutline } from "react-icons/io5";
 import useScrollIndicator, {
   ScrollIndicatorButton,
 } from "../CommonUI/ScrollIndicator";
+
+interface MenuItem {
+  icon: ReactNode;
+  label: string;
+  route: string;
+  children?: Array<{
+    label: string;
+    route: string;
+  }>;
+}
+
+interface MenuGroup {
+  name: string;
+  menuItems: MenuItem[];
+}
+
 // Base menu structure
-export const menuGroups = [
+export const menuGroups: MenuGroup[] = [
   {
     name: "MAIN MENU",
     menuItems: [
@@ -49,25 +66,7 @@ export const menuGroups = [
         ],
       },
       {
-        icon: (
-          <svg
-            className="fill-current"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Calendar SVG paths */}
-            <path d="M17 14C17.5523 14 18 13.5523 18 13C18 12.4477 17.5523 12 17 12C16.4477 12 16 12.4477 16 13C16 13.5523 16.4477 14 17 14Z" fill="" />
-            <path d="M17 18C17.5523 18 18 17.5523 18 17C18 16.4477 17.5523 16 17 16C16.4477 16 16 16.4477 16 17C16 17.5523 16.4477 18 17 18Z" fill="" />
-            <path d="M13 13C13 13.5523 12.5523 14 12 14C11.4477 14 11 13.5523 11 13C11 12.4477 11.4477 12 12 12C12.5523 12 13 12.4477 13 13Z" fill="" />
-            <path d="M13 17C13 17.5523 12.5523 18 12 18C11.4477 18 11 17.5523 11 17C11 16.4477 11.4477 16 12 16C12.5523 16 13 16.4477 13 17Z" fill="" />
-            <path d="M7 14C7.55229 14 8 13.5523 8 13C8 12.4477 7.55229 12 7 12C6.44772 12 6 12.4477 6 13C6 13.5523 6.44772 14 7 14Z" fill="" />
-            <path d="M7 18C7.55229 18 8 17.5523 8 17C8 16.4477 7.55229 16 7 16C6.44772 16 6 16.4477 6 17C6 17.5523 6.44772 18 7 18Z" fill="" />
-            <path fillRule="evenodd" clipRule="evenodd" d="M7 1.75C7.41421 1.75 7.75 2.08579 7.75 2.5V3.26272C8.412 3.24999 9.14133 3.24999 9.94346 3.25H14.0564C14.8586 3.24999 15.588 3.24999 16.25 3.26272V2.5C16.25 2.08579 16.5858 1.75 17 1.75C17.4142 1.75 17.75 2.08579 17.75 2.5V3.32709C18.0099 3.34691 18.2561 3.37182 18.489 3.40313C19.6614 3.56076 20.6104 3.89288 21.3588 4.64124C22.1071 5.38961 22.4392 6.33855 22.5969 7.51098C22.75 8.65018 22.75 10.1058 22.75 11.9435V14.0564C22.75 15.8941 22.75 17.3498 22.5969 18.489C22.4392 19.6614 22.1071 20.6104 21.3588 21.3588C20.6104 22.1071 19.6614 22.4392 18.489 22.5969C17.3498 22.75 15.8942 22.75 14.0565 22.75H9.94359C8.10585 22.75 6.65018 22.75 5.51098 22.5969C4.33856 22.4392 3.38961 22.1071 2.64124 21.3588C1.89288 20.6104 1.56076 19.6614 1.40314 18.489C1.24997 17.3498 1.24998 15.8942 1.25 14.0564V11.9436C1.24998 10.1058 1.24997 8.65019 1.40314 7.51098C1.56076 6.33855 1.89288 5.38961 2.64124 4.64124C3.38961 3.89288 4.33856 3.56076 5.51098 3.40313C5.7439 3.37182 5.99006 3.34691 6.25 3.32709V2.5C6.25 2.08579 6.58579 1.75 7 1.75Z" fill="" />
-          </svg>
-        ),
+        icon: <IoCalendarNumberOutline className="text-2xl" />,
         label: "Calendar",
         route: "/calendar",
       },
@@ -127,22 +126,39 @@ export const menuGroups = [
 ];
 
 // Function to get role-based menu groups
-const getMenuGroups = (userRole: string | null) => {
-  const groups = JSON.parse(JSON.stringify(menuGroups)); // Deep clone the menu groups
+const getMenuGroups = (userRole: string | null): MenuGroup[] => {
+  const clonedGroups: MenuGroup[] = JSON.parse(JSON.stringify(menuGroups));
   
-  // Find the Reports menu item
-  const mainMenu = groups.find((group:any) => group.name === "MAIN MENU");
-  if (mainMenu) {
-    const reportsMenuItem = mainMenu.menuItems.find((item:any) => item.label === "Reports");
-    if (reportsMenuItem && reportsMenuItem.children) {
-      // Add call report only for Super Admin
-      if (userRole === "Super Admin") {
+  // Restore React elements for icons after JSON parse
+  clonedGroups.forEach(group => {
+    group.menuItems.forEach((item, index) => {
+      item.icon = menuGroups[clonedGroups.indexOf(group)].menuItems[index].icon;
+    });
+  });
+
+  if (userRole !== "Super Admin") {
+    // Filter MAIN MENU items
+    const mainMenu = clonedGroups.find(group => group.name === "MAIN MENU");
+    if (mainMenu) {
+      mainMenu.menuItems = mainMenu.menuItems.filter(item => 
+        !["Contacts", "SMS Panel", "WhatsApp Panel"].includes(item.label)
+      );
+    }
+
+    // Return only the MAIN MENU group for non-Super Admin users
+    return clonedGroups.filter(group => group.name === "MAIN MENU");
+  } else {
+    // For Super Admin, add call report
+    const mainMenu = clonedGroups.find(group => group.name === "MAIN MENU");
+    if (mainMenu) {
+      const reportsMenuItem = mainMenu.menuItems.find(item => item.label === "Reports");
+      if (reportsMenuItem && reportsMenuItem.children) {
         reportsMenuItem.children.push({ label: "Call report", route: "/reports/call" });
       }
     }
   }
   
-  return groups;
+  return clonedGroups;
 };
 
 interface SidebarProps {
@@ -218,7 +234,7 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
             ref={navRef}
             className="no-scrollbar mt-1 flex-1 overflow-y-auto px-4 lg:px-6"
           >
-            {menuGroups.map((group, groupIndex) => (
+            {currentMenuGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
                 <h3 className="mb-5 text-sm font-medium text-dark-4 dark:text-dark-6">
                   {group.name}
