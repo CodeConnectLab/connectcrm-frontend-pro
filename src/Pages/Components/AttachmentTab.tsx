@@ -1,13 +1,14 @@
-// AttachmentTab.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Spin, message, Tooltip } from "antd";
-import { DeleteFilled, EditFilled } from "@ant-design/icons";
+import { FaMapMarkedAlt } from "react-icons/fa";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import InputGroup from "../../components/FormElements/InputGroup";
-import { FaMapMarkedAlt } from "react-icons/fa";
 import FileUploadFillType from "../../components/FormElements/FileUpload/FileUploadFillType";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import useGetLocation from "../../hooks/useGetLocation";
+import axios from "axios";
+import { BASE_URL } from "../../api/UrlProvider";
+import { getAuthHeader } from "../../utils/TokenVerify";
 
 interface Location {
   latitude: number;
@@ -24,14 +25,16 @@ interface GeoLocation {
 }
 
 interface AttachmentTabProps {
-  geoLocations: GeoLocation[];
+  geoLocations?: GeoLocation[];
+  leadId?: string;
 }
 
-const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
+const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations = [], leadId }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [getLocationToggle, setGetLocationToggle] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { error, location: locationValue, loading } = useGetLocation({
@@ -40,8 +43,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
   });
 
   useEffect(() => {
-    // Transform geoLocation data to match table format
-    const transformedFiles = geoLocations?.map((item, index) => {
+    const transformedFiles = geoLocations.map((item, index) => {
       const [lat, lng] = item.coordinates.split(",");
       return {
         key: item._id,
@@ -55,7 +57,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
         },
         created: new Date(item.createdAt).toLocaleString()
       };
-    }) || [];
+    });
     setUploadedFiles(transformedFiles);
   }, [geoLocations]);
 
@@ -70,23 +72,66 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
     setFileName(event.target.value);
   };
 
-  const handleUpload = () => {
-    if (selectedFile) {
+  const handleUpload = async () => {
+    if (!selectedFile || !locationValue || !leadId) {
+      message.error('Please ensure file, location and lead ID are available');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('leadId', leadId);
+      formData.append('coordinates', `${locationValue.latitude},${locationValue.longitude}`);
+
+      // Get auth header
+      const authHeader = await getAuthHeader();
+
+      // Make direct axios call to handle multipart/form-data
+      const response = await axios({
+        method: 'post',
+        url: `${BASE_URL}geo-location`,
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': authHeader
+        }
+      });
+
+      if (response.data.error) {
+        throw new Error(response.data.message || 'Upload failed');
+      }
+
+      // Update UI with new file
       const newFile = {
-        key: Date.now().toString(),
+        key: response.data._id,
         serial: uploadedFiles.length + 1,
         file: selectedFile.name,
         fileName: fileName || selectedFile.name,
+        fileUrl: response.data.s3Url,
         location: locationValue,
         created: new Date().toLocaleString()
       };
+      
       setUploadedFiles([...uploadedFiles, newFile]);
+      message.success('File uploaded successfully');
+
+      // Reset form
       setSelectedFile(null);
       setFileName("");
       setGetLocationToggle(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      message.error(error.message || 'Failed to upload file');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -128,6 +173,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
           <a
             href={`https://www.google.com/maps?q=${record?.latitude},${record?.longitude}`}
             target="_blank"
+            rel="noopener noreferrer"
           >
             <Tooltip title="Click to Reveal location on Google Maps">
               <Button
@@ -137,20 +183,6 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
               />
             </Tooltip>
           </a>
-          {/* <Tooltip title="Edit this record">
-            <Button
-              icon={<EditFilled className="text-xl text-green" />}
-              size="middle"
-              className="dark:text-white"
-            />
-          </Tooltip>
-          <Tooltip title="Delete this record">
-            <Button
-              icon={<DeleteFilled className="text-xl text-red-500" />}
-              size="middle"
-              className="dark:text-white"
-            />
-          </Tooltip> */}
         </div>
       ),
     },
@@ -205,8 +237,8 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({ geoLocations }) => {
               />
               <ButtonDefault
                 onClick={handleUpload}
-                disabled={!selectedFile}
-                label="Upload"
+                disabled={!selectedFile || isUploading}
+                label={isUploading ? "Uploading..." : "Upload"}
                 variant="primary"
               />
             </div>
