@@ -70,7 +70,7 @@ export default function App() {
             })}
           </Route>
           <Route path="/login" element={<Signin />} />
-          <Route path="/signup" element={<SignUp />} />
+          {/* <Route path="/signup" element={<SignUp />} /> */}
           <Route path="*" element={<NotFound text={"Not found 404"} />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* <Route path="/reset-password" element={<ResetPassword />} />   */}
