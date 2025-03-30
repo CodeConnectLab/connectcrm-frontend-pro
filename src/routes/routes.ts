@@ -21,6 +21,7 @@ import SMSCompose from "../Pages/SMS/SMSCompose";
 import SMSReport from "../Pages/SMS/SMSReport";
 import WhatsAppCompose from "../Pages/WhatsAppPanel/WhatsAppCompose";
 import WhatsAppReport from "../Pages/WhatsAppPanel/WhatsAppReport";
+import BookingDashboard from "../Pages/Booking/BookingDashboard";
 
 const navRoutes = [
   {
@@ -118,6 +119,10 @@ const navRoutes = [
   {
     path: "/Upload-contacts/:id",
     component: ContactList,
+  },
+  {
+    path: "/booking",
+    component: BookingDashboard,
   },
 ];
 

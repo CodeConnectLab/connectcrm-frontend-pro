@@ -42,7 +42,7 @@ export const menuGroups: MenuGroup[] = [
         icon: <LuLayoutDashboard className="text-2xl" />,
         label: "Dashboard",
         route: "#",
-        children: [{ label: "Overview", route: "/" }],
+        children: [{ label: "Overview", route: "/" }, { label: "Booking", route: "/booking" }],
       },
       {
         icon: <LuUserPlus className="text-2xl" />,
