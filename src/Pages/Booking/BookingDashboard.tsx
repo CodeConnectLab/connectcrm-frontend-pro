@@ -1,61 +1,11 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
-import { Card } from "antd";
 import { FaRegCalendarCheck, FaRegCalendarTimes, FaRupeeSign } from "react-icons/fa";
 import { BiCalendar, BiCalendarEvent } from "react-icons/bi";
 import { MdPendingActions } from "react-icons/md";
-
-// Booking summary card component
-interface BookingSummaryCardProps {
-  title: string;
-  value: string;
-  count: number;
-  color: string;
-  icon: React.ReactNode;
-}
-
-const BookingSummaryCard: React.FC<BookingSummaryCardProps> = ({ 
-  title, 
-  value,
-  count,
-  color,
-  icon
-}) => (
-  <Card className="bg-white shadow-md dark:bg-gray-700 h-full p-0 overflow-hidden">
-      <p className="text-sm font-medium uppercase text-gray-500 dark:text-gray-400 mb-4">
-        {title}
-      </p>
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col">
-          <p className="text-4xl font-bold text-gray-800 dark:text-white mb-1">
-            {count}
-          </p>
-          <p className="text-base font-medium text-gray-600 dark:text-gray-300">
-            ({value})
-          </p>
-        </div>
-        <div 
-          className={`flex h-14 w-14 items-center justify-center rounded-full text-white text-xl`} 
-          style={{ backgroundColor: color }}
-        >
-          {icon}
-        </div>
-    </div>
-  </Card>
-);
-
-// Performance table component
-interface PerformanceRowData {
-  name: string;
-  thisMonthValue: string;
-  thisYearValue: string;
-}
-
-interface PerformanceTableProps {
-  title: string;
-  data: PerformanceRowData[];
-}
+import BookingSummaryCard from "../../components/CommonUI/BookingSummaryCard";
+import PerformanceTable, { PerformanceRowData } from "../../components/CommonUI/PerformanceTable";
 
 interface BookingMetrics {
   totalBooking: { count: number; value: string };
@@ -75,61 +25,6 @@ interface BookingMetrics {
     employees: PerformanceRowData[];
   }
 }
-
-const PerformanceTable: React.FC<PerformanceTableProps> = ({ title, data }) => (
-  <div className="rounded-lg bg-white px-5 pb-5 pt-5 shadow-1 dark:bg-gray-dark dark:shadow-card h-full">
-    <div className="mb-5">
-      <h4 className="text-xl font-bold text-dark dark:text-white">
-        {title}
-      </h4>
-    </div>
-    
-    <div className="grid grid-cols-3 border-b border-gray-200 pb-3">
-      <div className="px-2">
-        <h5 className="text-sm font-medium uppercase text-gray-500">
-          Name
-        </h5>
-      </div>
-      <div className="px-2 text-center">
-        <h5 className="text-sm font-medium uppercase text-gray-500">
-          This Month
-        </h5>
-      </div>
-      <div className="px-2 text-center">
-        <h5 className="text-sm font-medium uppercase text-gray-500">
-          This Year
-        </h5>
-      </div>
-    </div>
-
-    {data.map((row, key) => (
-      <div
-        className={`grid grid-cols-3 ${
-          key === data.length - 1
-            ? ""
-            : "border-b border-gray-200"
-        }`}
-        key={key}
-      >
-        <div className="flex items-center px-2 py-4">
-          <p className="font-medium text-gray-800 dark:text-white">
-            {row.name}
-          </p>
-        </div>
-        <div className="flex items-center justify-center px-2 py-4">
-          <p className="font-medium text-gray-800 dark:text-white">
-            {row.thisMonthValue}
-          </p>
-        </div>
-        <div className="flex items-center justify-center px-2 py-4">
-          <p className="font-medium text-gray-800 dark:text-white">
-            {row.thisYearValue}
-          </p>
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
 // Mock data for development
 const getMockBookingMetrics = (): BookingMetrics => {
@@ -215,7 +110,7 @@ const BookingDashboard: React.FC = () => {
   }
 
   return (
-    <div className=" min-h-screen">
+    <div className="min-h-screen">
       <div className="grid grid-cols-12 gap-4 mb-8">
         <div className="col-span-12 sm:col-span-6 lg:col-span-4 ">
           <BookingSummaryCard 

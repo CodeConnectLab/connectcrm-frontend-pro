@@ -14,6 +14,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { IoBriefcaseOutline } from "react-icons/io5";
 import { PiPlugCharging } from "react-icons/pi";
 import { IoCalendarNumberOutline } from "react-icons/io5";
+import { FaFileInvoiceDollar } from "react-icons/fa6";
 import useScrollIndicator, {
   ScrollIndicatorButton,
 } from "../CommonUI/ScrollIndicator";
@@ -43,6 +44,18 @@ export const menuGroups: MenuGroup[] = [
         label: "Dashboard",
         route: "#",
         children: [{ label: "Overview", route: "/" }, { label: "Booking", route: "/booking" }],
+      },
+      {
+        icon: <FaFileInvoiceDollar className="text-2xl" />,
+        label: "Booking",
+        route: "#",
+        children: [
+          { label: "Add Booking", route: "/booking/add-booking" },
+          { label: "All Booking", route: "/booking/all-booking" },
+          { label: "New Booking", route: "/booking/new-booking" },
+          { label: "Upcoming Payments", route: "/booking/upcoming-payments" },
+          { label: "Reports", route: "/booking/reports" },
+        ],
       },
       {
         icon: <LuUserPlus className="text-2xl" />,
