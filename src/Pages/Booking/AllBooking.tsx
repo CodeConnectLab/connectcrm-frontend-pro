@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, Input, Row, Col, Select, Button, Table, Tag, Space } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { debounce } from 'lodash';
-import { Link } from 'react-router-dom';
-
-const { Option } = Select;
-const { Search } = Input;
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Card, Tag, Space, Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { debounce } from "lodash";
+import { Link, useNavigate } from "react-router-dom";
+import CustomAntdTable from "../../components/Tables/CustomAntdTable";
+import SearchForm from "../../components/Header/SearchForm";
+import BookingAdvanceFilterUI from "./BookingAdvanceFilterUI";
+import ButtonDefault from "../../components/Buttons/ButtonDefault";
 
 interface BookingData {
   key: string;
@@ -15,23 +16,104 @@ interface BookingData {
   status: string;
 }
 
+interface BookingFilters {
+  status?: string;
+  vertical?: string;
+  as?: string;
+  vp?: string;
+  avp?: string;
+  gm?: string;
+  agm?: string;
+  tlcp?: string;
+  employee?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Mock data for demonstration
+const mockBookings: BookingData[] = [
+    {
+      key: "1",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "2",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Complete",
+    },
+    {
+      key: "3",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "4",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "5",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Complete",
+    },
+    {
+      key: "6",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "7",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "8",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Complete",
+    },
+    {
+      key: "9",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+    {
+      key: "10",
+      name: "Anurag",
+      contactNumber: "9999999654",
+      bookingAmount: 1000000,
+      status: "Pending",
+    },
+  ];
+
 const AllBooking: React.FC = () => {
   // State for table data
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  
+  const [searchText, setSearchText] = useState("");
+  const [isAdvanceFilterOpen, setIsAdvanceFilterOpen] = useState(false);
+ const navigate=useNavigate()
   // State for filters
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
-  const [verticalFilter, setVerticalFilter] = useState<string | undefined>(undefined);
-  const [asFilter, setAsFilter] = useState<string | undefined>(undefined);
-  const [vpFilter, setVpFilter] = useState<string | undefined>(undefined);
-  const [avpFilter, setAvpFilter] = useState<string | undefined>(undefined);
-  const [gmFilter, setGmFilter] = useState<string | undefined>(undefined);
-  const [agmFilter, setAgmFilter] = useState<string | undefined>(undefined);
-  const [tlcpFilter, setTlcpFilter] = useState<string | undefined>(undefined);
-  const [employeeFilter, setEmployeeFilter] = useState<string | undefined>(undefined);
-  
+  const [advancedFilters, setAdvancedFilters] = useState<BookingFilters>({});
+
   // Pagination state
   const [pagination, setPagination] = useState({
     current: 1,
@@ -39,128 +121,62 @@ const AllBooking: React.FC = () => {
     total: 0,
   });
 
-  // Mock data for demonstration
-  const mockBookings: BookingData[] = [
-    {
-      key: '1',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '2',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Complete',
-    },
-    {
-      key: '3',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '4',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '5',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Complete',
-    },
-    {
-      key: '6',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '7',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '8',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Complete',
-    },
-    {
-      key: '9',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-    {
-      key: '10',
-      name: 'Anurag',
-      contactNumber: '9999999654',
-      bookingAmount: 1000000,
-      status: 'Pending',
-    },
-  ];
-
-  // Mock options for dropdowns
-  const statusOptions = ['Pending', 'Complete', 'Canceled'];
-  const verticalOptions = ['Residential', 'Commercial', 'Industrial'];
-  const asOptions = ['AS 1', 'AS 2', 'AS 3'];
-  const vpOptions = ['VP 1', 'VP 2', 'VP 3'];
-  const avpOptions = ['AVP 1', 'AVP 2', 'AVP 3'];
-  const gmOptions = ['GM 1', 'GM 2', 'GM 3'];
-  const agmOptions = ['AGM 1', 'AGM 2', 'AGM 3'];
-  const tlcpOptions = ['TL/CP 1', 'TL/CP 2', 'TL/CP 3'];
-  const employeeOptions = ['Employee 1', 'Employee 2', 'Employee 3'];
-
   // Table columns
   const columns = [
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
     },
     {
-      title: 'Contact Number',
-      dataIndex: 'contactNumber',
-      key: 'contactNumber',
+      title: "Contact Number",
+      dataIndex: "contactNumber",
+      key: "contactNumber",
     },
     {
-      title: 'Booking Amount',
-      dataIndex: 'bookingAmount',
-      key: 'bookingAmount',
-      render: (amount: number) => `₹${amount.toLocaleString('en-IN')}`,
+      title: "Booking Amount",
+      dataIndex: "bookingAmount",
+      key: "bookingAmount",
+      render: (amount: number) => `₹${amount.toLocaleString("en-IN")}`,
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (status: string) => (
-        <Tag color={status === 'Complete' ? 'green' : status === 'Pending' ? 'gold' : 'red'}>
+        <Tag
+          color={
+            status === "Complete"
+              ? "green"
+              : status === "Pending"
+              ? "gold"
+              : "red"
+          }
+        >
           {status}
         </Tag>
       ),
     },
     {
-      title: 'Action',
-      key: 'action',
+      title: "Action",
+      key: "action",
       render: (_: unknown, record: BookingData) => (
-        <Space size="middle">
-          <Link to={`/booking/edit/${record.key}`} className="text-blue-500 hover:text-blue-700">
-            Edit/Add Payment
-          </Link>
-        </Space>
+        // <Space size="middle">
+        //   <Link
+        //     to={`/booking/edit/${record.key}`}
+        //     className="text-blue-500 hover:text-blue-700"
+        //   >
+        //     Edit/Add Payment
+        //   </Link>
+        // </Space>
+        <Button
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        className="bg-primary text-white hover:bg-primary/90"
+      >
+        Quick Edit
+      </Button>
       ),
     },
   ];
@@ -168,40 +184,44 @@ const AllBooking: React.FC = () => {
   // Filter function for search and dropdown filters
   const filterBookings = useCallback(() => {
     setLoading(true);
-    
+
     let filteredData = [...mockBookings];
-    
+
     // Apply search filter
     if (searchText) {
       filteredData = filteredData.filter(
-        booking => booking.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                  booking.contactNumber.includes(searchText)
+        (booking) =>
+          booking.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          booking.contactNumber.includes(searchText)
       );
     }
-    
-    // Apply dropdown filters
-    if (statusFilter) {
-      filteredData = filteredData.filter(booking => booking.status === statusFilter);
+
+    // Apply advanced filters
+    if (advancedFilters.status) {
+      filteredData = filteredData.filter(
+        (booking) => booking.status === advancedFilters.status
+      );
     }
-    
-    // For demonstration, we're not implementing filtering for all dropdowns
-    // In a real implementation, you would filter based on all selected values
-    
+
+    // Apply other filters (just for demonstration - in a real app, these would filter based on the relevant fields)
+    // For vertical, as, vp, avp, gm, agm, tlcp, employee, etc.
+
     setTimeout(() => {
       setBookings(filteredData);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: filteredData.length,
       }));
       setLoading(false);
     }, 500); // Simulate API call delay
-  }, [searchText, statusFilter, mockBookings]);
+  }, [searchText, advancedFilters, mockBookings]);
 
   // Debounced search handler
   const debouncedSearch = useMemo(
-    () => debounce((value: string) => {
-      setSearchText(value);
-    }, 500),
+    () =>
+      debounce((value: string) => {
+        setSearchText(value);
+      }, 500),
     []
   );
 
@@ -217,17 +237,28 @@ const AllBooking: React.FC = () => {
     });
   };
 
-  const handleReset = () => {
-    setStatusFilter(undefined);
-    setVerticalFilter(undefined);
-    setAsFilter(undefined);
-    setVpFilter(undefined);
-    setAvpFilter(undefined);
-    setGmFilter(undefined);
-    setAgmFilter(undefined);
-    setTlcpFilter(undefined);
-    setEmployeeFilter(undefined);
-    setSearchText('');
+  const handleAdvancedFilter = (filters: BookingFilters) => {
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    setAdvancedFilters(filters);
+    setIsAdvanceFilterOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({});
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const handleRowClick = (record: BookingData) => {
+    console.log("Row clicked:", record);
+    // Navigate to detail or open edit modal
+  };
+
+  const handleAddBooking = () => {
+    navigate("/booking/add-booking");
+  };
+
+  const toggleAdvanceFilter = () => {
+    setIsAdvanceFilterOpen(!isAdvanceFilterOpen);
   };
 
   // Apply filters when they change
@@ -236,204 +267,76 @@ const AllBooking: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 space-y-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">All Bookings</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          All Bookings
+        </h2>
       </div>
-      
-      {/* Filters Section */}
-      <Card className="mb-6" bordered={false}>
-        <div className="mb-4">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select Status"
-                allowClear
-                style={{ width: '100%' }}
-                value={statusFilter}
-                onChange={setStatusFilter}
-              >
-                {statusOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select Vertical"
-                allowClear
-                style={{ width: '100%' }}
-                value={verticalFilter}
-                onChange={setVerticalFilter}
-              >
-                {verticalOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select AS"
-                allowClear
-                style={{ width: '100%' }}
-                value={asFilter}
-                onChange={setAsFilter}
-              >
-                {asOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select VP"
-                allowClear
-                style={{ width: '100%' }}
-                value={vpFilter}
-                onChange={setVpFilter}
-              >
-                {vpOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select AVP"
-                allowClear
-                style={{ width: '100%' }}
-                value={avpFilter}
-                onChange={setAvpFilter}
-              >
-                {avpOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-          </Row>
-        </div>
-        
-        <div className="mb-4">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select GM"
-                allowClear
-                style={{ width: '100%' }}
-                value={gmFilter}
-                onChange={setGmFilter}
-              >
-                {gmOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select AGM"
-                allowClear
-                style={{ width: '100%' }}
-                value={agmFilter}
-                onChange={setAgmFilter}
-              >
-                {agmOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select TL/CP"
-                allowClear
-                style={{ width: '100%' }}
-                value={tlcpFilter}
-                onChange={setTlcpFilter}
-              >
-                {tlcpOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                placeholder="Select Employee"
-                allowClear
-                style={{ width: '100%' }}
-                value={employeeFilter}
-                onChange={setEmployeeFilter}
-              >
-                {employeeOptions.map(option => (
-                  <Option key={option} value={option}>{option}</Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                className="mr-2"
-                onClick={() => window.location.href = '/booking/add-booking'}
-              >
-                Add Booking
-              </Button>
-              <Button 
-                onClick={handleReset}
-                className="ml-2"
-              >
-                Reset
-              </Button>
-            </Col>
-          </Row>
-        </div>
-        
-        <div>
-          <Row gutter={[16, 16]}>
-            <Col span={24}>
-              <Search
-                placeholder="Search by name or contact number"
-                allowClear
-                enterButton={<SearchOutlined />}
-                size="middle"
-                onSearch={handleSearch}
-                style={{ maxWidth: 400 }}
-              />
-            </Col>
-          </Row>
-        </div>
-      </Card>
-      
-      {/* Table Section */}
-      <Card bordered={false}>
-        <div className="mb-4 flex justify-between items-center">
-          <span>Showing {bookings.length} bookings</span>
-          <div>
-            <Button className="mr-2">Customize Column</Button>
+
+      {/* Header with search and buttons */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="flex items-center">
+            <SearchForm
+              onSearch={handleSearch}
+              placeholder="Search by name or contact number"
+              searchTerm={searchText}
+            />
+          </div>
+          <div className="flex gap-3">
+            <ButtonDefault
+              label="Advanced Filter"
+              onClick={toggleAdvanceFilter}
+            />
+            <ButtonDefault
+              label="Add Booking"
+              variant="secondary"
+              icon={<PlusOutlined />}
+              onClick={handleAddBooking}
+            />
           </div>
         </div>
-        
-        <Table
+
+        {/* Advanced Filter UI */}
+        {isAdvanceFilterOpen && (
+          <BookingAdvanceFilterUI
+            onFilter={handleAdvancedFilter}
+            onReset={handleResetFilters}
+            loading={loading}
+            setIsAdvanceFilterEnable={setIsAdvanceFilterOpen}
+          />
+        )}
+      </div>
+
+      {/* Table Section */}
+      <Card className="bg-white dark:bg-gray-800" bordered={false}>
+        <div className="mb-4 flex justify-between items-center">
+          <span className="text-gray-700 dark:text-gray-300">
+            Showing {bookings.length} bookings
+          </span>
+        </div>
+
+        <CustomAntdTable
           columns={columns}
           dataSource={bookings}
-          loading={loading}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            onChange: (page, pageSize) => handleTableChange(page, pageSize || 10),
+            onChange: handleTableChange,
+            pageSizeOptions: ["10", "20", "50", "100"],
             showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
           }}
-          rowClassName="cursor-pointer"
+          isLoading={loading}
           onRow={(record: BookingData) => ({
-            onClick: () => {
-              // Handle row click (e.g., navigate to detail page)
-              console.log('Row clicked:', record);
-            },
+            onClick: () => handleRowClick(record),
           })}
+          rowClassName="cursor-pointer"
         />
       </Card>
     </div>
   );
 };
 
-export default AllBooking; 
+export default AllBooking;
