@@ -209,8 +209,16 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 xl:py-5">
-          <Link to="/">
+          <Link to="/" className="flex gap-4 items-center">
             <img
+              src={"/images/logo/197-197.png"}
+              // src={"/images/logo/crmLogoFull.png"}
+              alt="Logo"
+              className=""
+              style={{ width: "78px", height: "auto", borderRadius: "33px" }}
+            />
+            <span className="text-black dark:text-white text-[23px] font-bold uppercase">Red Kaizen</span>
+            {/* <img
               src={"/images/logo/crmLogoFull.png"}
               alt="Logo"
               className="dark:hidden"
@@ -221,7 +229,7 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
               alt="Logo"
               className="hidden dark:block"
               style={{ width: "auto", height: "auto", borderRadius: "33px" }}
-            />
+            /> */}
           </Link>
 
           <button

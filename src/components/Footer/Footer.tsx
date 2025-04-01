@@ -8,6 +8,7 @@ export default function Footer() {
           target="_blank"
           rel="noopener noreferrer"
         >
+          Red Kaizen Realty in partner with 
           Code Connect{" "}
         </a>{" "}
         <a

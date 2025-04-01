@@ -100,7 +100,9 @@ const UniversalLoader = () => {
         </div>
       </StyledWrapper>
       <div>
-        <span className="text-4xl font-bold text-black">Connect CRM</span>
+        {/* <span className="text-4xl font-bold text-black">Connect CRM</span>
+        <span className="text-4xl font-bold text-black">in partner with</span> */}
+        <span className="text-4xl font-bold text-black">Red Kaizen Realty</span>
       </div>
     </div>
   );
