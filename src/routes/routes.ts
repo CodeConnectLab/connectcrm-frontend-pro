@@ -139,7 +139,7 @@ const navRoutes = [
   },
   {
     path: "/booking/new-booking",
-    component: NewBooking,
+    component: AllBooking,
   },
   {
     path: "/booking/upcoming-payments",
