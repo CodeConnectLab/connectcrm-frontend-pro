@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, DatePicker } from "antd";
 import type { Dayjs } from "dayjs";
-import type { RangeValue } from 'rc-picker/lib/interface';
 import dayjs from "dayjs";
 import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
@@ -118,10 +117,12 @@ const BookingReports: React.FC = () => {
   ];
 
   const handleDateRangeChange = (
-    dates: RangeValue<Dayjs>,
+    dates: null | [Dayjs | null, Dayjs | null],
     dateStrings: [string, string]
   ) => {
-    setDateRange(dateStrings);
+    if (dates) {
+      setDateRange(dateStrings);
+    }
   };
 
   const fetchReportData = async () => {
