@@ -161,14 +161,6 @@ const AllBooking: React.FC = () => {
       title: "Action",
       key: "action",
       render: (_: unknown, record: BookingData) => (
-        // <Space size="middle">
-        //   <Link
-        //     to={`/booking/edit/${record.key}`}
-        //     className="text-blue-500 hover:text-blue-700"
-        //   >
-        //     Edit/Add Payment
-        //   </Link>
-        // </Space>
         <Button
         onClick={(e) => {
           e.stopPropagation();

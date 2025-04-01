@@ -6,6 +6,52 @@ const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
+// Dummy data for dropdowns
+const dummyData = {
+  employees: [
+    { value: 'emp1', label: 'John Doe' },
+    { value: 'emp2', label: 'Jane Smith' },
+    { value: 'emp3', label: 'Mike Johnson' },
+    { value: 'emp4', label: 'Sarah Williams' },
+  ],
+  avpList: [
+    { value: 'avp1', label: 'David Brown' },
+    { value: 'avp2', label: 'Emily Davis' },
+    { value: 'avp3', label: 'Robert Wilson' },
+  ],
+  tlcpList: [
+    { value: 'tl1', label: 'Michael Lee' },
+    { value: 'tl2', label: 'Jennifer Taylor' },
+    { value: 'tl3', label: 'William Anderson' },
+  ],
+  vpList: [
+    { value: 'vp1', label: 'Thomas Moore' },
+    { value: 'vp2', label: 'Elizabeth Clark' },
+    { value: 'vp3', label: 'Daniel White' },
+  ],
+  agmList: [
+    { value: 'agm1', label: 'Joseph Martin' },
+    { value: 'agm2', label: 'Margaret Thompson' },
+    { value: 'agm3', label: 'Christopher Garcia' },
+  ],
+  asList: [
+    { value: 'as1', label: 'Kevin Rodriguez' },
+    { value: 'as2', label: 'Lisa Martinez' },
+    { value: 'as3', label: 'Brian Lee' },
+  ],
+  gmList: [
+    { value: 'gm1', label: 'George Wright' },
+    { value: 'gm2', label: 'Helen Adams' },
+    { value: 'gm3', label: 'Edward Baker' },
+  ],
+  verticals: [
+    { value: 'vert1', label: 'Residential' },
+    { value: 'vert2', label: 'Commercial' },
+    { value: 'vert3', label: 'Industrial' },
+    { value: 'vert4', label: 'Retail' },
+  ],
+};
+
 interface BookingFormValues {
   chooseName: string;
   projectName: string;
@@ -73,7 +119,7 @@ const AddBooking: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen dark:bg-gray-800">
       
       <Form
         form={form}
@@ -83,7 +129,7 @@ const AddBooking: React.FC = () => {
         className="rounded-lg"
       >
         {/* Basic Detail Section */}
-        <Card className="mb-6" title={<Title level={4}>Basic Detail</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Basic Detail</Title>}>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
@@ -186,21 +232,23 @@ const AddBooking: React.FC = () => {
         </Card>
 
         {/* Reference Section */}
-        <Card className="mb-6" title={<Title level={4}>Reference</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Reference</Title>}>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
                 label="Employee"
                 name="employee"
+                className="dark:text-white"
               >
                 <Select
                   showSearch
                   placeholder="Select employee"
                   optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                 >
-                  <Option value="employee1">Employee 1</Option>
-                  <Option value="employee2">Employee 2</Option>
-                  <Option value="employee3">Employee 3</Option>
+                  {dummyData.employees.map(emp => (
+                    <Option key={emp.value} value={emp.value}>{emp.label}</Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -208,8 +256,18 @@ const AddBooking: React.FC = () => {
               <Form.Item
                 label="AVP"
                 name="avp"
+                className="dark:text-white"
               >
-                <Input placeholder="AVP" />
+                <Select
+                  showSearch
+                  placeholder="Select AVP"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.avpList.map(avp => (
+                    <Option key={avp.value} value={avp.value}>{avp.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -219,16 +277,36 @@ const AddBooking: React.FC = () => {
               <Form.Item
                 label="TL/CP"
                 name="tlcp"
+                className="dark:text-white"
               >
-                <Input placeholder="TL/CP" />
+                <Select
+                  showSearch
+                  placeholder="Select TL/CP"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.tlcpList.map(tl => (
+                    <Option key={tl.value} value={tl.value}>{tl.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 label="VP"
                 name="vp"
+                className="dark:text-white"
               >
-                <Input placeholder="VP" />
+                <Select
+                  showSearch
+                  placeholder="Select VP"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.vpList.map(vp => (
+                    <Option key={vp.value} value={vp.value}>{vp.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -238,16 +316,36 @@ const AddBooking: React.FC = () => {
               <Form.Item
                 label="AGM"
                 name="agm"
+                className="dark:text-white"
               >
-                <Input placeholder="AGM" />
+                <Select
+                  showSearch
+                  placeholder="Select AGM"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.agmList.map(agm => (
+                    <Option key={agm.value} value={agm.value}>{agm.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 label="AS"
                 name="as"
+                className="dark:text-white"
               >
-                <Input placeholder="AS" />
+                <Select
+                  showSearch
+                  placeholder="Select AS"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.asList.map(as => (
+                    <Option key={as.value} value={as.value}>{as.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -257,23 +355,43 @@ const AddBooking: React.FC = () => {
               <Form.Item
                 label="GM"
                 name="gm"
+                className="dark:text-white"
               >
-                <Input placeholder="GM" />
+                <Select
+                  showSearch
+                  placeholder="Select GM"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.gmList.map(gm => (
+                    <Option key={gm.value} value={gm.value}>{gm.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 label="Vertical"
                 name="vertical"
+                className="dark:text-white"
               >
-                <Input placeholder="Vertical" />
+                <Select
+                  showSearch
+                  placeholder="Select Vertical"
+                  optionFilterProp="children"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                >
+                  {dummyData.verticals.map(vert => (
+                    <Option key={vert.value} value={vert.value}>{vert.label}</Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
         </Card>
 
         {/* Payment Detail Section */}
-        <Card className="mb-6" title={<Title level={4}>Payment Detail</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Payment Detail</Title>}>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
@@ -412,13 +530,18 @@ const AddBooking: React.FC = () => {
         </Card>
 
         {/* Remark Section */}
-        <Card className="mb-6" title={<Title level={4}>Remark</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Remark</Title>}>
           <Row>
             <Col span={24}>
               <Form.Item
                 name="remark"
+                className="dark:text-white"
               >
-                <TextArea rows={4} placeholder="Enter any remarks here" />
+                <TextArea 
+                  rows={4} 
+                  placeholder="Enter any remarks here"
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -436,6 +559,68 @@ const AddBooking: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
+
+      <style>{`
+        .ant-select-selector,
+        .ant-input,
+        .ant-picker,
+        .ant-input-number {
+          border-radius: 4px !important;
+        }
+        .dark .ant-select-selector,
+        .dark .ant-input,
+        .dark .ant-picker,
+        .dark .ant-input-number,
+        .dark .ant-picker-panel-container {
+          background-color: #374151 !important;
+          border-color: #4b5563 !important;
+          color: white !important;
+        }
+        .dark .ant-select-arrow,
+        .dark .ant-picker-suffix,
+        .dark .ant-picker-icon {
+          color: white !important;
+        }
+        .dark .ant-picker-header,
+        .dark .ant-picker-content th {
+          color: white !important;
+        }
+        .dark .ant-picker-cell {
+          color: rgba(255, 255, 255, 0.7) !important;
+        }
+        .dark .ant-picker-cell-in-view {
+          color: white !important;
+        }
+        .dark .ant-picker-cell:hover .ant-picker-cell-inner {
+          background-color: #4b5563 !important;
+        }
+        .dark .ant-picker-cell-selected .ant-picker-cell-inner {
+          background-color: #1890ff !important;
+        }
+        .dark .ant-picker-footer,
+        .dark .ant-picker-today-btn {
+          color: white !important;
+        }
+        .dark .ant-card-bordered {
+          border: 1px solid #4b5563 !important;
+        }
+        .dark .ant-form-item-label > label {
+          color: white !important;
+        }
+        .dark .ant-select-dropdown {
+          background-color: #374151 !important;
+          border-color: #4b5563 !important;
+        }
+        .dark .ant-select-item {
+          color: white !important;
+        }
+        .dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+          background-color: #1890ff !important;
+        }
+        .dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+          background-color: #4b5563 !important;
+        }
+      `}</style>
     </div>
   );
 };

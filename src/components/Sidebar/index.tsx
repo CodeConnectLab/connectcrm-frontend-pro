@@ -43,13 +43,14 @@ export const menuGroups: MenuGroup[] = [
         icon: <LuLayoutDashboard className="text-2xl" />,
         label: "Dashboard",
         route: "#",
-        children: [{ label: "Overview", route: "/" }, { label: "Booking", route: "/booking" }],
+        children: [{ label: "Overview", route: "/" },],
       },
       {
         icon: <FaFileInvoiceDollar className="text-2xl" />,
         label: "Booking",
         route: "#",
         children: [
+          { label: "Overview", route: "/booking" },
           { label: "Add Booking", route: "/booking/add-booking" },
           { label: "All Booking", route: "/booking/all-booking" },
           { label: "New Booking", route: "/booking/new-booking" },
