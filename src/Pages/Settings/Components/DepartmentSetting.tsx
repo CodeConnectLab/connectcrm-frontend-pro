@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "antd";
-import { EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Modal } from "antd";
+import { EditOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import CustomAntdTable from "../../../components/Tables/CustomAntdTable";
 import ButtonDefault from "../../../components/Buttons/ButtonDefault";
@@ -10,6 +10,7 @@ import { API } from "../../../api";
 import { END_POINT } from "../../../api/UrlProvider";
 import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
 import TextAreaCustom from "../../../components/FormElements/TextArea/TextAreaCustom";
+import ConfirmationModal from "../../../components/Modals/ConfirmationModal";
 
 interface User {
   key: string;
@@ -23,6 +24,17 @@ interface User {
   assignedTL?: string;
 }
 
+// Define a type for user data
+interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  assignedTL?: string;
+  isActive: boolean;
+}
+
 interface FormData {
   userName: string;
   email: string;
@@ -34,6 +46,7 @@ interface FormData {
 }
 
 export default function DepartmentSetting() {
+  const [tableLoading, setTableLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [tableData, setTableData] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -41,6 +54,13 @@ export default function DepartmentSetting() {
   const [teamLeads, setTeamLeads] = useState<
     { value: string; label: string }[]
   >([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [assignUserId, setAssignUserId] = useState<string>("");
+  const [employees, setEmployees] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [showAssignUserModal, setShowAssignUserModal] = useState(false);
 
   const initialFormState: FormData = {
     userName: "",
@@ -56,10 +76,11 @@ export default function DepartmentSetting() {
 
   const fetchUsers = async () => {
     try {
+      setTableLoading(true);
       const { data, error } = await API.getAuthAPI(END_POINT.USERS, true);
       if (error) throw new Error(error);
 
-      const transformedData = data.map((user: any, index: number) => ({
+      const transformedData = data.map((user: UserData, index: number) => ({
         key: user._id,
         sNo: index + 1,
         userName: user.name,
@@ -75,14 +96,27 @@ export default function DepartmentSetting() {
 
       // Set team leads
       const teamLeadsList = data
-        .filter((user: any) => user.role === "Team Leader" && user.isActive)
-        .map((lead: any) => ({
+        .filter(
+          (user: UserData) => user.role === "Team Leader" && user.isActive
+        )
+        .map((lead: UserData) => ({
           value: lead._id,
           label: lead.name,
         }));
       setTeamLeads(teamLeadsList);
+
+      // Set employees for reassignment
+      const employeesList = data
+        .filter((user: UserData) => user.isActive)
+        .map((employee: UserData) => ({
+          value: employee._id,
+          label: employee.name,
+        }));
+      setEmployees(employeesList);
     } catch (error: any) {
       console.error(error.message || "Failed to fetch users");
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -221,6 +255,53 @@ export default function DepartmentSetting() {
     }
   };
 
+  const handleDelete = (key: string) => {
+    setDeleteUserId(key);
+    setShowDeleteModal(true);
+  };
+
+  const handleAssignUser = () => {
+    setShowDeleteModal(false);
+    setShowAssignUserModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteUserId) return;
+
+    if (!assignUserId) {
+      toast.error("Please select an employee to transfer tasks and data to");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        deleteUserId,
+        LeadassigenUserId: assignUserId,
+      };
+
+      const { error } = await API.DeleteAuthAPI(
+        deleteUserId,
+        "delete-user",
+        true,
+        payload,
+        false
+      );
+
+      if (error) throw new Error(error);
+
+      toast.success("User deleted successfully");
+      setShowAssignUserModal(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error(error.message || "Failed to delete user");
+      toast.error(error.message || "Failed to delete user");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: "S.No.",
@@ -273,6 +354,11 @@ export default function DepartmentSetting() {
             icon={<EditOutlined />}
             className="bg-primary text-white"
             onClick={() => handleEdit(record.key)}
+          />
+          <Button
+            icon={<DeleteOutlined />}
+            className="bg-red-500 text-white"
+            onClick={() => handleDelete(record.key)}
           />
         </div>
       ),
@@ -404,12 +490,62 @@ export default function DepartmentSetting() {
 
       <CustomAntdTable
         columns={columns}
+        isLoading={tableLoading}
         dataSource={tableData}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
         }}
       />
+
+      {/* Initial Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleAssignUser}
+        type="delete"
+        title="Confirm User Deletion"
+        message="Are you sure you want to delete this user? You'll need to assign all existing tasks and data to another employee."
+        confirmLabel="Continue"
+        width={500}
+      />
+
+      {/* Assign User Modal */}
+      <Modal
+        title="Assign Tasks and Data"
+        open={showAssignUserModal}
+        onCancel={() => setShowAssignUserModal(false)}
+        footer={null}
+        width={500}
+      >
+        <p className="mb-4 text-gray-600 dark:text-gray-400">
+          Select an employee to transfer all tasks and data from the deleted
+          user.
+        </p>
+
+        <SelectGroupOne
+          label="Assign to Employee"
+          options={employees.filter((emp) => emp.value !== deleteUserId)}
+          selectedOption={assignUserId}
+          setSelectedOption={(value) => setAssignUserId(value)}
+          required
+        />
+
+        <div className="mt-6 flex justify-end gap-3">
+          <ButtonDefault
+            label="Cancel"
+            variant="outline"
+            onClick={() => setShowAssignUserModal(false)}
+          />
+          <ButtonDefault
+            label={isLoading ? "Processing..." : "Delete and Transfer"}
+            variant="primary"
+            onClick={confirmDelete}
+            customClasses="!bg-red-500 hover:!bg-red-600"
+            disabled={!assignUserId || isLoading}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
