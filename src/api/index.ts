@@ -94,7 +94,8 @@ export const DeleteAuthAPI = async <T>(
   id: string | number,
   endPoint: string,
   tokenRequired: boolean = false,
-  body?: any
+  body?: any,
+  idInUrl: boolean = true
   // Token: string = "",
   // navigate?: NavigateFunction
 ): Promise<ApiResponse<T>> => {
@@ -102,7 +103,7 @@ export const DeleteAuthAPI = async <T>(
   const config: ApiConfig = {
     method: "delete",
     maxBodyLength: Infinity,
-    url: `${BASE_URL}${endPoint}/${id}`,
+    url: idInUrl ? `${BASE_URL}${endPoint}/${id}` : `${BASE_URL}${endPoint}`,
     headers: {
       Authorization: header,
     },

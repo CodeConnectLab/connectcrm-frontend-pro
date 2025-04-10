@@ -51,7 +51,8 @@ export interface ApiMethods {
     id: string | number,
     endPoint: string,
     tokenRequired: boolean,
-    body?: any
+    body?: any,
+    idInUrl?: boolean
     // Token?: string,
     // navigate?: NavigateFunction
   ) => Promise<ApiResponse<T>>;
