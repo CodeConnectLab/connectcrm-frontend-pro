@@ -76,7 +76,7 @@ export const menuGroups: MenuGroup[] = [
         route: "#",
         children: [
           { label: "Employees List", route: "/call-manage/employee" },
-          { label: "Employee report", route: "/call-manage/employees-report" },
+          // { label: "Employee report", route: "/call-manage/employees-report" },
         ],
       },
       {
@@ -167,7 +167,7 @@ const getMenuGroups = (userRole: string | null): MenuGroup[] => {
     if (mainMenu) {
       const reportsMenuItem = mainMenu.menuItems.find(item => item.label === "Reports");
       if (reportsMenuItem && reportsMenuItem.children) {
-        reportsMenuItem.children.push({ label: "Call report", route: "/reports/call" });
+        // reportsMenuItem.children.push({ label: "Call report", route: "/reports/call" });
       }
     }
   }
