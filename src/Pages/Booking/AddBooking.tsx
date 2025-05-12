@@ -1,56 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, Input, Select, DatePicker, Button, Card, Row, Col, Typography, InputNumber } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
+import { useProductAndService } from '../../CustomHooks/useProductAndService';
+import { API } from '../../api';
+import { END_POINT } from '../../api/UrlProvider';
 
 const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Dummy data for dropdowns
-const dummyData = {
-  employees: [
-    { value: 'emp1', label: 'John Doe' },
-    { value: 'emp2', label: 'Jane Smith' },
-    { value: 'emp3', label: 'Mike Johnson' },
-    { value: 'emp4', label: 'Sarah Williams' },
-  ],
-  avpList: [
-    { value: 'avp1', label: 'David Brown' },
-    { value: 'avp2', label: 'Emily Davis' },
-    { value: 'avp3', label: 'Robert Wilson' },
-  ],
-  tlcpList: [
-    { value: 'tl1', label: 'Michael Lee' },
-    { value: 'tl2', label: 'Jennifer Taylor' },
-    { value: 'tl3', label: 'William Anderson' },
-  ],
-  vpList: [
-    { value: 'vp1', label: 'Thomas Moore' },
-    { value: 'vp2', label: 'Elizabeth Clark' },
-    { value: 'vp3', label: 'Daniel White' },
-  ],
-  agmList: [
-    { value: 'agm1', label: 'Joseph Martin' },
-    { value: 'agm2', label: 'Margaret Thompson' },
-    { value: 'agm3', label: 'Christopher Garcia' },
-  ],
-  asList: [
-    { value: 'as1', label: 'Kevin Rodriguez' },
-    { value: 'as2', label: 'Lisa Martinez' },
-    { value: 'as3', label: 'Brian Lee' },
-  ],
-  gmList: [
-    { value: 'gm1', label: 'George Wright' },
-    { value: 'gm2', label: 'Helen Adams' },
-    { value: 'gm3', label: 'Edward Baker' },
-  ],
-  verticals: [
-    { value: 'vert1', label: 'Residential' },
-    { value: 'vert2', label: 'Commercial' },
-    { value: 'vert3', label: 'Industrial' },
-    { value: 'vert4', label: 'Retail' },
-  ],
+// Roles hierarchy for reference
+const roleHierarchy = {
+  "Employee": "Team Leader",
+  "Team Leader": "AGM",
+  "AGM": "GM",
+  "GM": "AVP",
+  "AVP": "VP",
+  "VP": "AS",
+  "AS": "Vertical"
 };
+
+// Define user interface
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  isActive: boolean;
+  [key: string]: string | boolean | undefined;
+}
 
 interface BookingFormValues {
   chooseName: string;
@@ -85,12 +64,17 @@ const AddBooking: React.FC = () => {
   const [form] = Form.useForm<BookingFormValues>();
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [netRevenue, setNetRevenue] = useState<number>(0);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [usersByRole, setUsersByRole] = useState<{
+    [role: string]: { value: string; label: string }[];
+  }>({});
 
   // Sample options for dropdowns
-  const projectOptions = ['Project A', 'Project B', 'Project C'];
-  const unitOptions = ['Unit 1', 'Unit 2', 'Unit 3'];
-  const sizeOptions = ['1 BHK', '2 BHK', '3 BHK', '4 BHK'];
-
+  const { 
+    optionList,
+    fetchProductServices,
+  } = useProductAndService(true);
+  
   const calculateTotalRevenue = () => {
     const bsp = form.getFieldValue('bsp') || 0;
     const gst = form.getFieldValue('gst') || 0;
@@ -109,6 +93,89 @@ const AddBooking: React.FC = () => {
     });
   };
 
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await API.getAuthAPI(END_POINT.USERS, true);
+      if (error) throw new Error(error);
+
+      // Group users by their role
+      const usersByRoleMap: { [role: string]: { value: string; label: string }[] } = {};
+      
+      // Get all roles including Vertical
+      const roles = [...Object.keys(roleHierarchy), "Vertical"];
+      
+      // Initialize empty arrays for each role
+      roles.forEach(role => {
+        usersByRoleMap[role] = [];
+      });
+      
+      // Populate users for each role
+      data.forEach((user: User) => {
+        if (user.isActive && user.role) {
+          usersByRoleMap[user.role] = [
+            ...(usersByRoleMap[user.role] || []),
+            {
+              value: user._id,
+              label: user.name
+            }
+          ];
+        }
+      });
+      
+      setUsersByRole(usersByRoleMap);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Failed to fetch users");
+    }
+  };
+
+  // Handle selection of employee in the Reference section
+  const handleEmployeeSelect = (value: string, role: string) => {
+    // Set the selected role to control which other selects are enabled
+    setSelectedRole(role);
+    
+    // Convert role name to corresponding form field name
+    const roleToFieldMap: {[key: string]: keyof BookingFormValues} = {
+      "Employee": "employee",
+      "Team Leader": "tlcp",
+      "AGM": "agm",
+      "GM": "gm",
+      "AVP": "avp",
+      "VP": "vp",
+      "AS": "as",
+      "Vertical": "vertical"
+    };
+    
+    // Update the form value for the selected role
+    const fieldName = roleToFieldMap[role];
+    if (fieldName) {
+      form.setFieldsValue({
+        [fieldName]: value
+      });
+    }
+  };
+
+  // Check if a select should be disabled based on role hierarchy
+  const shouldDisableSelect = (role: string): boolean => {
+    if (!selectedRole) return false;
+    
+    // If no role is selected, or the role in hierarchy is higher than or equal to the selected role
+    // Create a map of role positions in the hierarchy for comparison
+    const roleOrder: { [role: string]: number } = {};
+    const allRoles = ["Employee", ...Object.values(roleHierarchy)];
+    
+    allRoles.forEach((role, index) => {
+      roleOrder[role] = index;
+    });
+    
+    // If selectedRole is higher in hierarchy (smaller index) than current role, disable it
+    return roleOrder[selectedRole] > roleOrder[role];
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const onFinish = (values: BookingFormValues) => {
     console.log('Form values:', values);
     // Handle form submission here
@@ -118,6 +185,10 @@ const AddBooking: React.FC = () => {
     calculateTotalRevenue();
   };
 
+  useEffect(()=>{
+    fetchProductServices()
+  },[fetchProductServices])
+  
   return (
     <div className="min-h-screen dark:bg-gray-800">
       
@@ -155,8 +226,8 @@ const AddBooking: React.FC = () => {
                 rules={[{ required: true, message: 'Please select a project' }]}
               >
                 <Select placeholder="Select project">
-                  {projectOptions.map(project => (
-                    <Option key={project} value={project}>{project}</Option>
+                  {optionList.map(project => (
+                    <Option key={project.value} value={project.value}>{project.label}</Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -197,11 +268,7 @@ const AddBooking: React.FC = () => {
                 label="Unit"
                 name="unit"
               >
-                <Select placeholder="Select unit">
-                  {unitOptions.map(unit => (
-                    <Option key={unit} value={unit}>{unit}</Option>
-                  ))}
-                </Select>
+                <Input placeholder="Enter Unit" />
               </Form.Item>
             </Col>
           </Row>
@@ -221,11 +288,7 @@ const AddBooking: React.FC = () => {
                 label="Size"
                 name="size"
               >
-                <Select placeholder="Select size">
-                  {sizeOptions.map(size => (
-                    <Option key={size} value={size}>{size}</Option>
-                  ))}
-                </Select>
+                 <Input placeholder="Enter Size" />
               </Form.Item>
             </Col>
           </Row>
@@ -245,8 +308,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select employee"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Employee")}
+                  disabled={shouldDisableSelect("Employee")}
                 >
-                  {dummyData.employees.map(emp => (
+                  {usersByRole["Employee"]?.map(emp => (
                     <Option key={emp.value} value={emp.value}>{emp.label}</Option>
                   ))}
                 </Select>
@@ -263,8 +328,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AVP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AVP")}
+                  disabled={shouldDisableSelect("AVP")}
                 >
-                  {dummyData.avpList.map(avp => (
+                  {usersByRole["AVP"]?.map(avp => (
                     <Option key={avp.value} value={avp.value}>{avp.label}</Option>
                   ))}
                 </Select>
@@ -284,8 +351,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select TL/CP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Team Leader")}
+                  disabled={shouldDisableSelect("Team Leader")}
                 >
-                  {dummyData.tlcpList.map(tl => (
+                  {usersByRole["Team Leader"]?.map(tl => (
                     <Option key={tl.value} value={tl.value}>{tl.label}</Option>
                   ))}
                 </Select>
@@ -302,8 +371,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select VP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "VP")}
+                  disabled={shouldDisableSelect("VP")}
                 >
-                  {dummyData.vpList.map(vp => (
+                  {usersByRole["VP"]?.map(vp => (
                     <Option key={vp.value} value={vp.value}>{vp.label}</Option>
                   ))}
                 </Select>
@@ -323,8 +394,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AGM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AGM")}
+                  disabled={shouldDisableSelect("AGM")}
                 >
-                  {dummyData.agmList.map(agm => (
+                  {usersByRole["AGM"]?.map(agm => (
                     <Option key={agm.value} value={agm.value}>{agm.label}</Option>
                   ))}
                 </Select>
@@ -341,8 +414,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AS"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AS")}
+                  disabled={shouldDisableSelect("AS")}
                 >
-                  {dummyData.asList.map(as => (
+                  {usersByRole["AS"]?.map(as => (
                     <Option key={as.value} value={as.value}>{as.label}</Option>
                   ))}
                 </Select>
@@ -362,8 +437,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select GM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "GM")}
+                  disabled={shouldDisableSelect("GM")}
                 >
-                  {dummyData.gmList.map(gm => (
+                  {usersByRole["GM"]?.map(gm => (
                     <Option key={gm.value} value={gm.value}>{gm.label}</Option>
                   ))}
                 </Select>
@@ -380,8 +457,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select Vertical"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Vertical")}
+                  disabled={shouldDisableSelect("Vertical")}
                 >
-                  {dummyData.verticals.map(vert => (
+                  {usersByRole["Vertical"]?.map(vert => (
                     <Option key={vert.value} value={vert.value}>{vert.label}</Option>
                   ))}
                 </Select>
