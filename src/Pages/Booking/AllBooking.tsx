@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, Tag, Space, Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { EditFilled, PlusOutlined } from "@ant-design/icons";
 import { debounce } from "lodash";
 import { Link, useNavigate } from "react-router-dom";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
@@ -161,14 +161,20 @@ const AllBooking: React.FC = () => {
       title: "Action",
       key: "action",
       render: (_: unknown, record: BookingData) => (
-        <Button
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="bg-primary text-white hover:bg-primary/90"
-      >
-        Quick Edit
-      </Button>
+      //   <Button
+      //   onClick={(e) => {
+      //     e.stopPropagation();
+      //   }}
+      //   className="bg-primary text-white hover:bg-primary/90"
+      // >
+      //   Quick Edit
+      // </Button>
+      <Link to={`/booking/${record.key}`}>
+      <Button
+        icon={<EditFilled />}
+        className="bg-transparent text-primary dark:text-blue-400"
+      />
+    </Link>
       ),
     },
   ];
