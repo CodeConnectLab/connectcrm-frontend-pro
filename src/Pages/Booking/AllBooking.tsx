@@ -1,19 +1,35 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, Tag, Space, Button } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { EditFilled, PlusOutlined } from "@ant-design/icons";
 import { debounce } from "lodash";
 import { Link, useNavigate } from "react-router-dom";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import SearchForm from "../../components/Header/SearchForm";
 import BookingAdvanceFilterUI from "./BookingAdvanceFilterUI";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
+import { API } from "../../api";
 
 interface BookingData {
   key: string;
-  name: string;
-  contactNumber: string;
+  _id: string;
+  customer: string;
+  contactName: string;
+  contactNumber?: string;
   bookingAmount: number;
+  BSP: number;
   status: string;
+  bookingStatus: string;
+  reference: {
+    employee: string;
+    tlcp: string;
+    avp: string;
+    vp: string;
+    as: string;
+    agm: string;
+    gm: string;
+    vertical: string;
+  };
+  bookingDate: string;
 }
 
 interface BookingFilters {
@@ -30,79 +46,25 @@ interface BookingFilters {
   endDate?: string;
 }
 
-// Mock data for demonstration
-const mockBookings: BookingData[] = [
-    {
-      key: "1",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "2",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Complete",
-    },
-    {
-      key: "3",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "4",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "5",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Complete",
-    },
-    {
-      key: "6",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "7",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "8",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Complete",
-    },
-    {
-      key: "9",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-    {
-      key: "10",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      status: "Pending",
-    },
-  ];
+interface BookingResponseItem {
+  _id: string;
+  customer: string;
+  contactName: string;
+  BSP: number;
+  bookingStatus: string;
+  reference: {
+    employee: string;
+    tlcp: string;
+    avp: string;
+    vp: string;
+    as: string;
+    agm: string;
+    gm: string;
+    vertical: string;
+  };
+  bookingDate: string;
+  [key: string]: unknown;
+}
 
 const AllBooking: React.FC = () => {
   // State for table data
@@ -110,7 +72,9 @@ const AllBooking: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [isAdvanceFilterOpen, setIsAdvanceFilterOpen] = useState(false);
- const navigate=useNavigate()
+  const navigate=useNavigate()
+  console.log({bookings});
+  
   // State for filters
   const [advancedFilters, setAdvancedFilters] = useState<BookingFilters>({});
 
@@ -121,39 +85,45 @@ const AllBooking: React.FC = () => {
     total: 0,
   });
 
+  // Sorting state
+  const [sortInfo] = useState({
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
+
   // Table columns
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
+      dataIndex: "customer",
+      key: "customer",
     },
     {
-      title: "Contact Number",
-      dataIndex: "contactNumber",
-      key: "contactNumber",
+      title: "Contact Name",
+      dataIndex: "contactName",
+      key: "contactName",
     },
     {
-      title: "Booking Amount",
-      dataIndex: "bookingAmount",
-      key: "bookingAmount",
+      title: "Total Received Amount",
+      dataIndex: "totalReceived",
+      key: "totalReceived",
       render: (amount: number) => `₹${amount.toLocaleString("en-IN")}`,
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: "Booking Status",
+      dataIndex: "bookingStatus",
+      key: "bookingStatus",
       render: (status: string) => (
         <Tag
           color={
-            status === "Complete"
+            status === "confirmed"
               ? "green"
-              : status === "Pending"
+              : status === "pending"
               ? "gold"
               : "red"
           }
         >
-          {status}
+          {status.charAt(0).toUpperCase() + status.slice(1)}
         </Tag>
       ),
     },
@@ -161,59 +131,80 @@ const AllBooking: React.FC = () => {
       title: "Action",
       key: "action",
       render: (_: unknown, record: BookingData) => (
-        <Button
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="bg-primary text-white hover:bg-primary/90"
-      >
-        Quick Edit
-      </Button>
+        <Link to={`/booking/${record._id}`}>
+          <Button
+            icon={<EditFilled />}
+            className="bg-transparent text-primary dark:text-blue-400"
+          />
+        </Link>
       ),
     },
   ];
 
-  // Filter function for search and dropdown filters
-  const filterBookings = useCallback(() => {
+  // Function to fetch bookings from API
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
+    try {
+      // Construct API parameters
+      const params = new URLSearchParams({
+        page: pagination.current.toString(),
+        limit: pagination.pageSize.toString(),
+        sortBy: sortInfo.sortBy,
+        sortOrder: sortInfo.sortOrder
+      });
 
-    let filteredData = [...mockBookings];
+      // Add search parameter if it exists
+      if (searchText) {
+        params.append('search', searchText);
+      }
 
-    // Apply search filter
-    if (searchText) {
-      filteredData = filteredData.filter(
-        (booking) =>
-          booking.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          booking.contactNumber.includes(searchText)
-      );
-    }
+      // Add advanced filters if they exist
+      if (advancedFilters.employee) params.append('employee', advancedFilters.employee);
+      if (advancedFilters.tlcp) params.append('tlcp', advancedFilters.tlcp);
+      if (advancedFilters.avp) params.append('avp', advancedFilters.avp);
+      if (advancedFilters.vp) params.append('vp', advancedFilters.vp);
+      if (advancedFilters.as) params.append('as', advancedFilters.as);
+      if (advancedFilters.agm) params.append('agm', advancedFilters.agm);
+      if (advancedFilters.gm) params.append('gm', advancedFilters.gm);
+      if (advancedFilters.vertical) params.append('vertical', advancedFilters.vertical);
+      if (advancedFilters.startDate) params.append('startDate', advancedFilters.startDate);
+      if (advancedFilters.endDate) params.append('endDate', advancedFilters.endDate);
 
-    // Apply advanced filters
-    if (advancedFilters.status) {
-      filteredData = filteredData.filter(
-        (booking) => booking.status === advancedFilters.status
-      );
-    }
+      // Call the API
+      const endpoint = `get-booking-list?${params.toString()}`;
+      const { data, error } = await API.getAuthAPI(endpoint, true);
 
-    // Apply other filters (just for demonstration - in a real app, these would filter based on the relevant fields)
-    // For vertical, as, vp, avp, gm, agm, tlcp, employee, etc.
+      if (error) {
+        throw new Error(error);
+      }
 
-    setTimeout(() => {
-      setBookings(filteredData);
-      setPagination((prev) => ({
-        ...prev,
-        total: filteredData.length,
-      }));
+      // Process and set the data
+      if (data && data.docs) {
+        const formattedBookings = data.docs.map((booking: BookingResponseItem) => ({
+          ...booking,
+          key: booking._id,
+        }));
+        
+        setBookings(formattedBookings);
+        setPagination({
+          ...pagination,
+          total: data.totalCount || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
       setLoading(false);
-    }, 500); // Simulate API call delay
-  }, [searchText, advancedFilters, mockBookings]);
+    }
+  }, [pagination.current, pagination.pageSize, searchText, advancedFilters, sortInfo]);
 
   // Debounced search handler
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
         setSearchText(value);
-      }, 500),
+        setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page on new search
+      }, 100),
     []
   );
 
@@ -241,8 +232,7 @@ const AllBooking: React.FC = () => {
   };
 
   const handleRowClick = (record: BookingData) => {
-    console.log("Row clicked:", record);
-    // Navigate to detail or open edit modal
+    navigate(`/booking/${record._id}`);
   };
 
   const handleAddBooking = () => {
@@ -255,8 +245,8 @@ const AllBooking: React.FC = () => {
 
   // Apply filters when they change
   useEffect(() => {
-    filterBookings();
-  }, []);
+    fetchBookings();
+  }, [fetchBookings, pagination.current, pagination.pageSize, searchText, advancedFilters, sortInfo]);
 
   return (
     <div className="min-h-screen p-4 space-y-4">
@@ -272,15 +262,15 @@ const AllBooking: React.FC = () => {
           <div className="flex items-center">
             <SearchForm
               onSearch={handleSearch}
-              placeholder="Search by name or contact number"
+              placeholder="Search by name"
               searchTerm={searchText}
             />
           </div>
           <div className="flex gap-3">
-            <ButtonDefault
+            {/* <ButtonDefault
               label="Advanced Filter"
               onClick={toggleAdvanceFilter}
-            />
+            /> */}
             <ButtonDefault
               label="Add Booking"
               variant="secondary"

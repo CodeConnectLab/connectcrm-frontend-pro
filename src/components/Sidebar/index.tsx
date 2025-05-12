@@ -55,7 +55,7 @@ export const menuGroups: MenuGroup[] = [
           { label: "All Booking", route: "/booking/all-booking" },
           { label: "New Booking", route: "/booking/new-booking" },
           { label: "Upcoming Payments", route: "/booking/upcoming-payments" },
-          { label: "Reports", route: "/booking/reports" },
+          // { label: "Reports", route: "/booking/reports" },
         ],
       },
       {

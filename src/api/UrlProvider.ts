@@ -57,4 +57,6 @@ export const END_POINT: EndPointType = {
   UserPost: "user-post",
   Permission: "permission",
   feature: "feature",
+  GET_BOOKING_DETAILS: 'get-booking-details',
+  UPDATE_BOOKING: 'update-booking',
 } as const;

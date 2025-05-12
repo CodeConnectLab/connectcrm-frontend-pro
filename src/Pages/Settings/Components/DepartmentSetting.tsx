@@ -33,6 +33,7 @@ interface UserData {
   role: string;
   assignedTL?: string;
   isActive: boolean;
+  [key: string]: string | boolean | undefined; // More specific type for dynamic fields
 }
 
 interface FormData {
@@ -43,7 +44,19 @@ interface FormData {
   isActive: string;
   userType: string;
   assignedTL: string;
+  superiorRole: string;
 }
+
+// Define role hierarchy
+const roleHierarchy: { [key: string]: string } = {
+  "Employee": "Team Leader",
+  "Team Leader": "AGM",
+  "AGM": "GM",
+  "GM": "AVP",
+  "AVP": "VP",
+  "VP": "AS",
+  "AS": "Vertical"
+};
 
 export default function DepartmentSetting() {
   const [tableLoading, setTableLoading] = useState(false);
@@ -61,6 +74,13 @@ export default function DepartmentSetting() {
     { value: string; label: string }[]
   >([]);
   const [showAssignUserModal, setShowAssignUserModal] = useState(false);
+  // Add state for storing users by role
+  const [usersByRole, setUsersByRole] = useState<{
+    [role: string]: { value: string; label: string }[];
+  }>({});
+
+  console.log({usersByRole});
+  
 
   const initialFormState: FormData = {
     userName: "",
@@ -70,6 +90,7 @@ export default function DepartmentSetting() {
     isActive: "active",
     userType: "",
     assignedTL: "",
+    superiorRole: "",
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
@@ -80,17 +101,27 @@ export default function DepartmentSetting() {
       const { data, error } = await API.getAuthAPI(END_POINT.USERS, true);
       if (error) throw new Error(error);
 
-      const transformedData = data.map((user: UserData, index: number) => ({
-        key: user._id,
-        sNo: index + 1,
-        userName: user.name,
-        email: user.email,
-        mobile: user.phone,
-        roll: user.role,
-        assignTeamLeader: user.assignedTL || "",
-        isActive: user.isActive,
-        assignedTL: user.assignedTL,
-      }));
+      const transformedData = data.map((user: UserData, index: number) => {
+        // Find the superior role field dynamically
+        let assignedSuperior = "";
+        if (user.role && roleHierarchy[user.role]) {
+          const superiorRole = roleHierarchy[user.role];
+          const superiorRoleField = `assigned${superiorRole}`;
+          assignedSuperior = user[superiorRoleField as keyof UserData] as string || "";
+        }
+        
+        return {
+          key: user._id,
+          sNo: index + 1,
+          userName: user.name,
+          email: user.email,
+          mobile: user.phone,
+          roll: user.role,
+          assignTeamLeader: assignedSuperior,
+          isActive: user.isActive,
+          assignedTL: assignedSuperior,
+        };
+      });
 
       setTableData(transformedData);
 
@@ -105,6 +136,22 @@ export default function DepartmentSetting() {
         }));
       setTeamLeads(teamLeadsList);
 
+      // Group users by role for assignment
+      const usersByRoleMap: { [role: string]: { value: string; label: string }[] } = {};
+      
+      const roles = Object.keys(roleHierarchy)
+      roles.push("Vertical")
+      roles.forEach((role) => {
+        usersByRoleMap[role] = data
+          .filter((user: UserData) => user.role === role && user.isActive)
+          .map((user: UserData) => ({
+            value: user._id,
+            label: user.name,
+          }));
+      });
+      
+      setUsersByRole(usersByRoleMap);
+
       // Set employees for reassignment
       const employeesList = data
         .filter((user: UserData) => user.isActive)
@@ -113,8 +160,9 @@ export default function DepartmentSetting() {
           label: employee.name,
         }));
       setEmployees(employeesList);
-    } catch (error: any) {
-      console.error(error.message || "Failed to fetch users");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Failed to fetch users");
     } finally {
       setTableLoading(false);
     }
@@ -155,12 +203,26 @@ export default function DepartmentSetting() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // If changing the user type, reset the assignedTL value
+    if (name === "userType") {
+      const superiorRole = roleHierarchy[value];
+      setFormData((prev) => ({ 
+        ...prev, 
+        [name]: value, 
+        assignedTL: "",
+        superiorRole: superiorRole || ""
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleEdit = (key: string) => {
     const user = tableData.find((user) => user.key === key);
     if (user) {
+      // Get the superior role based on the user's role
+      const superiorRole = roleHierarchy[user.roll] || "";
+      
       setFormData({
         userName: user.userName,
         email: user.email,
@@ -169,6 +231,7 @@ export default function DepartmentSetting() {
         isActive: user.isActive ? "active" : "inactive",
         userType: user.roll,
         assignedTL: user.assignedTL || "",
+        superiorRole,
       });
       setEditingUser(key);
       setShowForm(true);
@@ -181,13 +244,18 @@ export default function DepartmentSetting() {
     try {
       setIsLoading(true);
 
+      // Determine the correct field name for superior role assignment
+      let superiorRoleField = "assignedTL"; // default
+      if (formData.superiorRole) {
+        superiorRoleField = `assigned${formData.superiorRole}`;
+      }
+
       const basePayload = {
         name: formData.userName,
         email: formData.email,
         phone: formData.mobile,
         isActive: formData.isActive === "active",
-        assignedTL:
-          formData.userType === "Employee" ? formData.assignedTL || null : null,
+        [superiorRoleField]: formData.assignedTL || null, // Use dynamic field name
       };
 
       if (editingUser) {
@@ -228,8 +296,9 @@ export default function DepartmentSetting() {
       setEditingUser(null);
       setShowForm(false);
       fetchUsers();
-    } catch (error: any) {
-      console.error(error.message || "Operation failed");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Operation failed");
     } finally {
       setIsLoading(false);
     }
@@ -250,8 +319,9 @@ export default function DepartmentSetting() {
         `User ${status ? "activated" : "deactivated"} successfully`
       );
       fetchUsers();
-    } catch (error: any) {
-      console.error(error.message || "Failed to update status");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Failed to update status");
     }
   };
 
@@ -294,12 +364,27 @@ export default function DepartmentSetting() {
       toast.success("User deleted successfully");
       setShowAssignUserModal(false);
       fetchUsers();
-    } catch (error: any) {
-      console.error(error.message || "Failed to delete user");
-      toast.error(error.message || "Failed to delete user");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Failed to delete user");
+      toast.error(err.message || "Failed to delete user");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Get options for the superior role based on the selected role
+  const getSuperiorRoleOptions = (role: string) => {
+    const superiorRole = roleHierarchy[role];
+    if (!superiorRole) return [];
+    
+    return usersByRole[superiorRole] || [];
+  };
+
+  // Get label for the assign dropdown based on role
+  const getAssignLabel = (role: string) => {
+    const superiorRole = roleHierarchy[role];
+    return superiorRole ? `Assign ${superiorRole}` : "";
   };
 
   const columns = [
@@ -329,19 +414,19 @@ export default function DepartmentSetting() {
       dataIndex: "roll",
       key: "roll",
     },
-    {
-      title: "Team Leader",
-      dataIndex: "assignTeamLeader",
-      key: "assignTeamLeader",
-      render: (_: any, record: User) => {
-        const lead = teamLeads.find((l) => l.value === record.assignedTL);
-        return lead?.label || "-";
-      },
-    },
+    // {
+    //   title: "Team Leader",
+    //   dataIndex: "assignTeamLeader",
+    //   key: "assignTeamLeader",
+    //   render: (_: unknown, record: User) => {
+    //     const lead = teamLeads.find((l) => l.value === record.assignedTL);
+    //     return lead?.label || "-";
+    //   },
+    // },
     {
       title: "Action",
       key: "action",
-      render: (_: any, record: User) => (
+      render: (_: unknown, record: User) => (
         <div className="flex items-center gap-2">
           <SwitcherTwo
             id={record.key}
@@ -443,9 +528,15 @@ export default function DepartmentSetting() {
               <SelectGroupOne
                 label="Role"
                 options={[
+                  { value: "Vertical", label: "Vertical" },
+                  { value: "AS", label: "AS" },
+                  { value: "VP", label: "VP" },
+                  { value: "AVP", label: "AVP" },
+                  { value: "GM", label: "GM" },
+                  { value: "AGM", label: "AGM" },
                   { value: "Team Leader", label: "Team Leader" },
-                  { value: "Employee", label: "Employee" },
-                ]}
+                  { value: "Employee", label: "Employee" }
+              ]}
                 selectedOption={formData.userType}
                 setSelectedOption={(value) =>
                   handleSelectChange("userType", value)
@@ -454,15 +545,15 @@ export default function DepartmentSetting() {
               />
             )}
 
-            {formData.userType === "Employee" && (
+            {formData.userType && roleHierarchy[formData.userType] && (
               <SelectGroupOne
-                label="Assign Team Leader"
-                options={teamLeads}
+                label={getAssignLabel(formData.userType)}
+                options={getSuperiorRoleOptions(formData.userType)}
                 selectedOption={formData.assignedTL}
                 setSelectedOption={(value) =>
                   handleSelectChange("assignedTL", value)
                 }
-                placeholder="Select Team Leader"
+                placeholder={`Select ${roleHierarchy[formData.userType]}`}
               />
             )}
           </div>
@@ -493,8 +584,8 @@ export default function DepartmentSetting() {
         isLoading={tableLoading}
         dataSource={tableData}
         pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
+          pageSize: 15,
+          showSizeChanger: false,
         }}
       />
 

@@ -1,65 +1,97 @@
-import React, { useState } from 'react';
-import { Form, Input, Select, DatePicker, Button, Card, Row, Col, Typography, InputNumber } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Form, Input, Select, DatePicker, Button, Card, Row, Col, Typography, InputNumber, Collapse, Radio, message } from 'antd';
+import type { CollapseProps } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
+import { useProductAndService } from '../../CustomHooks/useProductAndService';
+import { API } from '../../api';
+import { END_POINT } from '../../api/UrlProvider';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Dummy data for dropdowns
-const dummyData = {
-  employees: [
-    { value: 'emp1', label: 'John Doe' },
-    { value: 'emp2', label: 'Jane Smith' },
-    { value: 'emp3', label: 'Mike Johnson' },
-    { value: 'emp4', label: 'Sarah Williams' },
-  ],
-  avpList: [
-    { value: 'avp1', label: 'David Brown' },
-    { value: 'avp2', label: 'Emily Davis' },
-    { value: 'avp3', label: 'Robert Wilson' },
-  ],
-  tlcpList: [
-    { value: 'tl1', label: 'Michael Lee' },
-    { value: 'tl2', label: 'Jennifer Taylor' },
-    { value: 'tl3', label: 'William Anderson' },
-  ],
-  vpList: [
-    { value: 'vp1', label: 'Thomas Moore' },
-    { value: 'vp2', label: 'Elizabeth Clark' },
-    { value: 'vp3', label: 'Daniel White' },
-  ],
-  agmList: [
-    { value: 'agm1', label: 'Joseph Martin' },
-    { value: 'agm2', label: 'Margaret Thompson' },
-    { value: 'agm3', label: 'Christopher Garcia' },
-  ],
-  asList: [
-    { value: 'as1', label: 'Kevin Rodriguez' },
-    { value: 'as2', label: 'Lisa Martinez' },
-    { value: 'as3', label: 'Brian Lee' },
-  ],
-  gmList: [
-    { value: 'gm1', label: 'George Wright' },
-    { value: 'gm2', label: 'Helen Adams' },
-    { value: 'gm3', label: 'Edward Baker' },
-  ],
-  verticals: [
-    { value: 'vert1', label: 'Residential' },
-    { value: 'vert2', label: 'Commercial' },
-    { value: 'vert3', label: 'Industrial' },
-    { value: 'vert4', label: 'Retail' },
-  ],
+// Roles hierarchy for reference
+const roleHierarchy = {
+  "Employee": "Team Leader",
+  "Team Leader": "AGM",
+  "AGM": "GM",
+  "GM": "AVP",
+  "AVP": "VP",
+  "VP": "AS",
+  "AS": "Vertical"
 };
 
-interface BookingFormValues {
-  chooseName: string;
+// Define user interface
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  isActive: boolean;
+  [key: string]: string | boolean | undefined;
+}
+
+export interface PaymentDetail {
+  amount: number;
+  date: string;
+  status: 'paid' | 'unpaid';
+  mode: 'cash' | 'cheque' | 'online';
+  transactionNo?: string;
+  chequeNumber?: string;
+}
+
+interface References {
+  name:string,
+  _id:string
+}
+
+export interface BookingData {
+  _id: string;
+  customer: string;
+  leadId: {
+    _id: string;
+    firstName: string;
+    id: string;
+  } | null;
+  projectName: string;
+  email: string;
+  contactName: string;
+  bookingDate: string | dayjs.Dayjs | null;
+  RM: string;
+  unit: string;
+  size: string;
+  reference: {
+    employee:  References | null;
+    tlcp: References | null;
+    avp: References | null;
+    vp: References | null;
+    as: References | null;
+    agm: References | null;
+    gm: References | null;
+    vertical: References | null;
+  };
+  paymentDetails: Array<PaymentDetail>;
+  BSP: number;
+  GST: number;
+  OtherCharges: number;
+  TSP: number;
+  totalReceived: number;
+  netRevenue: number;
+  remark: string;
+  bookingStatus: 'confirmed' | 'pending';
+}
+
+export interface BookingFormValues {
+  customer: string;
+  leadId?: string;
   projectName: string;
   email: string;
   rm: string;
   contactName: string;
   unit: string;
-  bookingDate: string;
+  bookingDate: string | dayjs.Dayjs | null;
   size: string;
   employee: string;
   avp: string;
@@ -70,53 +102,602 @@ interface BookingFormValues {
   gm: string;
   vertical: string;
   bsp: number;
-  paymentReceived: number;
+  paymentDetails: PaymentDetail[];
   gst: number;
-  nextPayment: number;
   otherCharges: number;
-  paymentToDev: number;
   tsp: number;
-  totalRevenue: number;
+  totalReceived: number;
   netRevenue: number;
   remark: string;
+  bookingStatus: 'confirmed' | 'pending';
 }
 
-const AddBooking: React.FC = () => {
+interface AddBookingProps {
+  isEditMode?: boolean;
+  initialValues?: BookingData | null;
+  onFinish?: (values: BookingFormValues & { receivedPayments: PaymentDetail[]; nextPayments: PaymentDetail[] }) => void;
+}
+
+const AddBooking: React.FC<AddBookingProps> = ({ 
+  isEditMode = false, 
+  initialValues = null, 
+  onFinish: customOnFinish
+}) => {
   const [form] = Form.useForm<BookingFormValues>();
-  const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [netRevenue, setNetRevenue] = useState<number>(0);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [usersByRole, setUsersByRole] = useState<{
+    [role: string]: { value: string; label: string }[];
+  }>({});
+  const [loading, setLoading] = useState<boolean>(false);
+  
+  // State for payment details
+  const [receivedPayments, setReceivedPayments] = useState<PaymentDetail[]>([
+    { amount: 0, date: '', status: 'paid', mode: 'cash' }
+  ]);
+  const [nextPayments, setNextPayments] = useState<PaymentDetail[]>([
+    { amount: 0, date: '', status: 'unpaid', mode: 'cash' }
+  ]);
 
   // Sample options for dropdowns
-  const projectOptions = ['Project A', 'Project B', 'Project C'];
-  const unitOptions = ['Unit 1', 'Unit 2', 'Unit 3'];
-  const sizeOptions = ['1 BHK', '2 BHK', '3 BHK', '4 BHK'];
+  const { 
+    optionList,
+    fetchProductServices,
+  } = useProductAndService(true);
+  
+  // Use a useEffect to set form values when in edit mode
+  useEffect(() => {
+    if (isEditMode && initialValues) {
+      // Process initial values
+      try {
+        // Extract payment details
+        const receivedPayments = initialValues.paymentDetails
+          ? initialValues.paymentDetails
+              .filter((payment: PaymentDetail) => payment.status === 'paid')
+              .map((payment: PaymentDetail) => ({
+                ...payment,
+                date: payment.date || ''
+              }))
+          : [{ amount: 0, date: '', status: 'paid', mode: 'cash' }];
+
+        const nextPayments = initialValues.paymentDetails
+          ? initialValues.paymentDetails
+              .filter((payment: PaymentDetail) => payment.status === 'unpaid')
+              .map((payment: PaymentDetail) => ({
+                ...payment,
+                date: payment.date || ''
+              }))
+          : [{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }];
+
+        // Set state values
+        setReceivedPayments(receivedPayments as PaymentDetail[]);
+        setNextPayments(nextPayments as PaymentDetail[]);
+        setNetRevenue(initialValues.netRevenue || 0);
+
+        // Set form values with properly formatted date
+        form.setFieldsValue({
+          customer: initialValues.customer,
+          leadId: initialValues.leadId?.id || '',
+          projectName: initialValues.projectName,
+          email: initialValues.email,
+          contactName: initialValues.contactName,
+          bookingDate: initialValues.bookingDate ? dayjs(initialValues.bookingDate, 'YYYY-MM-DD') : null,
+          rm: initialValues.RM,
+          unit: initialValues.unit,
+          size: initialValues.size,
+          // Reference fields
+          employee: initialValues.reference?.employee?._id || undefined,
+          tlcp: initialValues.reference?.tlcp?._id || undefined,
+          avp: initialValues.reference?.avp?._id || undefined,
+          vp: initialValues.reference?.vp?._id || undefined,
+          as: initialValues.reference?.as?._id || undefined,
+          agm: initialValues.reference?.agm?._id || undefined,
+          gm: initialValues.reference?.gm?._id || undefined,
+          vertical: initialValues.reference?.vertical?._id || undefined,
+          // Payment fields
+          bsp: initialValues.BSP,
+          gst: initialValues.GST,
+          otherCharges: initialValues.OtherCharges,
+          tsp: initialValues.TSP,
+          remark: initialValues.remark,
+          bookingStatus: initialValues.bookingStatus
+        });
+      } catch (error) {
+        console.error("Error setting initial values:", error);
+        message.error("Failed to load booking details. Please try again.");
+      }
+    }
+  }, [isEditMode, initialValues, form]);
+
+  // Modify the onFinish function to handle both add and edit modes
+  const onFinish = async (values: BookingFormValues) => {
+    if (isEditMode && customOnFinish) {
+      // Pass form values along with payment details to the custom onFinish handler
+      customOnFinish({
+        ...values,
+        receivedPayments,
+        nextPayments
+      });
+    } else {
+      // Default add booking behavior
+      try {
+        setLoading(true);
+        
+        // Calculate total received amount
+        const totalReceived = receivedPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        
+        // Prepare the booking data according to the expected API format
+        const bookingData = {
+          customer: values.customer,
+          leadId: values.leadId || "", // Optional
+          projectName: values.projectName,
+          email: values.email,
+          contactName: values.contactName,
+          bookingDate: values.bookingDate,
+          RM: values.rm,
+          unit: values.unit,
+          size: values.size,
+          reference: {
+            employee: values.employee,
+            tlcp: values.tlcp,
+            avp: values.avp,
+            vp: values.vp,
+            as: values.as,
+            agm: values.agm,
+            gm: values.gm,
+            vertical: values.vertical
+          },
+          paymentDetails: [...receivedPayments, ...nextPayments].map(payment => ({
+            amount: payment.amount,
+            date: payment.date,
+            status: payment.status,
+            mode: payment.mode,
+            ...(payment.mode === 'online' && { transactionNo: payment.transactionNo }),
+            ...(payment.mode === 'cheque' && { chequeNumber: payment.chequeNumber })
+          })),
+          BSP: values.bsp,
+          GST: values.gst,
+          OtherCharges: values.otherCharges,
+          TSP: values.tsp,
+          totalReceived: totalReceived,
+          netRevenue: values.netRevenue || netRevenue,
+          remark: values.remark,
+          bookingStatus: values.bookingStatus
+        };
+        
+        // API call to add booking
+        const response = await API.postAuthAPI(bookingData as unknown as string, 'add-booking', true);
+        
+        if (response.error) throw new Error(response.error);
+        
+        message.success('Booking added successfully!');
+        form.resetFields();
+        setReceivedPayments([{ amount: 0, date: '', status: 'paid', mode: 'cash' }]);
+        setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+        
+      } catch (error: unknown) {
+        const err = error as Error;
+        message.error(err.message || 'Failed to add booking');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const calculateTotalRevenue = () => {
     const bsp = form.getFieldValue('bsp') || 0;
     const gst = form.getFieldValue('gst') || 0;
     const otherCharges = form.getFieldValue('otherCharges') || 0;
-    const tsp = form.getFieldValue('tsp') || 0;
+    
+    // Calculate TSP as the sum of BSP + GST + Other charges
+    const tsp = bsp + gst + otherCharges;
+    
+    // Update the TSP field
+    form.setFieldsValue({
+      tsp: tsp
+    });
     
     const total = bsp + gst + otherCharges + tsp;
-    setTotalRevenue(total);
+    // setTotalRevenue(total);
     
     // Calculate net revenue (simple calculation for demonstration)
     setNetRevenue(total * 0.9); // Assuming 10% deduction for simplicity
     
-    form.setFieldsValue({
-      totalRevenue: total,
-      netRevenue: total * 0.9
-    });
+    // form.setFieldsValue({
+    //   totalRevenue: total,
+    //   netRevenue: total * 0.9
+    // });
   };
 
-  const onFinish = (values: BookingFormValues) => {
-    console.log('Form values:', values);
-    // Handle form submission here
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await API.getAuthAPI(END_POINT.USERS, true);
+      if (error) throw new Error(error);
+
+      // Group users by their role
+      const usersByRoleMap: { [role: string]: { value: string; label: string }[] } = {};
+      
+      // Get all roles including Vertical
+      const roles = [...Object.keys(roleHierarchy), "Vertical"];
+      
+      // Initialize empty arrays for each role
+      roles.forEach(role => {
+        usersByRoleMap[role] = [];
+      });
+      
+      // Populate users for each role
+      data.forEach((user: User) => {
+        if (user.isActive && user.role) {
+          usersByRoleMap[user.role] = [
+            ...(usersByRoleMap[user.role] || []),
+            {
+              value: user._id,
+              label: user.name
+            }
+          ];
+        }
+      });
+      
+      setUsersByRole(usersByRoleMap);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err.message || "Failed to fetch users");
+    }
   };
+
+  // Handle selection of employee in the Reference section
+  const handleEmployeeSelect = (value: string, role: string) => {
+    // Set the selected role to control which other selects are enabled
+    setSelectedRole(role);
+    
+    // Convert role name to corresponding form field name
+    const roleToFieldMap: {[key: string]: keyof BookingFormValues} = {
+      "Employee": "employee",
+      "Team Leader": "tlcp",
+      "AGM": "agm",
+      "GM": "gm",
+      "AVP": "avp",
+      "VP": "vp",
+      "AS": "as",
+      "Vertical": "vertical"
+    };
+    
+    // Update the form value for the selected role
+    const fieldName = roleToFieldMap[role];
+    if (fieldName) {
+      form.setFieldsValue({
+        [fieldName]: value
+      });
+    }
+  };
+
+  // Check if a select should be disabled based on role hierarchy
+  const shouldDisableSelect = (role: string): boolean => {
+    if (!selectedRole) return false;
+    
+    // If no role is selected, or the role in hierarchy is higher than or equal to the selected role
+    // Create a map of role positions in the hierarchy for comparison
+    const roleOrder: { [role: string]: number } = {};
+    const allRoles = ["Employee", ...Object.values(roleHierarchy)];
+    
+    allRoles.forEach((role, index) => {
+      roleOrder[role] = index;
+    });
+    
+    // If selectedRole is higher in hierarchy (smaller index) than current role, disable it
+    return roleOrder[selectedRole] > roleOrder[role];
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const onFieldsChange = () => {
     calculateTotalRevenue();
   };
+console.log({receivedPayments});
+
+  useEffect(()=>{
+    fetchProductServices()
+  },[fetchProductServices])
+  
+  // Handle payment detail changes for received payments
+  const handleReceivedPaymentChange = (index: number, field: keyof PaymentDetail, value: unknown) => {
+    const newPayments = [...receivedPayments];
+    // Handle date specifically to ensure proper format
+    if (field === 'date' && value) {
+      newPayments[index] = { 
+        ...newPayments[index], 
+        [field]: typeof value === 'string' ? value : value.toString() 
+      };
+    } else {
+      newPayments[index] = { ...newPayments[index], [field]: value };
+    }
+    setReceivedPayments(newPayments);
+    
+    // Update form field
+    form.setFieldsValue({ paymentDetails: [...newPayments, ...nextPayments] });
+    
+    // If amount is changed, recalculate total
+    if (field === 'amount') {
+      calculateTotalRevenue();
+    }
+  };
+  
+  // Handle payment detail changes for next payments
+  const handleNextPaymentChange = (index: number, field: keyof PaymentDetail, value: unknown) => {
+    const newPayments = [...nextPayments];
+    // Handle date specifically to ensure proper format
+    if (field === 'date' && value) {
+      newPayments[index] = { 
+        ...newPayments[index], 
+        [field]: typeof value === 'string' ? value : value.toString() 
+      };
+    } else {
+      newPayments[index] = { ...newPayments[index], [field]: value };
+    }
+    setNextPayments(newPayments);
+    
+    // Update form field
+    form.setFieldsValue({ paymentDetails: [...receivedPayments, ...newPayments] });
+  };
+  
+  // Add new payment entry
+  const addPaymentEntry = (type: 'received' | 'next') => {
+    if (type === 'received') {
+      setReceivedPayments([...receivedPayments, { amount: 0, date: '', status: 'paid', mode: 'cash' }]);
+    } else {
+      setNextPayments([...nextPayments, { amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+    }
+  };
+  
+  // Remove payment entry
+  const removePaymentEntry = (type: 'received' | 'next', index: number) => {
+    if (type === 'received') {
+      const newPayments = receivedPayments.filter((_, i) => i !== index);
+      setReceivedPayments(newPayments);
+      form.setFieldsValue({ paymentDetails: [...newPayments, ...nextPayments] });
+    } else {
+      const newPayments = nextPayments.filter((_, i) => i !== index);
+      setNextPayments(newPayments);
+      form.setFieldsValue({ paymentDetails: [...receivedPayments, ...newPayments] });
+    }
+    
+    // Recalculate total
+    calculateTotalRevenue();
+  };
+
+  // Collapse items for received payments
+  const receivedPaymentItems: CollapseProps['items'] = [
+    {
+      key: '1',
+      label: 'Payment Received',
+      children: (
+        <div className="space-y-4">
+          {receivedPayments.map((payment, index) => (
+            <Card key={index} className="mb-4 dark:bg-gray-700">
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item label="Amount">
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      placeholder="Enter amount"
+                      value={payment.amount}
+                      onChange={(value) => handleReceivedPaymentChange(index, 'amount', value)}
+                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Date">
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        // Use a simple approach that won't cause validation errors
+                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        handleReceivedPaymentChange(index, 'date', dateStr);
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item label="Status">
+                    <Radio.Group
+                      value={payment.status}
+                      onChange={(e) => handleReceivedPaymentChange(index, 'status', e.target.value)}
+                    >
+                      <Radio value="paid">Paid</Radio>
+                      <Radio value="unpaid">Unpaid</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Payment Mode">
+                    <Select
+                      value={payment.mode}
+                      onChange={(value) => handleReceivedPaymentChange(index, 'mode', value)}
+                      style={{ width: '100%' }}
+                    >
+                      <Option value="cash">Cash</Option>
+                      <Option value="cheque">Cheque</Option>
+                      <Option value="online">Online</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              {payment.mode === 'cheque' && (
+                <Row>
+                  <Col span={24}>
+                    <Form.Item label="Cheque Number">
+                      <Input
+                        placeholder="Enter cheque number"
+                        value={payment.chequeNumber}
+                        onChange={(e) => handleReceivedPaymentChange(index, 'chequeNumber', e.target.value)}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+              
+              {payment.mode === 'online' && (
+                <Row>
+                  <Col span={24}>
+                    <Form.Item label="Transaction Number">
+                      <Input
+                        placeholder="Enter transaction number"
+                        value={payment.transactionNo}
+                        onChange={(e) => handleReceivedPaymentChange(index, 'transactionNo', e.target.value)}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+              
+              {receivedPayments.length > 1 && (
+                <Button 
+                  danger 
+                  onClick={() => removePaymentEntry('received', index)}
+                  className="mt-2"
+                >
+                  Remove
+                </Button>
+              )}
+            </Card>
+          ))}
+          
+          {/* <Button 
+            type="dashed" 
+            onClick={() => addPaymentEntry('received')}
+            block
+          >
+            Add Payment
+          </Button> */}
+        </div>
+      )
+    }
+  ];
+  
+  // Collapse items for next payments
+  const nextPaymentItems: CollapseProps['items'] = [
+    {
+      key: '1',
+      label: 'Next Payment',
+      children: (
+        <div className="space-y-4">
+          {nextPayments.map((payment, index) => (
+            <Card key={index} className="mb-4 dark:bg-gray-700">
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item label="Amount">
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      placeholder="Enter amount"
+                      value={payment.amount}
+                      onChange={(value) => handleNextPaymentChange(index, 'amount', value)}
+                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Date">
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        // Use a simple approach that won't cause validation errors
+                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        handleNextPaymentChange(index, 'date', dateStr);
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item label="Status">
+                    <Radio.Group
+                      value={payment.status}
+                      onChange={(e) => handleNextPaymentChange(index, 'status', e.target.value)}
+                    >
+                      <Radio value="paid">Paid</Radio>
+                      <Radio value="unpaid">Unpaid</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Payment Mode">
+                    <Select
+                      value={payment.mode}
+                      onChange={(value) => handleNextPaymentChange(index, 'mode', value)}
+                      style={{ width: '100%' }}
+                    >
+                      <Option value="cash">Cash</Option>
+                      <Option value="cheque">Cheque</Option>
+                      <Option value="online">Online</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              {payment.mode === 'cheque' && (
+                <Row>
+                  <Col span={24}>
+                    <Form.Item label="Cheque Number">
+                      <Input
+                        placeholder="Enter cheque number"
+                        value={payment.chequeNumber}
+                        onChange={(e) => handleNextPaymentChange(index, 'chequeNumber', e.target.value)}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+              
+              {payment.mode === 'online' && (
+                <Row>
+                  <Col span={24}>
+                    <Form.Item label="Transaction Number">
+                      <Input
+                        placeholder="Enter transaction number"
+                        value={payment.transactionNo}
+                        onChange={(e) => handleNextPaymentChange(index, 'transactionNo', e.target.value)}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              )}
+              
+              {nextPayments.length > 1 && (
+                <Button 
+                  danger 
+                  onClick={() => removePaymentEntry('next', index)}
+                  className="mt-2"
+                >
+                  Remove
+                </Button>
+              )}
+            </Card>
+          ))}
+          
+          <Button 
+            type="dashed" 
+            onClick={() => addPaymentEntry('next')}
+            block
+          >
+            Add Payment
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="min-h-screen dark:bg-gray-800">
@@ -129,15 +710,16 @@ const AddBooking: React.FC = () => {
         className="rounded-lg"
       >
         {/* Basic Detail Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Basic Detail</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">{isEditMode ? "Edit Booking" : "Basic Detail"}</Title>}>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
-                label="Choose Name"
-                name="chooseName"
-                rules={[{ required: true, message: 'Please select a name' }]}
+                label="Customer"
+                name="customer"
+                rules={[{ required: true, message: 'Please enter name' }]}
               >
-                <Select
+                <Input placeholder="Enter name" />
+                {/* <Select
                   showSearch
                   placeholder="Select a name"
                   optionFilterProp="children"
@@ -145,7 +727,7 @@ const AddBooking: React.FC = () => {
                   <Option value="name1">Name 1</Option>
                   <Option value="name2">Name 2</Option>
                   <Option value="name3">Name 3</Option>
-                </Select>
+                </Select> */}
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -155,8 +737,8 @@ const AddBooking: React.FC = () => {
                 rules={[{ required: true, message: 'Please select a project' }]}
               >
                 <Select placeholder="Select project">
-                  {projectOptions.map(project => (
-                    <Option key={project} value={project}>{project}</Option>
+                  {optionList.map(project => (
+                    <Option key={project.value} value={project.value}>{project.label}</Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -197,11 +779,7 @@ const AddBooking: React.FC = () => {
                 label="Unit"
                 name="unit"
               >
-                <Select placeholder="Select unit">
-                  {unitOptions.map(unit => (
-                    <Option key={unit} value={unit}>{unit}</Option>
-                  ))}
-                </Select>
+                <Input placeholder="Enter Unit" />
               </Form.Item>
             </Col>
           </Row>
@@ -213,7 +791,17 @@ const AddBooking: React.FC = () => {
                 name="bookingDate"
                 rules={[{ required: true, message: 'Please select a date' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker 
+                  style={{ width: '100%' }}
+                  format="YYYY-MM-DD"
+                  onChange={(date) => {
+                    // Use a simple approach that won't cause validation errors
+                    const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                    form.setFieldsValue({
+                      bookingDate: dateStr
+                    });
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -221,11 +809,7 @@ const AddBooking: React.FC = () => {
                 label="Size"
                 name="size"
               >
-                <Select placeholder="Select size">
-                  {sizeOptions.map(size => (
-                    <Option key={size} value={size}>{size}</Option>
-                  ))}
-                </Select>
+                 <Input placeholder="Enter Size" />
               </Form.Item>
             </Col>
           </Row>
@@ -245,8 +829,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select employee"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Employee")}
+                  disabled={shouldDisableSelect("Employee")}
                 >
-                  {dummyData.employees.map(emp => (
+                  {usersByRole["Employee"]?.map(emp => (
                     <Option key={emp.value} value={emp.value}>{emp.label}</Option>
                   ))}
                 </Select>
@@ -263,8 +849,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AVP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AVP")}
+                  disabled={shouldDisableSelect("AVP")}
                 >
-                  {dummyData.avpList.map(avp => (
+                  {usersByRole["AVP"]?.map(avp => (
                     <Option key={avp.value} value={avp.value}>{avp.label}</Option>
                   ))}
                 </Select>
@@ -284,8 +872,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select TL/CP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Team Leader")}
+                  disabled={shouldDisableSelect("Team Leader")}
                 >
-                  {dummyData.tlcpList.map(tl => (
+                  {usersByRole["Team Leader"]?.map(tl => (
                     <Option key={tl.value} value={tl.value}>{tl.label}</Option>
                   ))}
                 </Select>
@@ -302,8 +892,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select VP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "VP")}
+                  disabled={shouldDisableSelect("VP")}
                 >
-                  {dummyData.vpList.map(vp => (
+                  {usersByRole["VP"]?.map(vp => (
                     <Option key={vp.value} value={vp.value}>{vp.label}</Option>
                   ))}
                 </Select>
@@ -323,8 +915,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AGM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AGM")}
+                  disabled={shouldDisableSelect("AGM")}
                 >
-                  {dummyData.agmList.map(agm => (
+                  {usersByRole["AGM"]?.map(agm => (
                     <Option key={agm.value} value={agm.value}>{agm.label}</Option>
                   ))}
                 </Select>
@@ -341,8 +935,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select AS"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "AS")}
+                  disabled={shouldDisableSelect("AS")}
                 >
-                  {dummyData.asList.map(as => (
+                  {usersByRole["AS"]?.map(as => (
                     <Option key={as.value} value={as.value}>{as.label}</Option>
                   ))}
                 </Select>
@@ -362,8 +958,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select GM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "GM")}
+                  disabled={shouldDisableSelect("GM")}
                 >
-                  {dummyData.gmList.map(gm => (
+                  {usersByRole["GM"]?.map(gm => (
                     <Option key={gm.value} value={gm.value}>{gm.label}</Option>
                   ))}
                 </Select>
@@ -380,8 +978,10 @@ const AddBooking: React.FC = () => {
                   placeholder="Select Vertical"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  onChange={(value) => handleEmployeeSelect(value, "Vertical")}
+                  disabled={shouldDisableSelect("Vertical")}
                 >
-                  {dummyData.verticals.map(vert => (
+                  {usersByRole["Vertical"]?.map(vert => (
                     <Option key={vert.value} value={vert.value}>{vert.label}</Option>
                   ))}
                 </Select>
@@ -408,41 +1008,12 @@ const AddBooking: React.FC = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                label="Payment received"
-                name="paymentReceived"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter payment received" 
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
                 label="GST"
                 name="gst"
               >
                 <InputNumber 
                   style={{ width: '100%' }} 
                   placeholder="Enter GST" 
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Next Payment"
-                name="nextPayment"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter next payment" 
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
                 />
@@ -464,23 +1035,7 @@ const AddBooking: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Payment to Dev"
-                name="paymentToDev"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter payment to dev" 
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={24}>
-            <Col span={12}>
+             <Col span={12}>
               <Form.Item
                 label="TSP"
                 name="tsp"
@@ -488,20 +1043,7 @@ const AddBooking: React.FC = () => {
                 <InputNumber 
                   style={{ width: '100%' }} 
                   placeholder="Enter TSP" 
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Total Revenue"
-                name="totalRevenue"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  disabled 
-                  value={totalRevenue}
+                  disabled
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
                 />
@@ -510,7 +1052,38 @@ const AddBooking: React.FC = () => {
           </Row>
 
           <Row gutter={24}>
+          <Col span={12}>
+              <Form.Item
+                label="Payment Received"
+                name="paymentDetails"
+              >
+                <Collapse items={receivedPaymentItems} className="w-full" />
+              </Form.Item>
+            </Col>
             <Col span={12}>
+              <Form.Item
+                label="Next Payment"
+                name="paymentDetails"
+              >
+                <Collapse items={nextPaymentItems} className="w-full" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* <Row gutter={24}>
+             <Col span={12}>
+              <Form.Item
+                label="Total Revenue"
+                name="totalRevenue"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  disabled 
+                  value={receivedPayments[0].amount}
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                />
+              </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
@@ -526,7 +1099,7 @@ const AddBooking: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
+          </Row> */}
         </Card>
 
         {/* Remark Section */}
@@ -534,7 +1107,23 @@ const AddBooking: React.FC = () => {
           <Row>
             <Col span={24}>
               <Form.Item
+                label="Booking Status"
+                name="bookingStatus"
+                className="dark:text-white"
+              >
+                <Select
+                  placeholder="Select a booking status"
+                  optionFilterProp="children"
+                >
+                  <Option value="confirmed">Confirmed</Option>
+                  <Option value="pending">Pending</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item
                 name="remark"
+                label="Remark"
                 className="dark:text-white"
               >
                 <TextArea 
@@ -547,6 +1136,7 @@ const AddBooking: React.FC = () => {
           </Row>
         </Card>
 
+        {/* Submit Button with Loading State */}
         <Form.Item>
           <Button 
             type="primary" 
@@ -554,8 +1144,9 @@ const AddBooking: React.FC = () => {
             size="large"
             icon={<SaveOutlined />}
             className="float-right"
+            loading={loading}
           >
-            Submit
+            {isEditMode ? "Update Booking" : "Submit"}
           </Button>
         </Form.Item>
       </Form>
@@ -620,9 +1211,38 @@ const AddBooking: React.FC = () => {
         .dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
           background-color: #4b5563 !important;
         }
+        
+        /* Collapse styles */
+        .ant-collapse {
+          background-color: transparent !important;
+          border-radius: 4px !important;
+        }
+        .dark .ant-collapse {
+          background-color: #1f2937 !important;
+          border-color: #4b5563 !important;
+        }
+        .dark .ant-collapse-header {
+          color: white !important;
+        }
+        .dark .ant-collapse-content {
+          background-color: #1f2937 !important;
+          border-color: #4b5563 !important;
+        }
+        .dark .ant-collapse-content-box {
+          background-color: #1f2937 !important;
+        }
+        .dark .ant-radio-wrapper {
+          color: white !important;
+        }
       `}</style>
     </div>
   );
 };
 
-export default AddBooking; 
+AddBooking.defaultProps = {
+  isEditMode: false,
+  initialValues: null,
+  onFinish: undefined
+};
+
+export default AddBooking;

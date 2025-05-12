@@ -24,9 +24,10 @@ import WhatsAppReport from "../Pages/WhatsAppPanel/WhatsAppReport";
 import BookingDashboard from "../Pages/Booking/BookingDashboard";
 import AddBooking from "../Pages/Booking/AddBooking";
 import AllBooking from "../Pages/Booking/AllBooking";
-import NewBooking from "../Pages/Booking/NewBooking";
 import UpcomingPayments from "../Pages/Booking/UpcomingPayments";
 import BookingReports from "../Pages/Booking/BookingReports";
+import EditBooking from "../Pages/Booking/EditBooking";
+import NewBooking from "../Pages/Booking/NewBooking";
 
 const navRoutes = [
   {
@@ -138,16 +139,20 @@ const navRoutes = [
     component: AllBooking,
   },
   {
-    path: "/booking/new-booking",
-    component: AllBooking,
-  },
-  {
     path: "/booking/upcoming-payments",
     component: UpcomingPayments,
   },
   {
     path: "/booking/reports",
     component: BookingReports,
+  },
+  {
+    path: "/booking/new-booking",
+    component: NewBooking,
+  },
+  {
+    path: "/booking/:bookingId",
+    component: EditBooking,
   },
 ];
 

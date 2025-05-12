@@ -25,7 +25,7 @@ interface DynamicDataManagementProps {
   onEdit: (key: string, updatedItem: any) => void;
   onDelete?: (key: string) => void;
   onSoftDelete?: (key: string, status: boolean) => void;
-  onUpdate: (key: string, status: boolean) => void;
+  onUpdate?: (key: string, status: boolean) => void;
   customClasses?: string;
   isLoading?: boolean;
 }
@@ -104,7 +104,9 @@ const DynamicDataManagement: React.FC<DynamicDataManagementProps> = ({
   // };
 
   const handleUpdate = (key: string, status: boolean) => {
-    onUpdate(key, status);
+    if (onUpdate) {
+      onUpdate(key, status);
+    }
   };
 
   const actionColumn = {
