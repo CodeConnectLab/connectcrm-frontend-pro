@@ -5,6 +5,7 @@ import { SaveOutlined } from '@ant-design/icons';
 import { useProductAndService } from '../../CustomHooks/useProductAndService';
 import { API } from '../../api';
 import { END_POINT } from '../../api/UrlProvider';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -32,7 +33,7 @@ interface User {
   [key: string]: string | boolean | undefined;
 }
 
-interface PaymentDetail {
+export interface PaymentDetail {
   amount: number;
   date: string;
   status: 'paid' | 'unpaid';
@@ -41,7 +42,43 @@ interface PaymentDetail {
   chequeNumber?: string;
 }
 
-interface BookingFormValues {
+export interface BookingData {
+  _id: string;
+  customer: string;
+  leadId: {
+    _id: string;
+    firstName: string;
+    id: string;
+  } | null;
+  projectName: string;
+  email: string;
+  contactName: string;
+  bookingDate: string | dayjs.Dayjs | null;
+  RM: string;
+  unit: string;
+  size: string;
+  reference: {
+    employee: string | null;
+    tlcp: string | null;
+    avp: string | null;
+    vp: string | null;
+    as: string | null;
+    agm: string | null;
+    gm: string | null;
+    vertical: string | null;
+  };
+  paymentDetails: Array<PaymentDetail>;
+  BSP: number;
+  GST: number;
+  OtherCharges: number;
+  TSP: number;
+  totalReceived: number;
+  netRevenue: number;
+  remark: string;
+  bookingStatus: 'confirmed' | 'pending';
+}
+
+export interface BookingFormValues {
   customer: string;
   leadId?: string;
   projectName: string;
@@ -49,7 +86,7 @@ interface BookingFormValues {
   rm: string;
   contactName: string;
   unit: string;
-  bookingDate: string;
+  bookingDate: string | dayjs.Dayjs | null;
   size: string;
   employee: string;
   avp: string;
@@ -70,9 +107,18 @@ interface BookingFormValues {
   bookingStatus: 'confirmed' | 'pending';
 }
 
-const AddBooking: React.FC = () => {
+interface AddBookingProps {
+  isEditMode?: boolean;
+  initialValues?: BookingData | null;
+  onFinish?: (values: BookingFormValues & { receivedPayments: PaymentDetail[]; nextPayments: PaymentDetail[] }) => void;
+}
+
+const AddBooking: React.FC<AddBookingProps> = ({ 
+  isEditMode = false, 
+  initialValues = null, 
+  onFinish: customOnFinish
+}) => {
   const [form] = Form.useForm<BookingFormValues>();
-  // const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [netRevenue, setNetRevenue] = useState<number>(0);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [usersByRole, setUsersByRole] = useState<{
@@ -94,6 +140,145 @@ const AddBooking: React.FC = () => {
     fetchProductServices,
   } = useProductAndService(true);
   
+  // Use a useEffect to set form values when in edit mode
+  useEffect(() => {
+    if (isEditMode && initialValues) {
+      // Process initial values
+      try {
+        // Extract payment details
+        const receivedPayments = initialValues.paymentDetails
+          ? initialValues.paymentDetails
+              .filter((payment: PaymentDetail) => payment.status === 'paid')
+              .map((payment: PaymentDetail) => ({
+                ...payment,
+                date: payment.date || ''
+              }))
+          : [{ amount: 0, date: '', status: 'paid', mode: 'cash' }];
+
+        const nextPayments = initialValues.paymentDetails
+          ? initialValues.paymentDetails
+              .filter((payment: PaymentDetail) => payment.status === 'unpaid')
+              .map((payment: PaymentDetail) => ({
+                ...payment,
+                date: payment.date || ''
+              }))
+          : [{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }];
+
+        // Set state values
+        setReceivedPayments(receivedPayments as PaymentDetail[]);
+        setNextPayments(nextPayments as PaymentDetail[]);
+        setNetRevenue(initialValues.netRevenue || 0);
+
+        // Set form values with properly formatted date
+        form.setFieldsValue({
+          customer: initialValues.customer,
+          leadId: initialValues.leadId?.id || '',
+          projectName: initialValues.projectName,
+          email: initialValues.email,
+          contactName: initialValues.contactName,
+          bookingDate: initialValues.bookingDate ? dayjs(initialValues.bookingDate, 'YYYY-MM-DD') : null,
+          rm: initialValues.RM,
+          unit: initialValues.unit,
+          size: initialValues.size,
+          // Reference fields
+          employee: initialValues.reference?.employee || undefined,
+          tlcp: initialValues.reference?.tlcp || undefined,
+          avp: initialValues.reference?.avp || undefined,
+          vp: initialValues.reference?.vp || undefined,
+          as: initialValues.reference?.as || undefined,
+          agm: initialValues.reference?.agm || undefined,
+          gm: initialValues.reference?.gm || undefined,
+          vertical: initialValues.reference?.vertical || undefined,
+          // Payment fields
+          bsp: initialValues.BSP,
+          gst: initialValues.GST,
+          otherCharges: initialValues.OtherCharges,
+          tsp: initialValues.TSP,
+          remark: initialValues.remark,
+          bookingStatus: initialValues.bookingStatus
+        });
+      } catch (error) {
+        console.error("Error setting initial values:", error);
+        message.error("Failed to load booking details. Please try again.");
+      }
+    }
+  }, [isEditMode, initialValues, form]);
+
+  // Modify the onFinish function to handle both add and edit modes
+  const onFinish = async (values: BookingFormValues) => {
+    if (isEditMode && customOnFinish) {
+      // Pass form values along with payment details to the custom onFinish handler
+      customOnFinish({
+        ...values,
+        receivedPayments,
+        nextPayments
+      });
+    } else {
+      // Default add booking behavior
+      try {
+        setLoading(true);
+        
+        // Calculate total received amount
+        const totalReceived = receivedPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        
+        // Prepare the booking data according to the expected API format
+        const bookingData = {
+          customer: values.customer,
+          leadId: values.leadId || "", // Optional
+          projectName: values.projectName,
+          email: values.email,
+          contactName: values.contactName,
+          bookingDate: values.bookingDate,
+          RM: values.rm,
+          unit: values.unit,
+          size: values.size,
+          reference: {
+            employee: values.employee,
+            tlcp: values.tlcp,
+            avp: values.avp,
+            vp: values.vp,
+            as: values.as,
+            agm: values.agm,
+            gm: values.gm,
+            vertical: values.vertical
+          },
+          paymentDetails: [...receivedPayments, ...nextPayments].map(payment => ({
+            amount: payment.amount,
+            date: payment.date,
+            status: payment.status,
+            mode: payment.mode,
+            ...(payment.mode === 'online' && { transactionNo: payment.transactionNo }),
+            ...(payment.mode === 'cheque' && { chequeNumber: payment.chequeNumber })
+          })),
+          BSP: values.bsp,
+          GST: values.gst,
+          OtherCharges: values.otherCharges,
+          TSP: values.tsp,
+          totalReceived: totalReceived,
+          netRevenue: values.netRevenue || netRevenue,
+          remark: values.remark,
+          bookingStatus: values.bookingStatus
+        };
+        
+        // API call to add booking
+        const response = await API.postAuthAPI(bookingData as unknown as string, 'add-booking', true);
+        
+        if (response.error) throw new Error(response.error);
+        
+        message.success('Booking added successfully!');
+        form.resetFields();
+        setReceivedPayments([{ amount: 0, date: '', status: 'paid', mode: 'cash' }]);
+        setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+        
+      } catch (error: unknown) {
+        const err = error as Error;
+        message.error(err.message || 'Failed to add booking');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const calculateTotalRevenue = () => {
     const bsp = form.getFieldValue('bsp') || 0;
     const gst = form.getFieldValue('gst') || 0;
@@ -202,70 +387,6 @@ const AddBooking: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const onFinish = async (values: BookingFormValues) => {
-    try {
-      setLoading(true);
-      
-      // Calculate total received amount
-      const totalReceived = receivedPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-      
-      // Prepare the booking data according to the expected API format
-      const bookingData = {
-        customer: values.customer,
-        leadId: values.leadId || "", // Optional
-        projectName: values.projectName,
-        email: values.email,
-        contactName: values.contactName,
-        bookingDate: values.bookingDate,
-        RM: values.rm,
-        unit: values.unit,
-        size: values.size,
-        reference: {
-          employee: values.employee,
-          tlcp: values.tlcp,
-          avp: values.avp,
-          vp: values.vp,
-          as: values.as,
-          agm: values.agm,
-          gm: values.gm,
-          vertical: values.vertical
-        },
-        paymentDetails: [...receivedPayments, ...nextPayments].map(payment => ({
-          amount: payment.amount,
-          date: payment.date,
-          status: payment.status,
-          mode: payment.mode,
-          ...(payment.mode === 'online' && { transactionNo: payment.transactionNo }),
-          ...(payment.mode === 'cheque' && { chequeNumber: payment.chequeNumber })
-        })),
-        BSP: values.bsp,
-        GST: values.gst,
-        OtherCharges: values.otherCharges,
-        TSP: values.tsp,
-        totalReceived: totalReceived,
-        netRevenue: values.netRevenue || netRevenue,
-        remark: values.remark,
-        bookingStatus: values.bookingStatus
-      };
-      
-      // API call to add booking
-      const response = await API.postAuthAPI( bookingData as unknown as string,'add-booking', true);
-      
-      if (response.error) throw new Error(response.error);
-      
-      message.success('Booking added successfully!');
-      form.resetFields();
-      setReceivedPayments([{ amount: 0, date: '', status: 'paid', mode: 'cash' }]);
-      setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
-      
-    } catch (error: unknown) {
-      const err = error as Error;
-      message.error(err.message || 'Failed to add booking');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onFieldsChange = () => {
     calculateTotalRevenue();
   };
@@ -278,7 +399,15 @@ console.log({receivedPayments});
   // Handle payment detail changes for received payments
   const handleReceivedPaymentChange = (index: number, field: keyof PaymentDetail, value: unknown) => {
     const newPayments = [...receivedPayments];
-    newPayments[index] = { ...newPayments[index], [field]: value };
+    // Handle date specifically to ensure proper format
+    if (field === 'date' && value) {
+      newPayments[index] = { 
+        ...newPayments[index], 
+        [field]: typeof value === 'string' ? value : value.toString() 
+      };
+    } else {
+      newPayments[index] = { ...newPayments[index], [field]: value };
+    }
     setReceivedPayments(newPayments);
     
     // Update form field
@@ -293,7 +422,15 @@ console.log({receivedPayments});
   // Handle payment detail changes for next payments
   const handleNextPaymentChange = (index: number, field: keyof PaymentDetail, value: unknown) => {
     const newPayments = [...nextPayments];
-    newPayments[index] = { ...newPayments[index], [field]: value };
+    // Handle date specifically to ensure proper format
+    if (field === 'date' && value) {
+      newPayments[index] = { 
+        ...newPayments[index], 
+        [field]: typeof value === 'string' ? value : value.toString() 
+      };
+    } else {
+      newPayments[index] = { ...newPayments[index], [field]: value };
+    }
     setNextPayments(newPayments);
     
     // Update form field
@@ -351,7 +488,12 @@ console.log({receivedPayments});
                   <Form.Item label="Date">
                     <DatePicker
                       style={{ width: '100%' }}
-                      onChange={(date) => handleReceivedPaymentChange(index, 'date', date?.toISOString())}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        // Use a simple approach that won't cause validation errors
+                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        handleReceivedPaymentChange(index, 'date', dateStr);
+                      }}
                     />
                   </Form.Item>
                 </Col>
@@ -462,7 +604,12 @@ console.log({receivedPayments});
                   <Form.Item label="Date">
                     <DatePicker
                       style={{ width: '100%' }}
-                      onChange={(date) => handleNextPaymentChange(index, 'date', date?.toISOString())}
+                      format="YYYY-MM-DD"
+                      onChange={(date) => {
+                        // Use a simple approach that won't cause validation errors
+                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        handleNextPaymentChange(index, 'date', dateStr);
+                      }}
                     />
                   </Form.Item>
                 </Col>
@@ -558,7 +705,7 @@ console.log({receivedPayments});
         className="rounded-lg"
       >
         {/* Basic Detail Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Basic Detail</Title>}>
+        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">{isEditMode ? "Edit Booking" : "Basic Detail"}</Title>}>
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
@@ -639,7 +786,17 @@ console.log({receivedPayments});
                 name="bookingDate"
                 rules={[{ required: true, message: 'Please select a date' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker 
+                  style={{ width: '100%' }}
+                  format="YYYY-MM-DD"
+                  onChange={(date) => {
+                    // Use a simple approach that won't cause validation errors
+                    const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                    form.setFieldsValue({
+                      bookingDate: dateStr
+                    });
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -984,7 +1141,7 @@ console.log({receivedPayments});
             className="float-right"
             loading={loading}
           >
-            Submit
+            {isEditMode ? "Update Booking" : "Submit"}
           </Button>
         </Form.Item>
       </Form>
@@ -1075,6 +1232,12 @@ console.log({receivedPayments});
       `}</style>
     </div>
   );
+};
+
+AddBooking.defaultProps = {
+  isEditMode: false,
+  initialValues: null,
+  onFinish: undefined
 };
 
 export default AddBooking;

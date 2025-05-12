@@ -104,7 +104,9 @@ const DynamicDataManagement: React.FC<DynamicDataManagementProps> = ({
   // };
 
   const handleUpdate = (key: string, status: boolean) => {
-    onUpdate(key, status);
+    if (onUpdate) {
+      onUpdate(key, status);
+    }
   };
 
   const actionColumn = {
