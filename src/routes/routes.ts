@@ -27,6 +27,7 @@ import AllBooking from "../Pages/Booking/AllBooking";
 import UpcomingPayments from "../Pages/Booking/UpcomingPayments";
 import BookingReports from "../Pages/Booking/BookingReports";
 import EditBooking from "../Pages/Booking/EditBooking";
+import NewBooking from "../Pages/Booking/NewBooking";
 
 const navRoutes = [
   {
@@ -147,7 +148,7 @@ const navRoutes = [
   },
   {
     path: "/booking/new-booking",
-    component: AllBooking,
+    component: NewBooking,
   },
   {
     path: "/booking/:bookingId",
