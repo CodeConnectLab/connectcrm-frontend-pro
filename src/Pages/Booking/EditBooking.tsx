@@ -119,7 +119,6 @@ const EditBooking: React.FC = () => {
       </div>
     );
   }
-  console.log({bookingData});
   
 
   return (

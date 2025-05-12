@@ -1,20 +1,33 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Card, Tag, Space, Button } from "antd";
+import { Card, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { debounce } from "lodash";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import SearchForm from "../../components/Header/SearchForm";
 import BookingAdvanceFilterUI from "./BookingAdvanceFilterUI";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
+import { API } from "../../api";
+
+interface NextDueAmount {
+  amount: number;
+  date: string;
+  status: string;
+  mode: string;
+  transctionNo: string;
+}
 
 interface BookingData {
   key: string;
-  name: string;
-  contactNumber: string;
-  bookingAmount: number;
-  duePayment: number;
-  status: string;
+  _id: string;
+  projectName: string;
+  customer: string;
+  email: string;
+  contactName: string;
+  bookingDate: string;
+  BookingAmount: number;
+  DuePayement: number;
+  nextdueamount: NextDueAmount;
 }
 
 interface BookingFilters {
@@ -31,89 +44,18 @@ interface BookingFilters {
   endDate?: string;
 }
 
-// Mock data for demonstration
-const mockBookings: BookingData[] = [
-    {
-      key: "1",
-      name: "Anurag", 
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 250000,
-      status: "Pending",
-    },
-    {
-      key: "2",
-      name: "Anurag",
-      contactNumber: "9999999654", 
-      bookingAmount: 1000000,
-      duePayment: 0,
-      status: "Complete",
-    },
-    {
-      key: "3",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 300000,
-      status: "Pending",
-    },
-    {
-      key: "4", 
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 400000,
-      status: "Pending",
-    },
-    {
-      key: "5",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 0,
-      status: "Complete",
-    },
-    {
-      key: "6",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 200000,
-      status: "Pending",
-    },
-    {
-      key: "7",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 350000,
-      status: "Pending",
-    },
-    {
-      key: "8",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 0,
-      status: "Complete",
-    },
-    {
-      key: "9",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 450000,
-      status: "Pending",
-    },
-    {
-      key: "10",
-      name: "Anurag",
-      contactNumber: "9999999654",
-      bookingAmount: 1000000,
-      duePayment: 275000,
-      status: "Pending",
-    },
-  ];
+interface PaginatedResponse {
+  docs: BookingData[];
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  prevPage: number | null;
+  nextPage: number | null;
+}
 
 const UpcomingPayments: React.FC = () => {
   // State for table data
@@ -121,7 +63,8 @@ const UpcomingPayments: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [isAdvanceFilterOpen, setIsAdvanceFilterOpen] = useState(false);
- const navigate=useNavigate()
+  const navigate = useNavigate();
+
   // State for filters
   const [advancedFilters, setAdvancedFilters] = useState<BookingFilters>({});
 
@@ -136,83 +79,135 @@ const UpcomingPayments: React.FC = () => {
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
+      dataIndex: "customer",
       key: "name",
     },
     {
-      title: "Contact Number",
-      dataIndex: "contactNumber",
-      key: "contactNumber",
+      title: "Contact Name",
+      dataIndex: "contactName",
+      key: "contactName",
     },
     {
       title: "Booking Amount",
-      dataIndex: "bookingAmount",
+      dataIndex: "BookingAmount",
       key: "bookingAmount",
       render: (amount: number) => `₹${amount.toLocaleString("en-IN")}`,
     },
     {
       title: "Due Payment",
-      dataIndex: "duePayment",
+      dataIndex: "DuePayement",
       key: "duePayment",
       render: (amount: number) => `₹${amount.toLocaleString("en-IN")}`,
     },
     {
-      title: "Action",
-      key: "action",
-      render: (_: unknown, record: BookingData) => (
-        <Button
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="bg-primary text-white hover:bg-primary/90"
-      >
-        Quick Edit
-      </Button>
-      ),
+      title: "Next Due Date",
+      dataIndex: "nextdueamount",
+      key: "nextDueDate",
+      render: (nextdue: NextDueAmount) => 
+        nextdue ? new Date(nextdue.date).toLocaleDateString() : "N/A",
     },
+    {
+      title: "Booking Date",
+      dataIndex: "bookingDate",
+      key: "bookingDate",
+      render: (bookingDate: string) => 
+        bookingDate ? new Date(bookingDate).toLocaleDateString() : "N/A",
+    },
+    // {
+    //   title: "Action",
+    //   key: "action",
+    //   render: () => (
+    //     <Button
+    //       onClick={(e) => {
+    //         e.stopPropagation();
+    //       }}
+    //       className="bg-primary text-white hover:bg-primary/90"
+    //     >
+    //       Quick Edit
+    //     </Button>
+    //   ),
+    // },
   ];
 
-  // Filter function for search and dropdown filters
-  const filterBookings = useCallback(() => {
+  // Function to fetch bookings from API
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
+    try {
+      // Construct API parameters
+      const params: {
+        page: number;
+        limit: number;
+        search?: string;
+        employee?: string;
+        tlcp?: string;
+        avp?: string;
+        vp?: string;
+        as?: string;
+        agm?: string;
+        gm?: string;
+        vertical?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+      };
 
-    let filteredData = [...mockBookings];
+      // Add search parameter if it exists
+      if (searchText) {
+        params.search = searchText;
+      }
 
-    // Apply search filter
-    if (searchText) {
-      filteredData = filteredData.filter(
-        (booking) =>
-          booking.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          booking.contactNumber.includes(searchText)
+      // Add advanced filters if they exist
+      if (advancedFilters.employee) params.employee = advancedFilters.employee;
+      if (advancedFilters.tlcp) params.tlcp = advancedFilters.tlcp;
+      if (advancedFilters.avp) params.avp = advancedFilters.avp;
+      if (advancedFilters.vp) params.vp = advancedFilters.vp;
+      if (advancedFilters.as) params.as = advancedFilters.as;
+      if (advancedFilters.agm) params.agm = advancedFilters.agm;
+      if (advancedFilters.gm) params.gm = advancedFilters.gm;
+      if (advancedFilters.vertical) params.vertical = advancedFilters.vertical;
+      if (advancedFilters.startDate) params.startDate = advancedFilters.startDate;
+      if (advancedFilters.endDate) params.endDate = advancedFilters.endDate;
+
+      // Call the API
+      const { data, error } = await API.getAuthAPI<PaginatedResponse>(
+        "get-upcomming-booking", 
+        true,
+        params
       );
-    }
 
-    // Apply advanced filters
-    if (advancedFilters.status) {
-      filteredData = filteredData.filter(
-        (booking) => booking.status === advancedFilters.status
-      );
-    }
+      if (error) {
+        throw new Error(error);
+      }
 
-    // Apply other filters (just for demonstration - in a real app, these would filter based on the relevant fields)
-    // For vertical, as, vp, avp, gm, agm, tlcp, employee, etc.
-
-    setTimeout(() => {
-      setBookings(filteredData);
-      setPagination((prev) => ({
-        ...prev,
-        total: filteredData.length,
-      }));
+      // Process and set the data
+      if (data && data.docs) {
+        const formattedBookings = data.docs.map((booking: BookingData) => ({
+          ...booking,
+          key: booking._id,
+        }));
+        
+        setBookings(formattedBookings);
+        setPagination({
+          ...pagination,
+          total: data.totalDocs || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming payments:', error);
+    } finally {
       setLoading(false);
-    }, 500); // Simulate API call delay
-  }, [searchText, advancedFilters, mockBookings]);
+    }
+  }, [pagination.current, pagination.pageSize, searchText, advancedFilters]);
 
   // Debounced search handler
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
         setSearchText(value);
-      }, 500),
+        setPagination(prev => ({ ...prev, current: 1 }));
+      }, 100),
     []
   );
 
@@ -241,7 +236,7 @@ const UpcomingPayments: React.FC = () => {
 
   const handleRowClick = (record: BookingData) => {
     console.log("Row clicked:", record);
-    // Navigate to detail or open edit modal
+    navigate(`/booking/${record._id}`);
   };
 
   const handleAddBooking = () => {
@@ -252,10 +247,10 @@ const UpcomingPayments: React.FC = () => {
     setIsAdvanceFilterOpen(!isAdvanceFilterOpen);
   };
 
-  // Apply filters when they change
+  // Apply filters when they change or pagination changes
   useEffect(() => {
-    filterBookings();
-  }, []);
+    fetchBookings();
+  }, [fetchBookings]);
 
   return (
     <div className="min-h-screen p-4 space-y-4">
@@ -271,15 +266,15 @@ const UpcomingPayments: React.FC = () => {
           <div className="flex items-center">
             <SearchForm
               onSearch={handleSearch}
-              placeholder="Search by name or contact number"
+              placeholder="Search by name or contact name"
               searchTerm={searchText}
             />
           </div>
           <div className="flex gap-3">
-            <ButtonDefault
+            {/* <ButtonDefault
               label="Advanced Filter"
               onClick={toggleAdvanceFilter}
-            />
+            /> */}
             <ButtonDefault
               label="Add Booking"
               variant="secondary"

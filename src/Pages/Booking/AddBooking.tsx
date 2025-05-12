@@ -42,6 +42,11 @@ export interface PaymentDetail {
   chequeNumber?: string;
 }
 
+interface References {
+  name:string,
+  _id:string
+}
+
 export interface BookingData {
   _id: string;
   customer: string;
@@ -58,14 +63,14 @@ export interface BookingData {
   unit: string;
   size: string;
   reference: {
-    employee: string | null;
-    tlcp: string | null;
-    avp: string | null;
-    vp: string | null;
-    as: string | null;
-    agm: string | null;
-    gm: string | null;
-    vertical: string | null;
+    employee:  References | null;
+    tlcp: References | null;
+    avp: References | null;
+    vp: References | null;
+    as: References | null;
+    agm: References | null;
+    gm: References | null;
+    vertical: References | null;
   };
   paymentDetails: Array<PaymentDetail>;
   BSP: number;
@@ -181,14 +186,14 @@ const AddBooking: React.FC<AddBookingProps> = ({
           unit: initialValues.unit,
           size: initialValues.size,
           // Reference fields
-          employee: initialValues.reference?.employee || undefined,
-          tlcp: initialValues.reference?.tlcp || undefined,
-          avp: initialValues.reference?.avp || undefined,
-          vp: initialValues.reference?.vp || undefined,
-          as: initialValues.reference?.as || undefined,
-          agm: initialValues.reference?.agm || undefined,
-          gm: initialValues.reference?.gm || undefined,
-          vertical: initialValues.reference?.vertical || undefined,
+          employee: initialValues.reference?.employee?._id || undefined,
+          tlcp: initialValues.reference?.tlcp?._id || undefined,
+          avp: initialValues.reference?.avp?._id || undefined,
+          vp: initialValues.reference?.vp?._id || undefined,
+          as: initialValues.reference?.as?._id || undefined,
+          agm: initialValues.reference?.agm?._id || undefined,
+          gm: initialValues.reference?.gm?._id || undefined,
+          vertical: initialValues.reference?.vertical?._id || undefined,
           // Payment fields
           bsp: initialValues.BSP,
           gst: initialValues.GST,
