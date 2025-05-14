@@ -117,7 +117,7 @@ const transformApiResponse = (data: BookingOverviewResponse['data']): BookingMet
 // Helper function to transform performance data
 const transformPerformanceData = (data: PerformanceData[]): PerformanceRowData[] => {
   return data.map(item => ({
-    name: item.name,
+    name: item.name || "",
     thisMonthValue: formatCurrency(item.thisMonth),
     thisYearValue: formatCurrency(item.thisYear)
   }));
