@@ -395,7 +395,6 @@ const AddBooking: React.FC<AddBookingProps> = ({
   const onFieldsChange = () => {
     calculateTotalRevenue();
   };
-console.log({receivedPayments});
 
   useEffect(()=>{
     fetchProductServices()
@@ -494,9 +493,10 @@ console.log({receivedPayments});
                     <DatePicker
                       style={{ width: '100%' }}
                       format="YYYY-MM-DD"
+                      defaultValue={dayjs(payment.date)}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
-                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
                         handleReceivedPaymentChange(index, 'date', dateStr);
                       }}
                     />
@@ -610,9 +610,10 @@ console.log({receivedPayments});
                     <DatePicker
                       style={{ width: '100%' }}
                       format="YYYY-MM-DD"
+                      defaultValue={dayjs(payment.date)}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
-                        const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                        const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
                         handleNextPaymentChange(index, 'date', dateStr);
                       }}
                     />
@@ -796,9 +797,9 @@ console.log({receivedPayments});
                   format="YYYY-MM-DD"
                   onChange={(date) => {
                     // Use a simple approach that won't cause validation errors
-                    const dateStr = date ? date.format('YYYY-MM-DD') : '';
+                    // const dateStr = date ? date.format('YYYY-MM-DD') : '';
                     form.setFieldsValue({
-                      bookingDate: dateStr
+                      bookingDate: date
                     });
                   }}
                 />
