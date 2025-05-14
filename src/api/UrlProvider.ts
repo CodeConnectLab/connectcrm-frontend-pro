@@ -59,4 +59,5 @@ export const END_POINT: EndPointType = {
   feature: "feature",
   GET_BOOKING_DETAILS: 'get-booking-details',
   UPDATE_BOOKING: 'update-booking',
+  GET_USER_TREE: "get-user-tree",
 } as const;

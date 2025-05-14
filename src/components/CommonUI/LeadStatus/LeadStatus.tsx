@@ -2,16 +2,35 @@ import InputGroup from "../../FormElements/InputGroup";
 import SelectGroupOne from "../../FormElements/SelectGroup/SelectGroupOne";
 import { getStoredLostReason, getStoredStatus } from "../../../api/commonAPI";
 import { useEffect, useState } from "react";
+import ButtonDefault from "../../Buttons/ButtonDefault";
+
+interface FormData {
+  status: string;
+  leadWonAmount: number;
+  leadLostReasonId: string;
+  [key: string]: unknown;
+}
+
+interface LeadStatusUIProps {
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSelectChange: (name: string, value: string) => void;
+  formData: FormData;
+  required?: boolean;
+  value: string;
+  lostReasonValue: string;
+  statusFieldName?: string;
+  onAddBooking?: () => void;
+}
 
 export default function LeadStatusUI({
   handleInputChange,
   handleSelectChange = () => {},
   formData,
   required = false,
-  defaultValue,
   value,
   lostReasonValue,
   statusFieldName = "status",
+  onAddBooking,
 }: any) {
   const leadStatusList = getStoredStatus(true);
   const leadStatusListRaw = getStoredStatus();
@@ -30,9 +49,10 @@ export default function LeadStatusUI({
     });
   };
 
-  const renderHiddenField = (fieldName: any) => {
+  const renderHiddenField = (fieldName: string) => {
     if (fieldName === statusIds.wonStatusId) {
       return (
+        <>
         <InputGroup
           label="Won amount in INR"
           name="leadWonAmount"
@@ -41,6 +61,13 @@ export default function LeadStatusUI({
           onChange={handleInputChange}
           required
         />
+        <ButtonDefault
+          label="Add as Booking"
+          onClick={onAddBooking}
+          variant="primary"
+          customClasses="w-full mt-auto"
+        />
+        </>
       );
     } else if (fieldName === statusIds.lostStatusId) {
       return (
@@ -60,6 +87,7 @@ export default function LeadStatusUI({
   useEffect(() => {
     findLostWonStatusId();
   }, []);
+  
   return (
     <>
       <SelectGroupOne
