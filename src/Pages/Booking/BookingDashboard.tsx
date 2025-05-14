@@ -6,6 +6,49 @@ import { BiCalendar, BiCalendarEvent } from "react-icons/bi";
 import { MdPendingActions } from "react-icons/md";
 import BookingSummaryCard from "../../components/CommonUI/BookingSummaryCard";
 import PerformanceTable, { PerformanceRowData } from "../../components/CommonUI/PerformanceTable";
+import { API } from "../../api";
+
+interface BookingOverviewResponse {
+  error: boolean;
+  message: string;
+  data: {
+    total: {
+      totalBookingAmount: number;
+      totalBookings: number;
+    };
+    thisMonth: {
+      bookingsThisMonth: number;
+      bookingsThisMonthAmount: number;
+    };
+    thisYear: {
+      bookingsThisYear: number;
+      bookingsThisYearAmount: number;
+    };
+    cancelBookings: {
+      cancelBookings: number;
+      cancelBookingAmount: number;
+    };
+    pendingAmount: number;
+    pendingThisMonth: number;
+    performanceOverview: {
+      vertical: PerformanceData[];
+      as: PerformanceData[];
+      vp: PerformanceData[];
+      avp: PerformanceData[];
+      gm: PerformanceData[];
+      agm: PerformanceData[];
+      tlcp: PerformanceData[];
+      employee: PerformanceData[];
+    };
+  };
+}
+
+interface PerformanceData {
+  _id: string;
+  name?: string;
+  thisMonth: number;
+  thisYear: number;
+}
 
 interface BookingMetrics {
   totalBooking: { count: number; value: string };
@@ -26,7 +69,61 @@ interface BookingMetrics {
   }
 }
 
-// Mock data for development
+// Helper function to format currency
+const formatCurrency = (amount: number): string => {
+  return `₹ ${amount.toLocaleString('en-IN')}`;
+};
+
+// Transform API response to our component's format
+const transformApiResponse = (data: BookingOverviewResponse['data']): BookingMetrics => {
+  return {
+    totalBooking: { 
+      count: data.total.totalBookings, 
+      value: formatCurrency(data.total.totalBookingAmount) 
+    },
+    bookingThisYear: { 
+      count: data.thisYear.bookingsThisYear, 
+      value: formatCurrency(data.thisYear.bookingsThisYearAmount) 
+    },
+    bookingThisMonth: { 
+      count: data.thisMonth.bookingsThisMonth, 
+      value: formatCurrency(data.thisMonth.bookingsThisMonthAmount) 
+    },
+    cancelledBooking: { 
+      count: data.cancelBookings.cancelBookings, 
+      value: formatCurrency(data.cancelBookings.cancelBookingAmount) 
+    },
+    pendingAmount: { 
+      count: 0, // No count in the API response
+      value: formatCurrency(data.pendingAmount) 
+    },
+    currentMonthPending: { 
+      count: 0, // No count in the API response
+      value: formatCurrency(data.pendingThisMonth) 
+    },
+    performanceOverview: {
+      vertical: transformPerformanceData(data.performanceOverview.vertical),
+      vp: transformPerformanceData(data.performanceOverview.vp),
+      avp: transformPerformanceData(data.performanceOverview.avp),
+      as: transformPerformanceData(data.performanceOverview.as),
+      gm: transformPerformanceData(data.performanceOverview.gm),
+      agm: transformPerformanceData(data.performanceOverview.agm),
+      tlcp: transformPerformanceData(data.performanceOverview.tlcp),
+      employees: transformPerformanceData(data.performanceOverview.employee)
+    }
+  };
+};
+
+// Helper function to transform performance data
+const transformPerformanceData = (data: PerformanceData[]): PerformanceRowData[] => {
+  return data.map(item => ({
+    name: item.name || "",
+    thisMonthValue: formatCurrency(item.thisMonth),
+    thisYearValue: formatCurrency(item.thisYear)
+  }));
+};
+
+// Mock data function kept for fallback or development purposes
 const getMockBookingMetrics = (): BookingMetrics => {
   return {
     totalBooking: { count: 700, value: "₹ 50,00,000" },
@@ -86,16 +183,18 @@ const BookingDashboard: React.FC = () => {
 
   const fetchBookingMetrics = async () => {
     try {
-      // In a real application, replace with actual API call
-      // const response = await API.getAuthAPI("booking/metrics", true);
-      // if (response.error) throw new Error(response.error);
-      // setMetrics(response.data);
+      const response = await API.getAuthAPI("booking-overview", true);
+      if (response.error) throw new Error(response.error);
       
-      // Using mock data for now
-      setMetrics(getMockBookingMetrics());
+      // Transform the API response to match our component's format
+      const transformedData = transformApiResponse(response.data);
+      setMetrics(transformedData);
     } catch (error: Error | unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch booking metrics";
       toast.error(errorMessage);
+      
+      // Fallback to mock data in case of error
+      setMetrics(getMockBookingMetrics());
     } finally {
       setLoading(false);
     }
