@@ -116,12 +116,14 @@ interface AddBookingProps {
   isEditMode?: boolean;
   initialValues?: BookingData | null;
   onFinish?: (values: BookingFormValues & { receivedPayments: PaymentDetail[]; nextPayments: PaymentDetail[] }) => void;
+  finalCallBack?: () => void;
 }
 
 const AddBooking: React.FC<AddBookingProps> = ({ 
   isEditMode = false, 
   initialValues = null, 
-  onFinish: customOnFinish
+  onFinish: customOnFinish,
+  finalCallBack = ()=>{}
 }) => {
   const [form] = Form.useForm<BookingFormValues>();
   const [netRevenue, setNetRevenue] = useState<number>(0);
@@ -152,7 +154,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
       // Process initial values
       try {
         // Extract payment details
-        const receivedPayments = initialValues.paymentDetails
+        const receivedPayments = initialValues.paymentDetails?.length
           ? initialValues.paymentDetails
               .filter((payment: PaymentDetail) => payment.status === 'paid')
               .map((payment: PaymentDetail) => ({
@@ -161,7 +163,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
               }))
           : [{ amount: 0, date: '', status: 'paid', mode: 'cash' }];
 
-        const nextPayments = initialValues.paymentDetails
+        const nextPayments = initialValues.paymentDetails?.length
           ? initialValues.paymentDetails
               .filter((payment: PaymentDetail) => payment.status === 'unpaid')
               .map((payment: PaymentDetail) => ({
@@ -275,6 +277,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
         form.resetFields();
         setReceivedPayments([{ amount: 0, date: '', status: 'paid', mode: 'cash' }]);
         setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+        finalCallBack();
         
       } catch (error: unknown) {
         const err = error as Error;

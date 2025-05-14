@@ -17,6 +17,9 @@ import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 import { isEqual } from "lodash";
 import { IoCaretBackOutline } from "react-icons/io5";
+import { Modal } from "antd";
+import AddBooking from "../Booking/AddBooking";
+import { BookingFormValues, PaymentDetail } from "../Booking/AddBooking";
 
 interface LeadHistory {
   _id: string;
@@ -88,7 +91,11 @@ const LeadAction = ({
   isModalView = false,
   leadIdProp = "",
   onClose = () => {},
-}: any) => {
+}: {
+  isModalView?: boolean;
+  leadIdProp?: string;
+  onClose?: () => void;
+}) => {
   const { leadId } = isModalView
     ? { leadId: leadIdProp }
     : useParams<{ leadId: string }>();
@@ -97,6 +104,7 @@ const LeadAction = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isFirstCommentClick, setIsFirstCommentClick] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [leadData, setLeadData] = useState<{
     lead: LeadData;
     history: LeadHistory[];
@@ -267,6 +275,20 @@ const LeadAction = ({
     await handleUpdateLead(updateData);
   };
 
+  // Handle booking modal
+  const handleOpenBookingModal = () => {
+    setShowBookingModal(true);
+  };
+
+  const handleCloseBookingModal = () => {
+    setShowBookingModal(false);
+  };
+
+  const handleBookingFinish =()=>{
+    setShowBookingModal(false);
+  }
+
+
   const historyColumns = [
     {
       title: "COMMENTED BY",
@@ -426,9 +448,9 @@ const LeadAction = ({
             handleInputChange={handleInputChange}
             handleSelectChange={handleSelectChange}
             formData={formData}
-            defaultValue={formData.status}
             value={formData.status}
             lostReasonValue={formData.leadLostReasonId}
+            onAddBooking={handleOpenBookingModal}
           />
 
           <AntDateTimePicker
@@ -528,6 +550,55 @@ const LeadAction = ({
         confirmLabel="Leave Page"
         cancelLabel="Stay"
       />
+
+      {/* Booking Modal */}
+      <Modal
+        title="Add Booking"
+        open={showBookingModal}
+        onCancel={handleCloseBookingModal}
+        footer={null}
+        width={1000}
+        style={{ top: 20 }}
+        bodyStyle={{ maxHeight: "80vh", overflowY: "auto" }}
+      >
+        {leadData?.lead && (
+          <AddBooking
+            isEditMode={true}
+            initialValues={{
+              _id: "",
+              customer: `${leadData.lead.firstName} ${leadData.lead.lastName}`,
+              leadId: { _id: leadData.lead._id, firstName: leadData.lead.firstName, id: leadData.lead._id },
+              projectName: leadData.lead.productService?._id || "",
+              email: leadData.lead.email,
+              contactName: "",
+              bookingDate: null,
+              RM: "",
+              unit: "",
+              size: "",
+              reference: {
+                employee: null,
+                tlcp: null,
+                avp: null,
+                vp: null,
+                as: null,
+                agm: null,
+                gm: null,
+                vertical: null
+              },
+              paymentDetails: [],
+              BSP: 0,
+              GST: 0,
+              OtherCharges: 0,
+              TSP: 0,
+              totalReceived: 0,
+              netRevenue: 0,
+              remark: "",
+              bookingStatus: "pending"
+            }}
+            finalCallBack={handleBookingFinish}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
