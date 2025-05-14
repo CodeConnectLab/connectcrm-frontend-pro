@@ -41,8 +41,9 @@ export interface EndPointType {
   UserPost: string;
   Permission: string;
   feature: string;
-  GET_BOOKING_DETAILS: string,
-  UPDATE_BOOKING: string,
+  GET_BOOKING_DETAILS: string;
+  UPDATE_BOOKING: string;
+  GET_USER_TREE: string;
 }
 
 export const BASE_URL: string;

@@ -11,16 +11,8 @@ const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// Roles hierarchy for reference
-const roleHierarchy = {
-  "Employee": "Team Leader",
-  "Team Leader": "AGM",
-  "AGM": "GM",
-  "GM": "AVP",
-  "AVP": "VP",
-  "VP": "AS",
-  "AS": "Vertical"
-};
+// List of all roles for reference
+const allRoles = ["Employee", "Team Leader", "AGM", "GM", "AVP", "VP", "AS", "Vertical"];
 
 // Define user interface
 interface User {
@@ -31,6 +23,14 @@ interface User {
   role: string;
   isActive: boolean;
   [key: string]: string | boolean | undefined;
+}
+
+// User tree response interface
+interface UserTreeData {
+  [role: string]: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface PaymentDetail {
@@ -125,11 +125,12 @@ const AddBooking: React.FC<AddBookingProps> = ({
 }) => {
   const [form] = Form.useForm<BookingFormValues>();
   const [netRevenue, setNetRevenue] = useState<number>(0);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [usersByRole, setUsersByRole] = useState<{
     [role: string]: { value: string; label: string }[];
   }>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingUserTree, setLoadingUserTree] = useState<boolean>(false);
+  const [selectedUserRole, setSelectedUserRole] = useState<string | null>(null);
   
   // State for payment details
   const [receivedPayments, setReceivedPayments] = useState<PaymentDetail[]>([
@@ -317,11 +318,8 @@ const AddBooking: React.FC<AddBookingProps> = ({
       // Group users by their role
       const usersByRoleMap: { [role: string]: { value: string; label: string }[] } = {};
       
-      // Get all roles including Vertical
-      const roles = [...Object.keys(roleHierarchy), "Vertical"];
-      
       // Initialize empty arrays for each role
-      roles.forEach(role => {
+      allRoles.forEach(role => {
         usersByRoleMap[role] = [];
       });
       
@@ -345,10 +343,52 @@ const AddBooking: React.FC<AddBookingProps> = ({
     }
   };
 
-  // Handle selection of employee in the Reference section
-  const handleEmployeeSelect = (value: string, role: string) => {
-    // Set the selected role to control which other selects are enabled
-    setSelectedRole(role);
+  // Fetch user tree hierarchy
+  const fetchUserTree = async (userId: string) => {
+    if (!userId) return;
+    
+    try {
+      setLoadingUserTree(true);
+      const response = await API.getAuthAPI(`${END_POINT.GET_USER_TREE}/${userId}`, true);
+      
+      if (response.error) throw new Error(response.error);
+      
+      const userTreeData: UserTreeData = response.data;
+      
+      // Map to collect form values
+      const updates: Record<string, string> = {};
+      
+      // Process the user tree data
+      Object.entries(userTreeData).forEach(([role, userData]) => {
+        if (role === "Employee") updates.employee = userData.id;
+        else if (role === "Team Leader") updates.tlcp = userData.id;
+        else if (role === "AGM") updates.agm = userData.id;
+        else if (role === "GM") updates.gm = userData.id;
+        else if (role === "AVP") updates.avp = userData.id;
+        else if (role === "VP") updates.vp = userData.id;
+        else if (role === "AS") updates.as = userData.id;
+        else if (role === "Vertical") updates.vertical = userData.id;
+      });
+      
+      // Update the form values
+      form.setFieldsValue(updates as unknown as Partial<BookingFormValues>);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error("Failed to fetch user tree:", err.message);
+      message.error("Failed to fetch user hierarchy");
+    } finally {
+      setLoadingUserTree(false);
+    }
+  };
+
+  // Handle selection of any user in the Reference section
+  const handleUserSelect = (value: string, role: string) => {
+    setSelectedUserRole(role);
+    
+    // Fetch user tree if a value is selected
+    if (value) {
+      fetchUserTree(value);
+    }
     
     // Convert role name to corresponding form field name
     const roleToFieldMap: {[key: string]: keyof BookingFormValues} = {
@@ -371,21 +411,20 @@ const AddBooking: React.FC<AddBookingProps> = ({
     }
   };
 
-  // Check if a select should be disabled based on role hierarchy
+  // Check if a select should be disabled
+  // Now disables only lower hierarchy roles based on the selected role
   const shouldDisableSelect = (role: string): boolean => {
-    if (!selectedRole) return false;
+    if (!selectedUserRole) return false;
     
-    // If no role is selected, or the role in hierarchy is higher than or equal to the selected role
     // Create a map of role positions in the hierarchy for comparison
     const roleOrder: { [role: string]: number } = {};
-    const allRoles = ["Employee", ...Object.values(roleHierarchy)];
-    
-    allRoles.forEach((role, index) => {
-      roleOrder[role] = index;
+    allRoles.forEach((r, index) => {
+      roleOrder[r] = index;
     });
     
-    // If selectedRole is higher in hierarchy (smaller index) than current role, disable it
-    return roleOrder[selectedRole] > roleOrder[role];
+    // Only disable roles that are lower in hierarchy (smaller index) than selected role
+    // Keep the selected role and higher roles (greater or equal index) enabled
+    return roleOrder[role] < roleOrder[selectedUserRole];
   };
 
   useEffect(() => {
@@ -493,7 +532,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                     <DatePicker
                       style={{ width: '100%' }}
                       format="YYYY-MM-DD"
-                      defaultValue={dayjs(payment.date)}
+                      defaultValue={payment.date?dayjs(payment.date): dayjs(new Date())}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
                         const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
@@ -610,7 +649,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                     <DatePicker
                       style={{ width: '100%' }}
                       format="YYYY-MM-DD"
-                      defaultValue={dayjs(payment.date)}
+                      defaultValue={payment.date?dayjs(payment.date): dayjs(new Date())}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
                         const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
@@ -830,8 +869,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select employee"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "Employee")}
-                  disabled={shouldDisableSelect("Employee")}
+                  onChange={(value) => handleUserSelect(value, "Employee")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Employee") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["Employee"]?.map(emp => (
                     <Option key={emp.value} value={emp.value}>{emp.label}</Option>
@@ -850,8 +890,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select AVP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "AVP")}
-                  disabled={shouldDisableSelect("AVP")}
+                  onChange={(value) => handleUserSelect(value, "AVP")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AVP") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["AVP"]?.map(avp => (
                     <Option key={avp.value} value={avp.value}>{avp.label}</Option>
@@ -873,8 +914,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select TL/CP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "Team Leader")}
-                  disabled={shouldDisableSelect("Team Leader")}
+                  onChange={(value) => handleUserSelect(value, "Team Leader")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Team Leader") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["Team Leader"]?.map(tl => (
                     <Option key={tl.value} value={tl.value}>{tl.label}</Option>
@@ -893,8 +935,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select VP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "VP")}
-                  disabled={shouldDisableSelect("VP")}
+                  onChange={(value) => handleUserSelect(value, "VP")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("VP") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["VP"]?.map(vp => (
                     <Option key={vp.value} value={vp.value}>{vp.label}</Option>
@@ -916,8 +959,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select AGM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "AGM")}
-                  disabled={shouldDisableSelect("AGM")}
+                  onChange={(value) => handleUserSelect(value, "AGM")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AGM") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["AGM"]?.map(agm => (
                     <Option key={agm.value} value={agm.value}>{agm.label}</Option>
@@ -936,8 +980,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select AS"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "AS")}
-                  disabled={shouldDisableSelect("AS")}
+                  onChange={(value) => handleUserSelect(value, "AS")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AS") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["AS"]?.map(as => (
                     <Option key={as.value} value={as.value}>{as.label}</Option>
@@ -959,8 +1004,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select GM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "GM")}
-                  disabled={shouldDisableSelect("GM")}
+                  onChange={(value) => handleUserSelect(value, "GM")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("GM") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["GM"]?.map(gm => (
                     <Option key={gm.value} value={gm.value}>{gm.label}</Option>
@@ -979,8 +1025,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   placeholder="Select Vertical"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                  onChange={(value) => handleEmployeeSelect(value, "Vertical")}
-                  disabled={shouldDisableSelect("Vertical")}
+                  onChange={(value) => handleUserSelect(value, "Vertical")}
+                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Vertical") : false}
+                  loading={loadingUserTree}
                 >
                   {usersByRole["Vertical"]?.map(vert => (
                     <Option key={vert.value} value={vert.value}>{vert.label}</Option>
