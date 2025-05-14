@@ -31,7 +31,7 @@ export default function LeadStatusUI({
   lostReasonValue,
   statusFieldName = "status",
   onAddBooking,
-}: LeadStatusUIProps) {
+}: any) {
   const leadStatusList = getStoredStatus(true);
   const leadStatusListRaw = getStoredStatus();
   const lostReasonList = getStoredLostReason(true);
