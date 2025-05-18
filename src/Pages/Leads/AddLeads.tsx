@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import type { CollapseProps } from "antd";
 import AdditionalLeadDetails from "./AdditionalLeadDetails";
 import CustomCollapse from "../../components/FormElements/CustomCollapse";
@@ -16,6 +15,7 @@ import {
 import MiniLoader from "../../components/CommonUI/Loader/MiniLoader";
 import { useNavigate } from "react-router-dom";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 interface AdditionalDetails {
   fullAddress: string;
@@ -297,7 +297,7 @@ export default function AddLeads() {
                 {/* Source and Service Fields */}
                 <div className="mb-4.5 flex flex-col gap-4.5 xl:flex-row">
                   <div className="w-full xl:w-1/2">
-                    <SelectGroupOne
+                    <SelectGroupAntd
                       label="Lead source"
                       options={sourceList}
                       required
@@ -305,10 +305,11 @@ export default function AddLeads() {
                       setSelectedOption={(value) =>
                         handleSelectChange("leadSource", value)
                       }
+                      showSearch
                     />
                   </div>
                   <div className="w-full xl:w-1/2">
-                    <SelectGroupOne
+                    <SelectGroupAntd
                       label="Product & Service"
                       options={serviceList}
                       required
@@ -316,6 +317,7 @@ export default function AddLeads() {
                       setSelectedOption={(value) =>
                         handleSelectChange("productService", value)
                       }
+                      showSearch
                     />
                   </div>
                 </div>
@@ -323,7 +325,7 @@ export default function AddLeads() {
                 {/* Agent and Status Fields */}
                 <div className="mb-4.5 flex flex-col gap-4.5 xl:flex-row">
                   <div className="w-full xl:w-1/2">
-                    <SelectGroupOne
+                    <SelectGroupAntd
                       label="Assign to agents"
                       options={agentList}
                       required
@@ -331,6 +333,7 @@ export default function AddLeads() {
                       setSelectedOption={(value) =>
                         handleSelectChange("assignedAgent", value)
                       }
+                      showSearch
                     />
                   </div>
                   <div className="w-full xl:w-1/2">

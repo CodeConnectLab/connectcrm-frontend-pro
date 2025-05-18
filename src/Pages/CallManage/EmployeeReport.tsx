@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import CallDetails from "./components/CallDetails";
 import AnalysisReport from "./components/AnalysisReport";
 import Summary from "./components/Summary";
@@ -11,6 +10,7 @@ import { END_POINT } from "../../api/UrlProvider";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 interface CallListResponse {
   calls: any[];
@@ -317,12 +317,13 @@ const EmployeeReport: React.FC = () => {
       <hr className="my-4" />
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div className="w-full lg:w-1/4">
-          <SelectGroupOne
+          <SelectGroupAntd
             label="Select Employee"
             placeholder="Select Employee"
             options={employee}
             selectedOption={selectedEmployee?.value}
             setSelectedOption={handleEmployeeChange}
+            showSearch
           />
         </div>
         <div className="w-full lg:w-1/4">

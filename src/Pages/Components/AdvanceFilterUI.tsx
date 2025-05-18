@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect } from "react";
-import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import {
   getStoredAgents,
@@ -9,6 +8,7 @@ import {
 } from "../../api/commonAPI";
 import dayjs from "dayjs";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 interface AdvanceFilterUIProps {
   onFilter: (filters: {
@@ -133,37 +133,42 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   return (
     <div className="rounded-lg bg-white p-6 mb-4 shadow-md dark:bg-gray-800">
       <div className="mb-4 grid sm:grid-cols-6 grid-cols-2 gap-4">
-        <SelectGroupOne
+        <SelectGroupAntd
           label="Select Status"
           placeholder="Select Status"
           options={statusList}
           selectedOption={filters.leadStatus}
           setSelectedOption={(value) => handleChange("leadStatus", value)}
           allowClear
+          showSearch
         />
-        <SelectGroupOne
+        <SelectGroupAntd
           label="Select Employee"
           placeholder="Select Employee"
           options={agentList}
           selectedOption={filters.assignedAgent}
           setSelectedOption={(value) => handleChange("assignedAgent", value)}
-          allowClear
+          showSearch={true}
+          searchPlaceholder="Type to search countries..."
+          allowClear={true}
         />
-        <SelectGroupOne
+        <SelectGroupAntd
           label="Select Product and Service"
           placeholder="Select Product and Service"
           options={serviceList}
           selectedOption={filters.productService}
           setSelectedOption={(value) => handleChange("productService", value)}
           allowClear
+          showSearch
         />
-        <SelectGroupOne
+        <SelectGroupAntd
           label="Select Source"
           placeholder="Select Source"
           options={sourceList}
           selectedOption={filters.leadSource}
           setSelectedOption={(value) => handleChange("leadSource", value)}
           allowClear
+          showSearch
         />
         <AntDateTimePicker
           label="Start Date"

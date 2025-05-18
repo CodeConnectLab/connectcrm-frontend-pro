@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, DatePicker } from "antd";
 import dayjs from "dayjs";
-import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
 import { API } from "../../api";
@@ -14,6 +13,7 @@ import {
   getStoredStatus,
 } from "../../api/commonAPI";
 import Heading from "../../components/CommonUI/Heading";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 const { RangePicker } = DatePicker;
 
@@ -145,39 +145,43 @@ const ManageReports: React.FC = () => {
       <Heading title="CRM Report" />
       <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <div className="col-span-1">
-          <SelectGroupOne
+          <SelectGroupAntd
             options={serviceList || []}
             setSelectedOption={setSelectedProduct}
             placeholder="Select Product"
             selectedOption={selectedProduct}
             allowClear
+            showSearch
           />
         </div>
         <div className="col-span-1">
-          <SelectGroupOne
+          <SelectGroupAntd
             options={sourceList || []}
             setSelectedOption={setSelectedSource}
             placeholder="Select Source"
             selectedOption={selectedSource}
             allowClear
+            showSearch
           />
         </div>
         <div className="col-span-1">
-          <SelectGroupOne
+          <SelectGroupAntd
             options={statusList || []}
             setSelectedOption={setSelectedStatus}
             placeholder="Select Status"
             selectedOption={selectedStatus}
             allowClear
+            showSearch
           />
         </div>
         <div className="col-span-1">
-          <SelectGroupOne
+          <SelectGroupAntd
             options={agentList || []}
             setSelectedOption={setSelectedAgent}
             placeholder="Select User"
             selectedOption={selectedAgent}
             allowClear
+            showSearch
           />
         </div>
         <div className="col-span-2 sm:col-span-1">
