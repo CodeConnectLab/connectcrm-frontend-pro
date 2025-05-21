@@ -1,88 +1,55 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Card } from 'antd';
-import { getStoredStatus } from '../../api/commonAPI';
-import CustomAntdTable from '../../components/Tables/CustomAntdTable';
-import { API } from '../../api';
-import { END_POINT } from '../../api/UrlProvider';
-import SearchForm from '../../components/Header/SearchForm';
-import { debounce } from 'lodash';
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, Tag, Button } from "antd";
+import { EditFilled } from "@ant-design/icons";
+import { debounce } from "lodash";
+import { Link, useNavigate } from "react-router-dom";
+import CustomAntdTable from "../../components/Tables/CustomAntdTable";
+import SearchForm from "../../components/Header/SearchForm";
+import { API } from "../../api";
 
-interface LeadResponse {
+interface BookingData {
+  key: string;
   _id: string;
-  firstName: string;
-  contactNumber: string;
-  comment: string;
-  assignedAgent: {
-    _id: string;
-    name: string;
-  };
-  productService: {
-    _id?: string;
-    name?: string;
-  } | null;
+  customer: string;
+  contactName: string;
+  leadId: string;
   email: string;
-  city: string;
-  followUpDate: string;
-  leadWonAmount: number;
+  bookingDate: string;
+  totalReceived: number;
+  bookingStatus: string;
   createdAt: string;
 }
 
-interface LeadData extends LeadResponse {
-  key: string;
-}
-
 const NewBooking: React.FC = () => {
-  const leadStatusListRaw = getStoredStatus();
-  const [statusIds, setStatusIds] = useState({
-    lostStatusId: "",
-    wonStatusId: "",
-  });
-  const [leads, setLeads] = useState<LeadData[]>([]);
+  const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const navigate = useNavigate();
+  
+  // Pagination state
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
-  const findLostWonStatusId = () => {
-    const statusId = leadStatusListRaw.find((status) => status.lossStatus);
-    const wonStatusId = leadStatusListRaw.find((status) => status.wonStatus);
-    setStatusIds({
-      lostStatusId: statusId?._id,
-      wonStatusId: wonStatusId?._id,
-    });
-  };
+  // Sorting state
+  const [sortInfo] = useState({
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
 
+  // Table columns
   const columns = [
     {
-      title: "Lead Name",
-      dataIndex: "firstName",
-      key: "firstName",
+      title: "Customer Name",
+      dataIndex: "customer",
+      key: "customer",
     },
     {
-      title: "Contact Number",
-      dataIndex: "contactNumber",
-      key: "contactNumber",
-    },
-    {
-      title: "Comment",
-      dataIndex: "comment",
-      key: "comment",
-      render: (comment: string) => comment || "-",
-    },
-    {
-      title: "Assigned Agent",
-      dataIndex: "assignedAgent",
-      key: "assignedAgent",
-      render: (agent: { name: string }) => agent?.name || "-",
-    },
-    {
-      title: "Product/Service",
-      dataIndex: "productService",
-      key: "productService",
-      render: (product: { name?: string } | null) => product?.name || "-",
+      title: "Contact Name",
+      dataIndex: "contactName",
+      key: "contactName",
     },
     {
       title: "Email",
@@ -90,53 +57,95 @@ const NewBooking: React.FC = () => {
       key: "email",
       render: (email: string) => email || "-",
     },
+    {
+      title: "Total Received Amount",
+      dataIndex: "totalReceived",
+      key: "totalReceived",
+      render: (amount: number) => `₹${amount.toLocaleString("en-IN")}`,
+    },
+    {
+      title: "Booking Status",
+      dataIndex: "bookingStatus",
+      key: "bookingStatus",
+      render: (status: string) => (
+        <Tag
+          color={
+            status === "confirmed"
+              ? "green"
+              : status === "pending"
+              ? "gold"
+              : "red"
+          }
+        >
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Tag>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_: unknown, record: BookingData) => (
+        <Link to={`/booking/${record._id}`}>
+          <Button
+            icon={<EditFilled />}
+            className="bg-transparent text-primary dark:text-blue-400"
+          />
+        </Link>
+      ),
+    },
   ];
 
-  const fetchLeads = useCallback(async () => {
-    if (!statusIds.wonStatusId) return;
-
+  // Function to fetch bookings from API
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {
-        page: pagination.current,
-        limit: pagination.pageSize,
-        leadStatus: statusIds.wonStatusId,
-        search: searchText,
-      };
+      // Construct API parameters
+      const params = new URLSearchParams({
+        page: pagination.current.toString(),
+        limit: pagination.pageSize.toString(),
+        sortBy: sortInfo.sortBy,
+        sortOrder: sortInfo.sortOrder
+      });
 
-      const { data, error, options } = await API.getAuthAPI(
-        END_POINT.LEADS_DATA,
-        true,
-        params
+      // Add search parameter if it exists
+      if (searchText) {
+        params.append('search', searchText);
+      }
+
+      // Call the API
+      const { data, error } = await API.getAuthAPI(
+        `new-booking?${params.toString()}`,
+        true
       );
 
       if (error) {
         throw new Error(error);
       }
 
-      if (data) {
-        const formattedLeads = data.map((lead: LeadResponse) => ({
-          ...lead,
-          key: lead._id,
+      // Process and set the data
+      if (data && data.docs) {
+        const formattedBookings = data.docs.map((booking: any) => ({
+          ...booking,
+          key: booking._id,
         }));
         
-        setLeads(formattedLeads);
+        setBookings(formattedBookings);
         setPagination({
           ...pagination,
-          total: options?.pagination?.total || 0,
+          total: data.totalDocs || 0,
         });
       }
     } catch (error) {
-      console.error('Error fetching leads:', error);
+      console.error('Error fetching new bookings:', error);
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, statusIds.wonStatusId, searchText]);
+  }, [pagination.current, pagination.pageSize, searchText, sortInfo]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchText(value);
     setPagination(prev => ({ ...prev, current: 1 }));
-  }, 100);
+  }, 0);
 
   const handleSearch = (value: string) => {
     debouncedSearch(value);
@@ -150,47 +159,50 @@ const NewBooking: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    findLostWonStatusId();
-  }, []);
+  const handleRowClick = (record: BookingData) => {
+    navigate(`/booking/${record._id}`);
+  };
 
+  // Apply filters when they change
   useEffect(() => {
-    if (statusIds.wonStatusId) {
-      fetchLeads();
-    }
-  }, [fetchLeads, statusIds.wonStatusId]);
+    fetchBookings();
+  }, [fetchBookings]);
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 space-y-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">New Bookings</h2>
-        {/* <p className="text-gray-600 dark:text-gray-300 mt-2">
-          Leads with won status that can be converted to bookings
-        </p> */}
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          New Bookings
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">
+          Recently created bookings that need attention
+        </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
+      {/* Header with search */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div className="flex items-center">
             <SearchForm
               onSearch={handleSearch}
-              placeholder="Search by name, email or contact number"
+              placeholder="Search by name or email"
               searchTerm={searchText}
             />
           </div>
         </div>
       </div>
 
+      {/* Table Section */}
       <Card className="bg-white dark:bg-gray-800" bordered={false}>
         <div className="mb-4 flex justify-between items-center">
           <span className="text-gray-700 dark:text-gray-300">
-            Showing {leads.length} leads with won status
+            Showing {bookings.length} new bookings
           </span>
         </div>
 
         <CustomAntdTable
           columns={columns}
-          dataSource={leads}
+          dataSource={bookings}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -200,6 +212,9 @@ const NewBooking: React.FC = () => {
             showSizeChanger: true,
           }}
           isLoading={loading}
+          onRow={(record: BookingData) => ({
+            onClick: () => handleRowClick(record),
+          })}
           rowClassName="cursor-pointer"
         />
       </Card>
@@ -207,4 +222,4 @@ const NewBooking: React.FC = () => {
   );
 };
 
-export default NewBooking; 
+export default NewBooking;

@@ -9,6 +9,7 @@ import SearchForm from "../../components/Header/SearchForm";
 import { getStoredAgents, getStoredStatus } from "../../api/commonAPI";
 import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 import ColumnSelector from "../../components/Utils/TableColumnSelector";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 interface LeadsTableHeaderProps {
   handleSearch: (value: string) => void;
@@ -243,21 +244,23 @@ export default function LeadsTableHeader({
             {selectedCount ? `on ${selectedCount} selected rows` : null}
           </span>
           <div className="flex gap-2 w-full">
-            <SelectGroupOne
+            <SelectGroupAntd
               options={statusList}
               placeholder="Select Status"
               setSelectedOption={setSelectedStatus}
               selectedOption={selectedStatus}
               wrapperClasses="w-full"
               disabled={disabled || isLoading}
+              showSearch
             />
-            <SelectGroupOne
+            <SelectGroupAntd
               options={agentList}
               placeholder="Select Employee"
               setSelectedOption={setSelectedAgent}
               selectedOption={selectedAgent}
               wrapperClasses="w-full"
               disabled={disabled || isLoading}
+              showSearch
             />
             <ButtonDefault
               label={isLoading ? "Updating..." : "Submit"}

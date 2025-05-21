@@ -9,7 +9,6 @@ import InputGroup from "../../../components/FormElements/InputGroup";
 import { API } from "../../../api";
 import { END_POINT } from "../../../api/UrlProvider";
 import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
-import TextAreaCustom from "../../../components/FormElements/TextArea/TextAreaCustom";
 import ConfirmationModal from "../../../components/Modals/ConfirmationModal";
 
 interface User {
@@ -22,6 +21,7 @@ interface User {
   assignTeamLeader: string;
   isActive: boolean;
   assignedTL?: string;
+  bookingStatus: boolean;
 }
 
 // Define a type for user data
@@ -45,6 +45,7 @@ interface FormData {
   userType: string;
   assignedTL: string;
   superiorRole: string;
+  bookingStatus: boolean;
 }
 
 // Define role hierarchy
@@ -91,6 +92,7 @@ export default function DepartmentSetting() {
     userType: "",
     assignedTL: "",
     superiorRole: "",
+    bookingStatus: false,
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
@@ -120,6 +122,7 @@ export default function DepartmentSetting() {
           assignTeamLeader: assignedSuperior,
           isActive: user.isActive,
           assignedTL: assignedSuperior,
+          bookingStatus: user.bookingStatus,
         };
       });
 
@@ -232,6 +235,7 @@ export default function DepartmentSetting() {
         userType: user.roll,
         assignedTL: user.assignedTL || "",
         superiorRole,
+        bookingStatus: user.bookingStatus,
       });
       setEditingUser(key);
       setShowForm(true);
@@ -256,6 +260,7 @@ export default function DepartmentSetting() {
         phone: formData.mobile,
         isActive: formData.isActive === "active",
         [superiorRoleField]: formData.assignedTL || null, // Use dynamic field name
+        bookingStatus: formData.bookingStatus,
       };
 
       if (editingUser) {
@@ -535,8 +540,8 @@ export default function DepartmentSetting() {
                   { value: "GM", label: "GM" },
                   { value: "AGM", label: "AGM" },
                   { value: "Team Leader", label: "Team Leader" },
-                  { value: "Employee", label: "Employee" }
-              ]}
+                  { value: "Employee", label: "Employee" },
+                ]}
                 selectedOption={formData.userType}
                 setSelectedOption={(value) =>
                   handleSelectChange("userType", value)
@@ -556,6 +561,18 @@ export default function DepartmentSetting() {
                 placeholder={`Select ${roleHierarchy[formData.userType]}`}
               />
             )}
+            <SelectGroupOne
+              label={"Activate Booking Module"}
+              options={[
+                { value: true, label: "Enable" },
+                { value: false, label: "Disable" },
+              ]}
+              selectedOption={formData.bookingStatus}
+              setSelectedOption={(value) =>
+                handleSelectChange("bookingStatus", value)
+              }
+              placeholder={`Select Enable or Disable`}
+            />
           </div>
 
           <div className="flex gap-3">

@@ -17,6 +17,7 @@ interface Permission {
   edit: boolean;
   delete: boolean;
   view: boolean;
+  enable: boolean;
   group: string;
   children?: Permission[];
   key?: string;
@@ -49,6 +50,7 @@ const RolePermissions = () => {
       edit: false,
       delete: false,
       view: false,
+      enable: false,
       children: item.children?.map((child, childIndex) => ({
         key: `${group.name}-${index}-${childIndex}`,
         id: `${group.name}-${index}-${childIndex}`,
@@ -58,6 +60,7 @@ const RolePermissions = () => {
         edit: false,
         delete: false,
         view: false,
+        enable: false,
       })),
     }))
   );
@@ -122,57 +125,73 @@ const RolePermissions = () => {
       dataIndex: "featureName",
       key: "featureName",
     },
+    // {
+    //   title: "Add",
+    //   key: "add",
+    //   align: "center" as const,
+    //   render: (_: any, record: Permission) => (
+    //     <div className="flex justify-center">
+    //       <SwitcherTwo
+    //         id={`add-${record.id}`}
+    //         defaultChecked={record.add}
+    //         onChange={() =>
+    //           handlePermissionChange(record.id, "add", !record.add)
+    //         }
+    //       />
+    //     </div>
+    //   ),
+    // },
+    // {
+    //   title: "Edit",
+    //   key: "edit",
+    //   align: "center" as const,
+    //   render: (_: any, record: Permission) => (
+    //     <div className="flex justify-center">
+    //       <SwitcherTwo
+    //         id={`edit-${record.id}`}
+    //         defaultChecked={record.edit}
+    //         onChange={() =>
+    //           handlePermissionChange(record.id, "edit", !record.edit)
+    //         }
+    //       />
+    //     </div>
+    //   ),
+    // },
+    // {
+    //   title: "Delete",
+    //   key: "delete",
+    //   align: "center" as const,
+    //   render: (_: any, record: Permission) => (
+    //     <div className="flex justify-center">
+    //       <SwitcherTwo
+    //         id={`delete-${record.id}`}
+    //         defaultChecked={record.delete}
+    //         onChange={() =>
+    //           handlePermissionChange(record.id, "delete", !record.delete)
+    //         }
+    //       />
+    //     </div>
+    //   ),
+    // },
+    // {
+    //   title: "View",
+    //   key: "view",
+    //   align: "center" as const,
+    //   render: (_: any, record: Permission) => (
+    //     <div className="flex justify-center">
+    //       <SwitcherTwo
+    //         id={`view-${record.id}`}
+    //         defaultChecked={record.view}
+    //         onChange={() =>
+    //           handlePermissionChange(record.id, "view", !record.view)
+    //         }
+    //       />
+    //     </div>
+    //   ),
+    // },
     {
-      title: "Add",
-      key: "add",
-      align: "center" as const,
-      render: (_: any, record: Permission) => (
-        <div className="flex justify-center">
-          <SwitcherTwo
-            id={`add-${record.id}`}
-            defaultChecked={record.add}
-            onChange={() =>
-              handlePermissionChange(record.id, "add", !record.add)
-            }
-          />
-        </div>
-      ),
-    },
-    {
-      title: "Edit",
-      key: "edit",
-      align: "center" as const,
-      render: (_: any, record: Permission) => (
-        <div className="flex justify-center">
-          <SwitcherTwo
-            id={`edit-${record.id}`}
-            defaultChecked={record.edit}
-            onChange={() =>
-              handlePermissionChange(record.id, "edit", !record.edit)
-            }
-          />
-        </div>
-      ),
-    },
-    {
-      title: "Delete",
-      key: "delete",
-      align: "center" as const,
-      render: (_: any, record: Permission) => (
-        <div className="flex justify-center">
-          <SwitcherTwo
-            id={`delete-${record.id}`}
-            defaultChecked={record.delete}
-            onChange={() =>
-              handlePermissionChange(record.id, "delete", !record.delete)
-            }
-          />
-        </div>
-      ),
-    },
-    {
-      title: "View",
-      key: "view",
+      title: "Enable",
+      key: "enable",
       align: "center" as const,
       render: (_: any, record: Permission) => (
         <div className="flex justify-center">
@@ -180,7 +199,7 @@ const RolePermissions = () => {
             id={`view-${record.id}`}
             defaultChecked={record.view}
             onChange={() =>
-              handlePermissionChange(record.id, "view", !record.view)
+              handlePermissionChange(record.id, "enable", !record.enable)
             }
           />
         </div>

@@ -140,7 +140,7 @@ export const menuGroups: MenuGroup[] = [
 ];
 
 // Function to get role-based menu groups
-const getMenuGroups = (userRole: string | null): MenuGroup[] => {
+const getMenuGroups = (userRole: string | null, isBookingEnable:boolean): MenuGroup[] => {
   const clonedGroups: MenuGroup[] = JSON.parse(JSON.stringify(menuGroups));
   
   // Restore React elements for icons after JSON parse
@@ -157,6 +157,11 @@ const getMenuGroups = (userRole: string | null): MenuGroup[] => {
       mainMenu.menuItems = mainMenu.menuItems.filter(item => 
         !["Contacts", "SMS Panel", "WhatsApp Panel"].includes(item.label)
       );
+      if(!isBookingEnable){
+        mainMenu.menuItems = mainMenu.menuItems.filter(item =>
+          !["Booking"].includes(item.label)
+         );
+      }
     }
 
     // Return only the MAIN MENU group for non-Super Admin users
@@ -168,6 +173,11 @@ const getMenuGroups = (userRole: string | null): MenuGroup[] => {
       const reportsMenuItem = mainMenu.menuItems.find(item => item.label === "Reports");
       if (reportsMenuItem && reportsMenuItem.children) {
         reportsMenuItem.children.push({ label: "Call report", route: "/reports/call" });
+      }
+      if(!isBookingEnable){
+        mainMenu.menuItems = mainMenu.menuItems.filter(item =>
+          !["Booking"].includes(item.label)
+         );
       }
     }
   }
@@ -184,6 +194,7 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const [pageName, setPageName] = useLocalStorage("selectedMenu", "dashboard");
   const { navRef, isVisible, scrollToBottom } = useScrollIndicator();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isBookingEnable, setIsBookingEnable] = useState<boolean>(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -191,13 +202,14 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       try {
         const data = JSON.parse(userStr);
         setUserRole(data?.role);
+        setIsBookingEnable(data?.bookingStatus);
       } catch (error) {
         console.error("Error parsing user data:", error);
       }
     }
   }, []);
 
-  const currentMenuGroups = getMenuGroups(userRole);
+  const currentMenuGroups = getMenuGroups(userRole, isBookingEnable);
 
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>

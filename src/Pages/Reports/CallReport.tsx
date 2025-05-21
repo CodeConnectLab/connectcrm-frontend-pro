@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import SelectGroupOne from "../../components/FormElements/SelectGroup/SelectGroupOne";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import CallDetails from "../CallManage/components/CallDetails";
 import { API } from "../../api";
@@ -9,6 +8,7 @@ import { getStoredAgents } from "../../api/commonAPI";
 import dayjs from "dayjs";
 import Heading from "../../components/CommonUI/Heading";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
+import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
 
 interface CallListResponse {
   calls: any[];
@@ -223,11 +223,12 @@ export default function CallReport() {
       <Heading title="Call Report" />
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div className="w-full lg:w-1/4">
-          <SelectGroupOne
+          <SelectGroupAntd
             label="Select Employee"
             options={employeeList}
             selectedOption={selectedEmployee?.value}
             setSelectedOption={handleEmployeeChange}
+            showSearch
           />
         </div>
         <div className="w-full lg:w-1/4">

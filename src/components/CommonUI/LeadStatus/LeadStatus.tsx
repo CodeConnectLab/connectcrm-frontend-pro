@@ -2,7 +2,7 @@ import InputGroup from "../../FormElements/InputGroup";
 import SelectGroupOne from "../../FormElements/SelectGroup/SelectGroupOne";
 import { getStoredLostReason, getStoredStatus } from "../../../api/commonAPI";
 import { useEffect, useState } from "react";
-import ButtonDefault from "../../Buttons/ButtonDefault";
+// import ButtonDefault from "../../Buttons/ButtonDefault";
 
 interface FormData {
   status: string;
@@ -61,12 +61,12 @@ export default function LeadStatusUI({
           onChange={handleInputChange}
           required
         />
-        <ButtonDefault
+        {/* <ButtonDefault
           label="Add as Booking"
           onClick={onAddBooking}
           variant="primary"
           customClasses="w-full mt-auto"
-        />
+        /> */}
         </>
       );
     } else if (fieldName === statusIds.lostStatusId) {

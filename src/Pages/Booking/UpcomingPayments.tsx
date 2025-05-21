@@ -207,7 +207,7 @@ const UpcomingPayments: React.FC = () => {
       debounce((value: string) => {
         setSearchText(value);
         setPagination(prev => ({ ...prev, current: 1 }));
-      }, 100),
+      }, 0),
     []
   );
 
