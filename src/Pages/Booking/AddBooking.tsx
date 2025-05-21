@@ -890,6 +890,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
               <Form.Item
                 label="Contact Name"
                 name="contactName"
+                rules={[{ required: true, message: 'Please enter contact name' }]}
               >
                 <Input placeholder="Enter contact name" />
               </Form.Item>
@@ -1346,7 +1347,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
           </Row>
 
           <Row gutter={24}>
-            <Col span={24}>
+          <Col span={8}>
               <Form.Item
                 label="Gross Revenue"
                 name="grossRevenue"
@@ -1360,10 +1361,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={24}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="- CP Revenue"
                 name="cpRevenue"
@@ -1377,7 +1375,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="- Discount"
                 name="discount"

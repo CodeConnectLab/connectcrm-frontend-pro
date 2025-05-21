@@ -157,6 +157,11 @@ const getMenuGroups = (userRole: string | null, isBookingEnable:boolean): MenuGr
       mainMenu.menuItems = mainMenu.menuItems.filter(item => 
         !["Contacts", "SMS Panel", "WhatsApp Panel"].includes(item.label)
       );
+      if(!isBookingEnable){
+        mainMenu.menuItems = mainMenu.menuItems.filter(item =>
+          !["Booking"].includes(item.label)
+         );
+      }
     }
 
     // Return only the MAIN MENU group for non-Super Admin users
@@ -168,6 +173,11 @@ const getMenuGroups = (userRole: string | null, isBookingEnable:boolean): MenuGr
       const reportsMenuItem = mainMenu.menuItems.find(item => item.label === "Reports");
       if (reportsMenuItem && reportsMenuItem.children) {
         reportsMenuItem.children.push({ label: "Call report", route: "/reports/call" });
+      }
+      if(!isBookingEnable){
+        mainMenu.menuItems = mainMenu.menuItems.filter(item =>
+          !["Booking"].includes(item.label)
+         );
       }
     }
   }
@@ -184,7 +194,7 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const [pageName, setPageName] = useLocalStorage("selectedMenu", "dashboard");
   const { navRef, isVisible, scrollToBottom } = useScrollIndicator();
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [isBookingEnable, setIsBookingEnable] = useState<boolean | null>(false);
+  const [isBookingEnable, setIsBookingEnable] = useState<boolean>(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");

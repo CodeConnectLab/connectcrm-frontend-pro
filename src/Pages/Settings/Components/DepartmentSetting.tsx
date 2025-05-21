@@ -260,6 +260,7 @@ export default function DepartmentSetting() {
         phone: formData.mobile,
         isActive: formData.isActive === "active",
         [superiorRoleField]: formData.assignedTL || null, // Use dynamic field name
+        bookingStatus: formData.bookingStatus,
       };
 
       if (editingUser) {
