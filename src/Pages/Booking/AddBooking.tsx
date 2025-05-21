@@ -1150,7 +1150,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
                     />
                   </Form.Item>
                 </Col>
@@ -1213,7 +1213,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
                     />
                   </Form.Item>
                 </Col>
@@ -1276,7 +1276,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
                     />
                   </Form.Item>
                 </Col>
