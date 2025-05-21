@@ -75,9 +75,18 @@ export interface BookingData {
   paymentDetails: Array<PaymentDetail>;
   BSP: number;
   GST: number;
+  GSTPercentage: number;
   OtherCharges: number;
+  OtherGST: number;
+  OtherGSTPercentage: number;
+  PLC: number;
+  PLCGST: number;
+  PLCGSTPercentage: number;
   TSP: number;
   totalReceived: number;
+  GrossRevenue: number;
+  CPRevenue: number;
+  Discount: number;
   netRevenue: number;
   remark: string;
   bookingStatus: 'confirmed' | 'pending';
@@ -104,9 +113,18 @@ export interface BookingFormValues {
   bsp: number;
   paymentDetails: PaymentDetail[];
   gst: number;
+  gstPercentage: number;
   otherCharges: number;
+  otherGST: number;
+  otherGSTPercentage: number;
+  plc: number;
+  plcGST: number;
+  plcGSTPercentage: number;
   tsp: number;
   totalReceived: number;
+  grossRevenue: number;
+  cpRevenue: number;
+  discount: number;
   netRevenue: number;
   remark: string;
   bookingStatus: 'confirmed' | 'pending';
@@ -200,8 +218,18 @@ const AddBooking: React.FC<AddBookingProps> = ({
           // Payment fields
           bsp: initialValues.BSP,
           gst: initialValues.GST,
+          gstPercentage: initialValues.GSTPercentage || 10,
           otherCharges: initialValues.OtherCharges,
+          otherGST: initialValues.OtherGST,
+          otherGSTPercentage: initialValues.OtherGSTPercentage || 10,
+          plc: initialValues.PLC,
+          plcGST: initialValues.PLCGST,
+          plcGSTPercentage: initialValues.PLCGSTPercentage || 10,
           tsp: initialValues.TSP,
+          grossRevenue: initialValues.GrossRevenue,
+          cpRevenue: initialValues.CPRevenue,
+          discount: initialValues.Discount,
+          netRevenue: initialValues.netRevenue,
           remark: initialValues.remark,
           bookingStatus: initialValues.bookingStatus
         });
@@ -209,6 +237,13 @@ const AddBooking: React.FC<AddBookingProps> = ({
         console.error("Error setting initial values:", error);
         message.error("Failed to load booking details. Please try again.");
       }
+    } else {
+      // Set default GST percentages for new bookings
+      form.setFieldsValue({
+        gstPercentage: 10,
+        otherGSTPercentage: 10,
+        plcGSTPercentage: 10
+      });
     }
   }, [isEditMode, initialValues, form]);
 
@@ -260,9 +295,18 @@ const AddBooking: React.FC<AddBookingProps> = ({
           })),
           BSP: values.bsp,
           GST: values.gst,
+          GSTPercentage: values.gstPercentage,
           OtherCharges: values.otherCharges,
+          OtherGST: values.otherGST,
+          OtherGSTPercentage: values.otherGSTPercentage,
+          PLC: values.plc,
+          PLCGST: values.plcGST,
+          PLCGSTPercentage: values.plcGSTPercentage,
           TSP: values.tsp,
           totalReceived: totalReceived,
+          GrossRevenue: values.grossRevenue,
+          CPRevenue: values.cpRevenue,
+          Discount: values.discount,
           netRevenue: values.netRevenue || netRevenue,
           remark: values.remark,
           bookingStatus: values.bookingStatus
@@ -289,28 +333,53 @@ const AddBooking: React.FC<AddBookingProps> = ({
   };
 
   const calculateTotalRevenue = () => {
+    // Get base values
     const bsp = form.getFieldValue('bsp') || 0;
-    const gst = form.getFieldValue('gst') || 0;
     const otherCharges = form.getFieldValue('otherCharges') || 0;
+    const plc = form.getFieldValue('plc') || 0;
     
-    // Calculate TSP as the sum of BSP + GST + Other charges
-    const tsp = bsp + gst + otherCharges;
+    // Get GST percentages
+    const gstPercentage = form.getFieldValue('gstPercentage') || 0;
+    const otherGSTPercentage = form.getFieldValue('otherGSTPercentage') || 0;
+    const plcGSTPercentage = form.getFieldValue('plcGSTPercentage') || 0;
+    
+    // Calculate GST values
+    const gst = (bsp * gstPercentage / 100);
+    const otherGST = (otherCharges * otherGSTPercentage / 100);
+    const plcGST = (plc * plcGSTPercentage / 100);
+    
+    // Update GST fields
+    form.setFieldsValue({
+      gst,
+      otherGST,
+      plcGST
+    });
+    
+    // Calculate totals for each row
+    const bspTotal = bsp + gst;
+    const otherTotal = otherCharges + otherGST;
+    const plcTotal = plc + plcGST;
+    
+    // Calculate TSP as the sum of all totals
+    const tsp = bspTotal + otherTotal + plcTotal;
     
     // Update the TSP field
     form.setFieldsValue({
       tsp: tsp
     });
     
-    const total = bsp + gst + otherCharges + tsp;
-    // setTotalRevenue(total);
+    // Get revenue values
+    const grossRevenue = form.getFieldValue('grossRevenue') || 0;
+    const cpRevenue = form.getFieldValue('cpRevenue') || 0;
+    const discount = form.getFieldValue('discount') || 0;
     
-    // Calculate net revenue (simple calculation for demonstration)
-    setNetRevenue(total * 0.9); // Assuming 10% deduction for simplicity
+    // Calculate net revenue
+    const netRevenue = grossRevenue - cpRevenue - discount;
+    setNetRevenue(netRevenue);
     
-    // form.setFieldsValue({
-    //   totalRevenue: total,
-    //   netRevenue: total * 0.9
-    // });
+    form.setFieldsValue({
+      netRevenue: netRevenue
+    });
   };
 
   const fetchUsers = async () => {
@@ -1044,7 +1113,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
         {/* Payment Detail Section */}
         <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Payment Detail</Title>}>
           <Row gutter={24}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="BSP"
                 name="bsp"
@@ -1052,19 +1121,53 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 <InputNumber 
                   style={{ width: '100%' }} 
                   placeholder="Enter BSP" 
+                  onChange={calculateTotalRevenue}
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST %"
+                    name="gstPercentage"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      placeholder="%" 
+                      min={0}
+                      max={100}
+                      onChange={calculateTotalRevenue}
+                      formatter={(value) => `${value}%`}
+                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST Value"
+                    name="gst"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      disabled
+                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Col>
+            <Col span={8}>
               <Form.Item
-                label="GST"
-                name="gst"
+                label="Total"
               >
                 <InputNumber 
                   style={{ width: '100%' }} 
-                  placeholder="Enter GST" 
+                  disabled
+                  value={(form.getFieldValue('bsp') || 0) + (form.getFieldValue('gst') || 0)}
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
                 />
@@ -1073,27 +1176,140 @@ const AddBooking: React.FC<AddBookingProps> = ({
           </Row>
 
           <Row gutter={24}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 label="Other charges"
                 name="otherCharges"
               >
                 <InputNumber 
                   style={{ width: '100%' }} 
-                  placeholder="Enter other charges" 
+                  placeholder="Enter other charges"
+                  onChange={calculateTotalRevenue}
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
                 />
               </Form.Item>
             </Col>
-             <Col span={12}>
+            <Col span={8}>
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST %"
+                    name="otherGSTPercentage"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      placeholder="%"
+                      min={0}
+                      max={100}
+                      onChange={calculateTotalRevenue}
+                      formatter={(value) => `${value}%`}
+                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST Value"
+                    name="otherGST"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      disabled
+                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Col>
+            <Col span={8}>
               <Form.Item
-                label="TSP"
+                label="Total"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  disabled
+                  value={(form.getFieldValue('otherCharges') || 0) + (form.getFieldValue('otherGST') || 0)}
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={8}>
+              <Form.Item
+                label="PLC"
+                name="plc"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  placeholder="Enter PLC"
+                  onChange={calculateTotalRevenue}
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST %"
+                    name="plcGSTPercentage"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      placeholder="%"
+                      min={0}
+                      max={100}
+                      onChange={calculateTotalRevenue}
+                      formatter={(value) => `${value}%`}
+                      parser={(value) => value ? Number(value.replace('%', '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="GST Value"
+                    name="plcGST"
+                  >
+                    <InputNumber 
+                      style={{ width: '100%' }} 
+                      disabled
+                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="Total"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  disabled
+                  value={(form.getFieldValue('plc') || 0) + (form.getFieldValue('plcGST') || 0)}
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={24}>
+              <Form.Item
+                label="Total"
                 name="tsp"
               >
                 <InputNumber 
                   style={{ width: '100%' }} 
-                  placeholder="Enter TSP" 
+                  placeholder="Total" 
                   disabled
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
@@ -1103,7 +1319,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
           </Row>
 
           <Row gutter={24}>
-          <Col span={12}>
+            <Col span={12}>
               <Form.Item
                 label="Payment Received"
                 name="paymentDetails"
@@ -1121,22 +1337,56 @@ const AddBooking: React.FC<AddBookingProps> = ({
             </Col>
           </Row>
 
-          {/* <Row gutter={24}>
-             <Col span={12}>
+          <Row gutter={24}>
+            <Col span={24}>
               <Form.Item
-                label="Total Revenue"
-                name="totalRevenue"
+                label="Gross Revenue"
+                name="grossRevenue"
               >
                 <InputNumber 
                   style={{ width: '100%' }} 
-                  disabled 
-                  value={receivedPayments[0].amount}
+                  placeholder="Enter gross revenue"
                   formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  onChange={calculateTotalRevenue}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item
+                label="CP Revenue"
+                name="cpRevenue"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  placeholder="Enter CP Revenue"
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  onChange={calculateTotalRevenue}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
+              <Form.Item
+                label="Discount"
+                name="discount"
+              >
+                <InputNumber 
+                  style={{ width: '100%' }} 
+                  placeholder="Enter discount"
+                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  onChange={calculateTotalRevenue}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={24}>
               <Form.Item
                 label="Net Revenue"
                 name="netRevenue"
@@ -1150,7 +1400,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 />
               </Form.Item>
             </Col>
-          </Row> */}
+          </Row>
         </Card>
 
         {/* Remark Section */}
