@@ -59,7 +59,7 @@ const SelectGroupAntd = ({
           allowClear={false} // We'll handle our own clear button
           showSearch={showSearch}
           filterOption={showSearch ? filterOption : false}
-          searchPlaceholder={searchPlaceholder}
+          // searchPlaceholder={searchPlaceholder}
           className={`custom-antd-select w-full appearance-none rounded-lg border ${
             disabled
               ? "border-gray-200 text-gray-400"

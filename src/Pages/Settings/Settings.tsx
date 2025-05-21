@@ -23,30 +23,30 @@ const Settings: React.FC = () => {
     { tabName: "CRM Field", component: <CRMFields /> },
     // { tabName: "Subscription", component: <SubscriptionInfo /> },
     { tabName: "Notification Settings", component: <NotificationSettings /> },
-    {
-      tabName: "Permission Settings",
-      component: (
-        // <BlurScreenOverlay
-        //   title="Permission Settings Coming Soon!"
-        //   message="We're working hard to bring you Permission Settings features."
-        //   submessage="Track and manage your permission settings in the next update."
-        // >
-          <RolePermissions />
-        // </BlurScreenOverlay>
-      ),
-    },
-    {
-      tabName: "Storage Insights",
-      component: (
-        <BlurScreenOverlay
-          title="Storage Management Coming Soon!"
-          message="We're working hard to bring you storage management features."
-          submessage="Track and manage your storage usage in the next update."
-        >
-          <StorageInsights />
-        </BlurScreenOverlay>
-      ),
-    },
+    // {
+    //   tabName: "Permission Settings",
+    //   component: (
+    //     // <BlurScreenOverlay
+    //     //   title="Permission Settings Coming Soon!"
+    //     //   message="We're working hard to bring you Permission Settings features."
+    //     //   submessage="Track and manage your permission settings in the next update."
+    //     // >
+    //       <RolePermissions />
+    //     // </BlurScreenOverlay>
+    //   ),
+    // },
+    // {
+    //   tabName: "Storage Insights",
+    //   component: (
+    //     <BlurScreenOverlay
+    //       title="Storage Management Coming Soon!"
+    //       message="We're working hard to bring you storage management features."
+    //       submessage="Track and manage your storage usage in the next update."
+    //     >
+    //       <StorageInsights />
+    //     </BlurScreenOverlay>
+    //   ),
+    // },
   ];
 
   const { deviceType } = useScreenHook();

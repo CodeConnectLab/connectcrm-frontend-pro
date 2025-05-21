@@ -204,7 +204,7 @@ const AllBooking: React.FC = () => {
       debounce((value: string) => {
         setSearchText(value);
         setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page on new search
-      }, 100),
+      }, 0),
     []
   );
 

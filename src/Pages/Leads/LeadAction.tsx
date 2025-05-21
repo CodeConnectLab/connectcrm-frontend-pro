@@ -17,9 +17,9 @@ import ConfirmationModal from "../../components/Modals/ConfirmationModal";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 import { isEqual } from "lodash";
 import { IoCaretBackOutline } from "react-icons/io5";
-import { Modal } from "antd";
-import AddBooking from "../Booking/AddBooking";
-import { BookingFormValues, PaymentDetail } from "../Booking/AddBooking";
+// import { Modal } from "antd";
+// import AddBooking from "../Booking/AddBooking";
+// import { BookingFormValues, PaymentDetail } from "../Booking/AddBooking";
 
 interface LeadHistory {
   _id: string;
@@ -450,7 +450,7 @@ const LeadAction = ({
             formData={formData}
             value={formData.status}
             lostReasonValue={formData.leadLostReasonId}
-            onAddBooking={handleOpenBookingModal}
+            // onAddBooking={handleOpenBookingModal}
           />
 
           <AntDateTimePicker
@@ -552,7 +552,7 @@ const LeadAction = ({
       />
 
       {/* Booking Modal */}
-      <Modal
+      {/* <Modal
         title="Add Booking"
         open={showBookingModal}
         onCancel={handleCloseBookingModal}
@@ -598,7 +598,7 @@ const LeadAction = ({
             finalCallBack={handleBookingFinish}
           />
         )}
-      </Modal>
+      </Modal> */}
     </div>
   );
 };
