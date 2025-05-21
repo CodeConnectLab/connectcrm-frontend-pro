@@ -140,7 +140,7 @@ export const menuGroups: MenuGroup[] = [
 ];
 
 // Function to get role-based menu groups
-const getMenuGroups = (userRole: string | null): MenuGroup[] => {
+const getMenuGroups = (userRole: string | null, isBookingEnable:boolean): MenuGroup[] => {
   const clonedGroups: MenuGroup[] = JSON.parse(JSON.stringify(menuGroups));
   
   // Restore React elements for icons after JSON parse
@@ -184,6 +184,7 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const [pageName, setPageName] = useLocalStorage("selectedMenu", "dashboard");
   const { navRef, isVisible, scrollToBottom } = useScrollIndicator();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isBookingEnable, setIsBookingEnable] = useState<boolean | null>(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -191,13 +192,14 @@ const Sidebar: FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       try {
         const data = JSON.parse(userStr);
         setUserRole(data?.role);
+        setIsBookingEnable(data?.bookingStatus);
       } catch (error) {
         console.error("Error parsing user data:", error);
       }
     }
   }, []);
 
-  const currentMenuGroups = getMenuGroups(userRole);
+  const currentMenuGroups = getMenuGroups(userRole, isBookingEnable);
 
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
