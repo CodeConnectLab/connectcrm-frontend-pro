@@ -149,7 +149,6 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           selectedOption={filters.assignedAgent}
           setSelectedOption={(value) => handleChange("assignedAgent", value)}
           showSearch={true}
-          searchPlaceholder="Type to search countries..."
           allowClear={true}
         />
         <SelectGroupAntd
