@@ -1,13 +1,13 @@
 import React from "react";
-import { Select } from "antd";
+import { Form, Select } from "antd";
 import { SelectOption, SelectProps } from "../../../types/selectType";
 import "./SelectGroupAntd.css"; // Import custom CSS for styling
-
 interface SelectGroupAntdProps extends SelectProps {
   allowClear?: boolean;
   isGrouped?: boolean;
   showSearch?: boolean;
-  searchPlaceholder?: string;
+  name?: string;
+  isFormModeOn?: boolean;
 }
 
 const SelectGroupAntd = ({
@@ -24,7 +24,8 @@ const SelectGroupAntd = ({
   allowClear = false,
   isGrouped = false,
   showSearch = false,
-  searchPlaceholder = "Search options...",
+  name = "",
+  isFormModeOn = false,
 }: SelectGroupAntdProps) => {
   // Handle value change
   const handleChange = (value: string) => {
@@ -43,7 +44,7 @@ const SelectGroupAntd = ({
     setSelectedOption?.("");
   };
 
-  return (
+  return !isFormModeOn ? (
     <div className={`relative ${wrapperClasses}`}>
       {label && (
         <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -84,7 +85,9 @@ const SelectGroupAntd = ({
                 }))
           }
           dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
-          getPopupContainer={(triggerNode) => triggerNode.parentNode as HTMLElement}
+          getPopupContainer={(triggerNode) =>
+            triggerNode.parentNode as HTMLElement
+          }
           suffixIcon={<></>} // Remove the default arrow icon
         />
 
@@ -130,7 +133,52 @@ const SelectGroupAntd = ({
         </div>
       </div>
     </div>
-)
+  ) : (
+    <Form.Item
+      label={label}
+      name={name}
+      rules={[{ required: true, message: "Please select a project" }]}
+    >
+      <Select
+        value={selectedOption || undefined}
+        onChange={handleChange}
+        disabled={disabled}
+        placeholder={placeholder}
+        allowClear={false} // We'll handle our own clear button
+        showSearch={showSearch}
+        filterOption={showSearch ? filterOption : false}
+        // searchPlaceholder={searchPlaceholder}
+        className={`${
+          disabled
+            ? "border-gray-200 text-gray-400"
+            : "border-gray-300 text-gray-900"
+        } ${customClasses}`}
+        style={{
+          ...(customStyles ? JSON.parse(customStyles) : {}),
+          // height: "54px", // Match the height of the original component
+        }}
+        options={
+          isGrouped
+            ? options.map((group: any) => ({
+                label: group.label,
+                options: group.options.map((option: SelectOption) => ({
+                  value: option.value,
+                  label: option.label,
+                })),
+              }))
+            : options.map((option: SelectOption) => ({
+                value: option.value,
+                label: option.label,
+              }))
+        }
+        dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+        getPopupContainer={(triggerNode) =>
+          triggerNode.parentNode as HTMLElement
+        }
+        suffixIcon={<></>} // Remove the default arrow icon
+      />
+    </Form.Item>
+  );
 };
 
 export default SelectGroupAntd;

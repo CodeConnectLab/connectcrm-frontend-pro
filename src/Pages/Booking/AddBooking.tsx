@@ -6,6 +6,7 @@ import { useProductAndService } from '../../CustomHooks/useProductAndService';
 import { API } from '../../api';
 import { END_POINT } from '../../api/UrlProvider';
 import dayjs from 'dayjs';
+import SelectGroupAntd from '../../components/FormElements/SelectGroup/SelectGroupAntd';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -586,49 +587,64 @@ const AddBooking: React.FC<AddBookingProps> = ({
   };
 
   // Collapse items for received payments
-  const receivedPaymentItems: CollapseProps['items'] = [
+  const receivedPaymentItems: CollapseProps["items"] = [
     {
-      key: '1',
-      label: 'Payment Received',
+      key: "1",
+      label: "Received Payment",
       children: (
         <div className="space-y-4">
           {receivedPayments.map((payment, index) => (
             <Card key={index} className="mb-4 dark:bg-gray-700">
               <Row gutter={24}>
                 <Col span={12}>
-                  <Form.Item label="Amount">
+                  <Form.Item label="Amount" rules={[{required:true, message:"Please enter amount"  }]}>
                     <InputNumber
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       placeholder="Enter amount"
                       value={payment.amount}
-                      onChange={(value) => handleReceivedPaymentChange(index, 'amount', value)}
-                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                      onChange={(value) =>
+                        handleReceivedPaymentChange(index, "amount", value)
+                      }
+                      formatter={(value) =>
+                        `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) =>
+                        value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item label="Date">
+                  <Form.Item label="Date" rules={[{required:true, message:"Please select the date."  }]}>
                     <DatePicker
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       format="YYYY-MM-DD"
-                      defaultValue={payment.date?dayjs(payment.date): dayjs(new Date())}
+                      defaultValue={payment.date ? dayjs(payment.date) : null}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
-                        const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
-                        handleReceivedPaymentChange(index, 'date', dateStr);
+                        const dateStr =
+                          typeof date === "string"
+                            ? date
+                            : date?.format("YYYY-MM-DD");
+                        handleReceivedPaymentChange(index, "date", dateStr);
                       }}
                     />
                   </Form.Item>
                 </Col>
               </Row>
-              
+
               <Row gutter={24}>
                 <Col span={12}>
                   <Form.Item label="Status">
                     <Radio.Group
                       value={payment.status}
-                      onChange={(e) => handleReceivedPaymentChange(index, 'status', e.target.value)}
+                      onChange={(e) =>
+                        handleReceivedPaymentChange(
+                          index,
+                          "status",
+                          e.target.value
+                        )
+                      }
                     >
                       <Radio value="paid">Paid</Radio>
                       <Radio value="unpaid">Unpaid</Radio>
@@ -639,8 +655,10 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   <Form.Item label="Payment Mode">
                     <Select
                       value={payment.mode}
-                      onChange={(value) => handleReceivedPaymentChange(index, 'mode', value)}
-                      style={{ width: '100%' }}
+                      onChange={(value) =>
+                        handleReceivedPaymentChange(index, "mode", value)
+                      }
+                      style={{ width: "100%" }}
                     >
                       <Option value="cash">Cash</Option>
                       <Option value="cheque">Cheque</Option>
@@ -649,39 +667,51 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   </Form.Item>
                 </Col>
               </Row>
-              
-              {payment.mode === 'cheque' && (
+
+              {payment.mode === "cheque" && (
                 <Row>
                   <Col span={24}>
                     <Form.Item label="Cheque Number">
                       <Input
                         placeholder="Enter cheque number"
                         value={payment.chequeNumber}
-                        onChange={(e) => handleReceivedPaymentChange(index, 'chequeNumber', e.target.value)}
+                        onChange={(e) =>
+                          handleReceivedPaymentChange(
+                            index,
+                            "chequeNumber",
+                            e.target.value
+                          )
+                        }
                       />
                     </Form.Item>
                   </Col>
                 </Row>
               )}
-              
-              {payment.mode === 'online' && (
+
+              {payment.mode === "online" && (
                 <Row>
                   <Col span={24}>
                     <Form.Item label="Transaction Number">
                       <Input
                         placeholder="Enter transaction number"
                         value={payment.transactionNo}
-                        onChange={(e) => handleReceivedPaymentChange(index, 'transactionNo', e.target.value)}
+                        onChange={(e) =>
+                          handleReceivedPaymentChange(
+                            index,
+                            "transactionNo",
+                            e.target.value
+                          )
+                        }
                       />
                     </Form.Item>
                   </Col>
                 </Row>
               )}
-              
+
               {receivedPayments.length > 1 && (
-                <Button 
-                  danger 
-                  onClick={() => removePaymentEntry('received', index)}
+                <Button
+                  danger
+                  onClick={() => removePaymentEntry("received", index)}
                   className="mt-2"
                 >
                   Remove
@@ -689,7 +719,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
               )}
             </Card>
           ))}
-          
+
           {/* <Button 
             type="dashed" 
             onClick={() => addPaymentEntry('received')}
@@ -698,15 +728,15 @@ const AddBooking: React.FC<AddBookingProps> = ({
             Add Payment
           </Button> */}
         </div>
-      )
-    }
+      ),
+    },
   ];
   
   // Collapse items for next payments
-  const nextPaymentItems: CollapseProps['items'] = [
+  const nextPaymentItems: CollapseProps["items"] = [
     {
-      key: '1',
-      label: 'Next Payment',
+      key: "1",
+      label: "Next Payment",
       children: (
         <div className="space-y-4">
           {nextPayments.map((payment, index) => (
@@ -715,37 +745,48 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 <Col span={12}>
                   <Form.Item label="Amount">
                     <InputNumber
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       placeholder="Enter amount"
                       value={payment.amount}
-                      onChange={(value) => handleNextPaymentChange(index, 'amount', value)}
-                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                      onChange={(value) =>
+                        handleNextPaymentChange(index, "amount", value)
+                      }
+                      formatter={(value) =>
+                        `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) =>
+                        value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
                   <Form.Item label="Date">
                     <DatePicker
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                       format="YYYY-MM-DD"
-                      defaultValue={payment.date?dayjs(payment.date): dayjs(new Date())}
+                      defaultValue={payment.date ? dayjs(payment.date) : null}
                       onChange={(date) => {
                         // Use a simple approach that won't cause validation errors
-                        const dateStr = typeof date==='string' ? date: date?.format('YYYY-MM-DD');
-                        handleNextPaymentChange(index, 'date', dateStr);
+                        const dateStr =
+                          typeof date === "string"
+                            ? date
+                            : date?.format("YYYY-MM-DD");
+                        handleNextPaymentChange(index, "date", dateStr);
                       }}
                     />
                   </Form.Item>
                 </Col>
               </Row>
-              
+
               <Row gutter={24}>
                 <Col span={12}>
                   <Form.Item label="Status">
                     <Radio.Group
                       value={payment.status}
-                      onChange={(e) => handleNextPaymentChange(index, 'status', e.target.value)}
+                      onChange={(e) =>
+                        handleNextPaymentChange(index, "status", e.target.value)
+                      }
                     >
                       <Radio value="paid">Paid</Radio>
                       <Radio value="unpaid">Unpaid</Radio>
@@ -756,49 +797,62 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   <Form.Item label="Payment Mode">
                     <Select
                       value={payment.mode}
-                      onChange={(value) => handleNextPaymentChange(index, 'mode', value)}
-                      style={{ width: '100%' }}
+                      onChange={(value) =>
+                        handleNextPaymentChange(index, "mode", value)
+                      }
+                      style={{ width: "100%" }}
                     >
-                      <Option value="cash">Cash</Option>
                       <Option value="cheque">Cheque</Option>
                       <Option value="online">Online</Option>
                     </Select>
                   </Form.Item>
                 </Col>
               </Row>
-              
-              {payment.mode === 'cheque' && (
+
+              {payment.mode === "cheque" && (
                 <Row>
                   <Col span={24}>
                     <Form.Item label="Cheque Number">
                       <Input
                         placeholder="Enter cheque number"
                         value={payment.chequeNumber}
-                        onChange={(e) => handleNextPaymentChange(index, 'chequeNumber', e.target.value)}
+                        onChange={(e) =>
+                          handleNextPaymentChange(
+                            index,
+                            "chequeNumber",
+                            e.target.value
+                          )
+                        }
                       />
                     </Form.Item>
                   </Col>
                 </Row>
               )}
-              
-              {payment.mode === 'online' && (
+
+              {payment.mode === "online" && (
                 <Row>
                   <Col span={24}>
                     <Form.Item label="Transaction Number">
                       <Input
                         placeholder="Enter transaction number"
                         value={payment.transactionNo}
-                        onChange={(e) => handleNextPaymentChange(index, 'transactionNo', e.target.value)}
+                        onChange={(e) =>
+                          handleNextPaymentChange(
+                            index,
+                            "transactionNo",
+                            e.target.value
+                          )
+                        }
                       />
                     </Form.Item>
                   </Col>
                 </Row>
               )}
-              
+
               {nextPayments.length > 1 && (
-                <Button 
-                  danger 
-                  onClick={() => removePaymentEntry('next', index)}
+                <Button
+                  danger
+                  onClick={() => removePaymentEntry("next", index)}
                   className="mt-2"
                 >
                   Remove
@@ -806,22 +860,17 @@ const AddBooking: React.FC<AddBookingProps> = ({
               )}
             </Card>
           ))}
-          
-          <Button 
-            type="dashed" 
-            onClick={() => addPaymentEntry('next')}
-            block
-          >
+
+          <Button type="dashed" onClick={() => addPaymentEntry("next")} block>
             Add Payment
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <div className="min-h-screen dark:bg-gray-800">
-      
       <Form
         form={form}
         layout="vertical"
@@ -830,38 +879,34 @@ const AddBooking: React.FC<AddBookingProps> = ({
         className="rounded-lg"
       >
         {/* Basic Detail Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">{isEditMode ? "Edit Booking" : "Basic Detail"}</Title>}>
+        <Card
+          className="mb-6 dark:bg-gray-700 dark:border-gray-600"
+          title={
+            <Title level={4} className="dark:text-white">
+              {isEditMode ? "Edit Booking" : "Basic Detail"}
+            </Title>
+          }
+        >
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
                 label="Customer"
                 name="customer"
-                rules={[{ required: true, message: 'Please enter name' }]}
+                rules={[{ required: true, message: "Please enter name" }]}
               >
                 <Input placeholder="Enter name" />
-                {/* <Select
-                  showSearch
-                  placeholder="Select a name"
-                  optionFilterProp="children"
-                >
-                  <Option value="name1">Name 1</Option>
-                  <Option value="name2">Name 2</Option>
-                  <Option value="name3">Name 3</Option>
-                </Select> */}
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="Project Name"
+              <SelectGroupAntd
+                options={optionList || []}
+                placeholder="Select Project"
+                allowClear
+                showSearch
                 name="projectName"
-                rules={[{ required: true, message: 'Please select a project' }]}
-              >
-                <Select placeholder="Select project">
-                  {optionList.map(project => (
-                    <Option key={project.value} value={project.value}>{project.label}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                label="Project Name"
+                isFormModeOn
+              />
             </Col>
           </Row>
 
@@ -870,16 +915,15 @@ const AddBooking: React.FC<AddBookingProps> = ({
               <Form.Item
                 label="Email"
                 name="email"
-                rules={[{ type: 'email', message: 'Please enter a valid email' }]}
+                rules={[
+                  { type: "email", message: "Please enter a valid email" },
+                ]}
               >
                 <Input placeholder="Enter email" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="R.M."
-                name="rm"
-              >
+              <Form.Item label="R.M." name="rm">
                 <Input placeholder="Enter RM" />
               </Form.Item>
             </Col>
@@ -890,16 +934,15 @@ const AddBooking: React.FC<AddBookingProps> = ({
               <Form.Item
                 label="Contact Name"
                 name="contactName"
-                rules={[{ required: true, message: 'Please enter contact name' }]}
+                rules={[
+                  { required: true, message: "Please enter contact name" },
+                ]}
               >
                 <Input placeholder="Enter contact name" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="Unit"
-                name="unit"
-              >
+              <Form.Item label="Unit" name="unit">
                 <Input placeholder="Enter Unit" />
               </Form.Item>
             </Col>
@@ -910,34 +953,38 @@ const AddBooking: React.FC<AddBookingProps> = ({
               <Form.Item
                 label="Booking Date"
                 name="bookingDate"
-                rules={[{ required: true, message: 'Please select a date' }]}
+                rules={[{ required: true, message: "Please select a date" }]}
               >
-                <DatePicker 
-                  style={{ width: '100%' }}
+                <DatePicker
+                  style={{ width: "100%" }}
                   format="YYYY-MM-DD"
                   onChange={(date) => {
                     // Use a simple approach that won't cause validation errors
                     // const dateStr = date ? date.format('YYYY-MM-DD') : '';
                     form.setFieldsValue({
-                      bookingDate: date
+                      bookingDate: date,
                     });
                   }}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="Size"
-                name="size"
-              >
-                 <Input placeholder="Enter Size" />
+              <Form.Item label="Size" name="size">
+                <Input placeholder="Enter Size" />
               </Form.Item>
             </Col>
           </Row>
         </Card>
 
         {/* Reference Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Reference</Title>}>
+        <Card
+          className="mb-6 dark:bg-gray-700 dark:border-gray-600"
+          title={
+            <Title level={4} className="dark:text-white">
+              Reference
+            </Title>
+          }
+        >
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item
@@ -951,32 +998,40 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "Employee")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Employee") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("Employee")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["Employee"]?.map(emp => (
-                    <Option key={emp.value} value={emp.value}>{emp.label}</Option>
+                  {usersByRole["Employee"]?.map((emp) => (
+                    <Option key={emp.value} value={emp.value}>
+                      {emp.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="AVP"
-                name="avp"
-                className="dark:text-white"
-              >
+              <Form.Item label="AVP" name="avp" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select AVP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "AVP")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AVP") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("AVP")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["AVP"]?.map(avp => (
-                    <Option key={avp.value} value={avp.value}>{avp.label}</Option>
+                  {usersByRole["AVP"]?.map((avp) => (
+                    <Option key={avp.value} value={avp.value}>
+                      {avp.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -985,43 +1040,47 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={12}>
-              <Form.Item
-                label="TL/CP"
-                name="tlcp"
-                className="dark:text-white"
-              >
+              <Form.Item label="TL/CP" name="tlcp" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select TL/CP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "Team Leader")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Team Leader") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("Team Leader")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["Team Leader"]?.map(tl => (
-                    <Option key={tl.value} value={tl.value}>{tl.label}</Option>
+                  {usersByRole["Team Leader"]?.map((tl) => (
+                    <Option key={tl.value} value={tl.value}>
+                      {tl.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="VP"
-                name="vp"
-                className="dark:text-white"
-              >
+              <Form.Item label="VP" name="vp" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select VP"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "VP")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("VP") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("VP")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["VP"]?.map(vp => (
-                    <Option key={vp.value} value={vp.value}>{vp.label}</Option>
+                  {usersByRole["VP"]?.map((vp) => (
+                    <Option key={vp.value} value={vp.value}>
+                      {vp.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -1030,43 +1089,47 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={12}>
-              <Form.Item
-                label="AGM"
-                name="agm"
-                className="dark:text-white"
-              >
+              <Form.Item label="AGM" name="agm" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select AGM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "AGM")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AGM") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("AGM")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["AGM"]?.map(agm => (
-                    <Option key={agm.value} value={agm.value}>{agm.label}</Option>
+                  {usersByRole["AGM"]?.map((agm) => (
+                    <Option key={agm.value} value={agm.value}>
+                      {agm.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="AS"
-                name="as"
-                className="dark:text-white"
-              >
+              <Form.Item label="AS" name="as" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select AS"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "AS")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("AS") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("AS")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["AS"]?.map(as => (
-                    <Option key={as.value} value={as.value}>{as.label}</Option>
+                  {usersByRole["AS"]?.map((as) => (
+                    <Option key={as.value} value={as.value}>
+                      {as.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -1075,22 +1138,24 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={12}>
-              <Form.Item
-                label="GM"
-                name="gm"
-                className="dark:text-white"
-              >
+              <Form.Item label="GM" name="gm" className="dark:text-white">
                 <Select
                   showSearch
                   placeholder="Select GM"
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "GM")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("GM") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("GM")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["GM"]?.map(gm => (
-                    <Option key={gm.value} value={gm.value}>{gm.label}</Option>
+                  {usersByRole["GM"]?.map((gm) => (
+                    <Option key={gm.value} value={gm.value}>
+                      {gm.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -1107,11 +1172,17 @@ const AddBooking: React.FC<AddBookingProps> = ({
                   optionFilterProp="children"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                   onChange={(value) => handleUserSelect(value, "Vertical")}
-                  disabled={(loadingUserTree || selectedUserRole) ? shouldDisableSelect("Vertical") : false}
+                  disabled={
+                    loadingUserTree || selectedUserRole
+                      ? shouldDisableSelect("Vertical")
+                      : false
+                  }
                   loading={loadingUserTree}
                 >
-                  {usersByRole["Vertical"]?.map(vert => (
-                    <Option key={vert.value} value={vert.value}>{vert.label}</Option>
+                  {usersByRole["Vertical"]?.map((vert) => (
+                    <Option key={vert.value} value={vert.value}>
+                      {vert.label}
+                    </Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -1120,65 +1191,74 @@ const AddBooking: React.FC<AddBookingProps> = ({
         </Card>
 
         {/* Payment Detail Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Payment Detail</Title>}>
+        <Card
+          className="mb-6 dark:bg-gray-700 dark:border-gray-600"
+          title={
+            <Title level={4} className="dark:text-white">
+              Payment Detail
+            </Title>
+          }
+        >
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item
-                label="BSP"
-                name="bsp"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter BSP" 
+              <Form.Item label="BSP" name="bsp">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  placeholder="Enter BSP"
                   onChange={calculateTotalRevenue}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Row gutter={8}>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST %"
-                    name="gstPercentage"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
-                      placeholder="%" 
+                  <Form.Item label="GST %" name="gstPercentage">
+                    <InputNumber
+                      style={{ width: "100%" }}
+                      placeholder="%"
                       min={0}
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
+                      parser={(value) =>
+                        value ? (Number(value.replace("%", "")) as 0 | 100) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST Value"
-                    name="gst"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
+                  <Form.Item label="GST Value" name="gst">
+                    <InputNumber
+                      style={{ width: "100%" }}
                       disabled
-                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                      formatter={(value) =>
+                        `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) =>
+                        value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
               </Row>
             </Col>
             <Col span={8}>
-              <Form.Item
-                label="Total"
-                name="bspGstTotal"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="Total" name="bspGstTotal">
+                <InputNumber
+                  style={{ width: "100%" }}
                   disabled
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
@@ -1186,62 +1266,64 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item
-                label="Other charges"
-                name="otherCharges"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="Other charges" name="otherCharges">
+                <InputNumber
+                  style={{ width: "100%" }}
                   placeholder="Enter other charges"
                   onChange={calculateTotalRevenue}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Row gutter={8}>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST %"
-                    name="otherGSTPercentage"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
+                  <Form.Item label="GST %" name="otherGSTPercentage">
+                    <InputNumber
+                      style={{ width: "100%" }}
                       placeholder="%"
                       min={0}
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
+                      parser={(value) =>
+                        value ? (Number(value.replace("%", "")) as 0 | 100) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST Value"
-                    name="otherGST"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
+                  <Form.Item label="GST Value" name="otherGST">
+                    <InputNumber
+                      style={{ width: "100%" }}
                       disabled
-                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                      formatter={(value) =>
+                        `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) =>
+                        value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
               </Row>
             </Col>
             <Col span={8}>
-              <Form.Item
-                label="Total"
-                name="otherGstTotal"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="Total" name="otherGstTotal">
+                <InputNumber
+                  style={{ width: "100%" }}
                   disabled
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
@@ -1249,62 +1331,64 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={8}>
-              <Form.Item
-                label="PLC"
-                name="plc"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="PLC" name="plc">
+                <InputNumber
+                  style={{ width: "100%" }}
                   placeholder="Enter PLC"
                   onChange={calculateTotalRevenue}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Row gutter={8}>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST %"
-                    name="plcGSTPercentage"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
+                  <Form.Item label="GST %" name="plcGSTPercentage">
+                    <InputNumber
+                      style={{ width: "100%" }}
                       placeholder="%"
                       min={0}
                       max={100}
                       onChange={calculateTotalRevenue}
                       formatter={(value) => `${value}%`}
-                      parser={(value) => value ? Number(value.replace('%', '')) as (0 | 100) : 0}
+                      parser={(value) =>
+                        value ? (Number(value.replace("%", "")) as 0 | 100) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item
-                    label="GST Value"
-                    name="plcGST"
-                  >
-                    <InputNumber 
-                      style={{ width: '100%' }} 
+                  <Form.Item label="GST Value" name="plcGST">
+                    <InputNumber
+                      style={{ width: "100%" }}
                       disabled
-                      formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                      formatter={(value) =>
+                        `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value) =>
+                        value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                      }
                     />
                   </Form.Item>
                 </Col>
               </Row>
             </Col>
             <Col span={8}>
-              <Form.Item
-                label="Total"
-                name="plcGstTotal"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="Total" name="plcGstTotal">
+                <InputNumber
+                  style={{ width: "100%" }}
                   disabled
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
@@ -1312,79 +1396,72 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={24}>
-              <Form.Item
-                label="Total"
-                name="tsp"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  placeholder="Total" 
+              <Form.Item label="Total" name="tsp">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  placeholder="Total"
                   disabled
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                label="Payment Received"
-                name="paymentDetails"
-              >
+          <Col span={24}>
+              <Form.Item label="Received Payment" name="paymentDetails">
                 <Collapse items={receivedPaymentItems} className="w-full" />
               </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Next Payment"
-                name="paymentDetails"
-              >
-                <Collapse items={nextPaymentItems} className="w-full" />
-              </Form.Item>
-            </Col>
+          </Col>
           </Row>
 
           <Row gutter={24}>
-          <Col span={8}>
-              <Form.Item
-                label="Gross Revenue"
-                name="grossRevenue"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+            <Col span={8}>
+              <Form.Item label="Gross Revenue" name="grossRevenue">
+                <InputNumber
+                  style={{ width: "100%" }}
                   placeholder="Enter gross revenue"
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                   onChange={calculateTotalRevenue}
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item
-                label="- CP Revenue"
-                name="cpRevenue"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="- CP Revenue" name="cpRevenue">
+                <InputNumber
+                  style={{ width: "100%" }}
                   placeholder="Enter CP Revenue"
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                   onChange={calculateTotalRevenue}
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item
-                label="- Discount"
-                name="discount"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
+              <Form.Item label="- Discount" name="discount">
+                <InputNumber
+                  style={{ width: "100%" }}
                   placeholder="Enter discount"
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                   onChange={calculateTotalRevenue}
                 />
               </Form.Item>
@@ -1393,24 +1470,40 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
           <Row gutter={24}>
             <Col span={24}>
-              <Form.Item
-                label="Net Revenue"
-                name="netRevenue"
-              >
-                <InputNumber 
-                  style={{ width: '100%' }} 
-                  disabled 
+              <Form.Item label="Net Revenue" name="netRevenue">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  disabled
                   value={netRevenue}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value ? Number(value.replace(/[^\d.]/g, '')) : 0}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d.]/g, "")) : 0
+                  }
                 />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={24} >
+              <Form.Item label="Next Payment" name="paymentDetails">
+                <Collapse items={nextPaymentItems} className="w-full" />
               </Form.Item>
             </Col>
           </Row>
         </Card>
 
         {/* Remark Section */}
-        <Card className="mb-6 dark:bg-gray-700 dark:border-gray-600" title={<Title level={4} className="dark:text-white">Remark</Title>}>
+        <Card
+          className="mb-6 dark:bg-gray-700 dark:border-gray-600"
+          title={
+            <Title level={4} className="dark:text-white">
+              Remark
+            </Title>
+          }
+        >
           <Row>
             <Col span={24}>
               <Form.Item
@@ -1433,8 +1526,8 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 label="Remark"
                 className="dark:text-white"
               >
-                <TextArea 
-                  rows={4} 
+                <TextArea
+                  rows={4}
                   placeholder="Enter any remarks here"
                   className="dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                 />
@@ -1445,9 +1538,9 @@ const AddBooking: React.FC<AddBookingProps> = ({
 
         {/* Submit Button with Loading State */}
         <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
+          <Button
+            type="primary"
+            htmlType="submit"
             size="large"
             icon={<SaveOutlined />}
             className="float-right"
