@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from "react";
 import ButtonDefault from "../../components/Buttons/ButtonDefault";
 import {
   getStoredAgents,
+  getStoredAgentsAsTree,
   getStoredProductsServices,
   getStoredSources,
   getStoredStatus,
@@ -9,6 +10,7 @@ import {
 import dayjs from "dayjs";
 import AntDateTimePicker from "../../components/FormElements/DatePicker/AntDateTimePicker";
 import SelectGroupAntd from "../../components/FormElements/SelectGroup/SelectGroupAntd";
+import TreeSelectAntd from "../../components/FormElements/SelectGroup/TreeSelectAntd";
 
 interface AdvanceFilterUIProps {
   onFilter: (filters: {
@@ -50,7 +52,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   initialFilterData = {},
   setIsAdvanceFilterEnable = () => {},
 }) => {
-  const agentList = getStoredAgents(true);
+  const agentTreeData = getStoredAgentsAsTree();
   const serviceList = getStoredProductsServices(true);
   const sourceList = getStoredSources(true);
   const statusList = getStoredStatus(true);
@@ -142,14 +144,16 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           allowClear
           showSearch
         />
-        <SelectGroupAntd
+         <TreeSelectAntd
           label="Select Employee"
-          placeholder="Select Employee"
-          options={agentList}
+          treeData={agentTreeData}
           selectedOption={filters.assignedAgent}
           setSelectedOption={(value) => handleChange("assignedAgent", value)}
+          placeholder="Select Employee"
           showSearch={true}
           allowClear={true}
+          treeDefaultExpandAll={true}
+          options={[]} // Provide empty array for the required options property
         />
         <SelectGroupAntd
           label="Select Product and Service"
@@ -169,6 +173,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
           allowClear
           showSearch
         />
+        
         <AntDateTimePicker
           label="Start Date"
           onChange={handleDateChange("startDate")}

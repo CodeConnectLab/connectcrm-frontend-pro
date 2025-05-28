@@ -4,12 +4,12 @@ import {
   leadSourceOptionsNewFormat,
   leadStatusNewFormat,
   lostReasonOptionsNewFormat,
+  ROLES,
   serviceOptionsNewFormat,
 } from "../../utils/Constants/UsefullJSON";
 import { API } from "../index";
 import { END_POINT } from "../UrlProvider";
 import { toast } from "react-toastify";
-
 interface GeneralData {
   status: any[];
   sources: any[];
@@ -125,14 +125,26 @@ export const getStoredSources = (forSelectOptions = false): any[] => {
   }
 };
 
-export const getStoredAgents = (forSelectOptions = false): any[] => {
+export const getStoredAgents = (forSelectOptions = false, includeRole=false): any[] => {
   try {
     const data = localStorage.getItem("crm_agents");
     const parsedData = data ? JSON.parse(data) : AGEND_NAMESNewFormat;
-    const transformedData = parsedData?.map((item: any) => ({
-      value: item._id,
-      label: item.name,
-    }));
+    console.log({parsedData});
+    let transformedData = []
+    if (includeRole) {
+      transformedData = parsedData?.map((item: any) => ({
+        value: item._id,
+        label: `${item.name}-${item.role}`,
+        role: item.role,
+      }))
+      
+    }else{
+      transformedData = parsedData?.map((item: any) => ({
+        value: item._id,
+        label: item.name,
+      }));
+    }
+    
     if (!forSelectOptions) {
       return data ? JSON.parse(data) : [];
     } else {
@@ -141,6 +153,78 @@ export const getStoredAgents = (forSelectOptions = false): any[] => {
   } catch (error) {
     console.error("Error parsing agents data:", error);
     toast.error("Error parsing agents data");
+    return [];
+  }
+};
+
+/**
+ * Get stored agents data formatted as a tree structure for TreeSelectAntd component
+ * Organizes agents by their roles in a hierarchical structure
+ */
+export const getStoredAgentsAsTree = (): any[] => {
+  try {
+    const data = localStorage.getItem("crm_agents");
+    const parsedData = data ? JSON.parse(data) : AGEND_NAMESNewFormat;
+    
+    // Create a map to store agents by role
+    const agentsByRole: Record<string, any[]> = {};
+    
+    // Group agents by their roles
+    parsedData?.forEach((agent: any) => {
+      const role = agent.role || "Other";
+      if (!agentsByRole[role]) {
+        agentsByRole[role] = [];
+      }
+      agentsByRole[role].push(agent);
+    });
+    
+    // Create tree structure with roles as parent nodes and agents as children
+    const treeData = ROLES.map((role: string) => {
+      // Skip roles with no agents
+      if (!agentsByRole[role] || agentsByRole[role].length === 0) {
+        return null;
+      }
+      
+      return {
+        label: role,
+        value: `role-${role}`,
+        children: agentsByRole[role].map((agent: any) => ({
+          label: agent.name,
+          value: agent._id,
+        })),
+      };
+    }).filter(Boolean); // Remove null entries for roles with no agents
+    
+    // Add any agents with roles not in the predefined ROLES list
+    Object.keys(agentsByRole).forEach(role => {
+      if (!ROLES.includes(role) && role !== "Other") {
+        treeData.push({
+          label: role,
+          value: `role-${role}`,
+          children: agentsByRole[role].map((agent: any) => ({
+            label: agent.name,
+            value: agent._id,
+          })),
+        });
+      }
+    });
+    
+    // Add agents with no role to "Other" category
+    if (agentsByRole["Other"] && agentsByRole["Other"].length > 0) {
+      treeData.push({
+        label: "Other",
+        value: "role-Other",
+        children: agentsByRole["Other"].map((agent: any) => ({
+          label: agent.name,
+          value: agent._id,
+        })),
+      });
+    }
+    
+    return treeData;
+  } catch (error) {
+    console.error("Error creating tree structure from agents data:", error);
+    toast.error("Error processing agents data");
     return [];
   }
 };
