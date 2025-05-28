@@ -10,6 +10,7 @@ import { API } from "../../../api";
 import { END_POINT } from "../../../api/UrlProvider";
 import SwitcherTwo from "../../../components/FormElements/Switchers/SwitcherTwo";
 import ConfirmationModal from "../../../components/Modals/ConfirmationModal";
+import SearchForm from "../../../components/Header/SearchForm";
 
 interface User {
   key: string;
@@ -96,6 +97,25 @@ export default function DepartmentSetting() {
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormState);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filteredData, setFilteredData] = useState<User[]>([]);
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Filter data based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredData(tableData);
+    } else {
+      const filtered = tableData.filter(user => 
+        user.userName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  }, [searchTerm, tableData]);
 
   const fetchUsers = async () => {
     try {
@@ -459,17 +479,24 @@ export default function DepartmentSetting() {
     <div className="w-full">
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-semibold">Department Management</h2>
-        {!showForm && (
-          <ButtonDefault
-            label="Add New User"
-            onClick={() => {
-              setShowForm(true);
-              setFormData(initialFormState);
-              setEditingUser(null);
-            }}
-            icon={<PlusOutlined />}
+        <div className="flex items-center gap-4">
+          <SearchForm 
+            placeholder="Search by name"
+            onSearch={setSearchTerm}
+            searchTerm={searchTerm}
           />
-        )}
+          {!showForm && (
+            <ButtonDefault
+              label="Add New User"
+              onClick={() => {
+                setShowForm(true);
+                setFormData(initialFormState);
+                setEditingUser(null);
+              }}
+              icon={<PlusOutlined />}
+            />
+          )}
+        </div>
       </div>
 
       {showForm && (
@@ -599,7 +626,7 @@ export default function DepartmentSetting() {
       <CustomAntdTable
         columns={columns}
         isLoading={tableLoading}
-        dataSource={tableData}
+        dataSource={filteredData}
         pagination={{
           pageSize: 15,
           showSizeChanger: false,
