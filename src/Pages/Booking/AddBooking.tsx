@@ -161,7 +161,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
     { amount: 0, date: '', status: 'paid', mode: 'cash' }
   ]);
   const [nextPayments, setNextPayments] = useState<PaymentDetail[]>([
-    { amount: 0, date: '', status: 'unpaid', mode: 'cash' }
+    { amount: 0, date: '', status: 'unpaid', mode: 'cheque' }
   ]);
 
   // Sample options for dropdowns
@@ -192,7 +192,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
                 ...payment,
                 date: payment.date || ''
               }))
-          : [{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }];
+          : [{ amount: 0, date: '', status: 'unpaid', mode: 'cheque' }];
 
         // Set state values
         setReceivedPayments(receivedPayments as PaymentDetail[]);
@@ -324,7 +324,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
         message.success('Booking added successfully!');
         form.resetFields();
         setReceivedPayments([{ amount: 0, date: '', status: 'paid', mode: 'cash' }]);
-        setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+        setNextPayments([{ amount: 0, date: '', status: 'unpaid', mode: 'cheque' }]);
         finalCallBack();
         
       } catch (error: unknown) {
@@ -566,7 +566,7 @@ const AddBooking: React.FC<AddBookingProps> = ({
     if (type === 'received') {
       setReceivedPayments([...receivedPayments, { amount: 0, date: '', status: 'paid', mode: 'cash' }]);
     } else {
-      setNextPayments([...nextPayments, { amount: 0, date: '', status: 'unpaid', mode: 'cash' }]);
+      setNextPayments([...nextPayments, { amount: 0, date: '', status: 'unpaid', mode: 'cheque' }]);
     }
   };
   
