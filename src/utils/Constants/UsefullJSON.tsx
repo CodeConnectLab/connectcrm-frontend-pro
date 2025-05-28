@@ -335,6 +335,18 @@ const INDUSTRY_TYPES: IndustryOption[] = [
   { value: "other", label: "Other", category: "Other" },
 ];
 
+export const ROLES = [
+  "Employee",
+  "Team Leader",
+  "AGM",
+  "GM",
+  "AVP",
+  "VP",
+  "AS",
+  "Vertical",
+  "Super Admin",
+];
+
 // Helper function to get industries by category
 export const getIndustriesByCategory = (category: string): IndustryOption[] => {
   return INDUSTRY_TYPES.filter((industry) => industry.category === category);
