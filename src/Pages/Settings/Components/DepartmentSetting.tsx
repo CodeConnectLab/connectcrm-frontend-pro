@@ -51,8 +51,8 @@ interface FormData {
 
 // Define role hierarchy
 const roleHierarchy: { [key: string]: string } = {
-  "Employee": "Team Leader",
-  "Team Leader": "AGM",
+  "Employee": "TL",
+  "TL": "AGM",
   "AGM": "GM",
   "GM": "AVP",
   "AVP": "VP",
@@ -126,8 +126,9 @@ export default function DepartmentSetting() {
       const transformedData = data.map((user: UserData, index: number) => {
         // Find the superior role field dynamically
         let assignedSuperior = "";
-        if (user.role && roleHierarchy[user.role]) {
-          const superiorRole = roleHierarchy[user.role];
+        const roleName=user.role==="Team Leader"? "TL" : user.role
+        if (user.role && roleHierarchy[roleName]) {
+          const superiorRole = roleHierarchy[roleName];
           const superiorRoleField = `assigned${superiorRole}`;
           assignedSuperior = user[superiorRoleField as keyof UserData] as string || "";
         }
@@ -138,7 +139,7 @@ export default function DepartmentSetting() {
           userName: user.name,
           email: user.email,
           mobile: user.phone,
-          roll: user.role,
+          roll: user.role==="Team Leader"? "TL" : user.role,
           assignTeamLeader: assignedSuperior,
           isActive: user.isActive,
           assignedTL: assignedSuperior,
@@ -165,11 +166,12 @@ export default function DepartmentSetting() {
       const roles = Object.keys(roleHierarchy)
       roles.push("Vertical")
       roles.forEach((role) => {
-        usersByRoleMap[role] = data
-          .filter((user: UserData) => user.role === role && user.isActive)
+        usersByRoleMap[role] = transformedData
+          .filter((user: UserData) => {
+            return user.roll === role && user.isActive})
           .map((user: UserData) => ({
-            value: user._id,
-            label: user.name,
+            value: user.key,
+            label: user.userName,
           }));
       });
       
@@ -200,14 +202,29 @@ export default function DepartmentSetting() {
       toast.error("Please enter user name");
       return false;
     }
+    
+    // Email validation
     if (!formData.email.trim()) {
       toast.error("Please enter email");
       return false;
     }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+    
+    // Mobile validation
     if (!formData.mobile.trim()) {
       toast.error("Please enter mobile number");
       return false;
     }
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(formData.mobile.replace(/\D/g, ''))) {
+      toast.error("Please enter a valid mobile number (10 digits)");
+      return false;
+    }
+    
     if (!editingUser && !formData.password.trim()) {
       toast.error("Please enter password");
       return false;
@@ -566,7 +583,7 @@ export default function DepartmentSetting() {
                   { value: "AVP", label: "AVP" },
                   { value: "GM", label: "GM" },
                   { value: "AGM", label: "AGM" },
-                  { value: "Team Leader", label: "Team Leader" },
+                  { value: "TL", label: "Team Leader" },
                   { value: "Employee", label: "Employee" },
                 ]}
                 selectedOption={formData.userType}

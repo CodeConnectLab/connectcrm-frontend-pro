@@ -125,14 +125,26 @@ export const getStoredSources = (forSelectOptions = false): any[] => {
   }
 };
 
-export const getStoredAgents = (forSelectOptions = false): any[] => {
+export const getStoredAgents = (forSelectOptions = false, includeRole=false): any[] => {
   try {
     const data = localStorage.getItem("crm_agents");
     const parsedData = data ? JSON.parse(data) : AGEND_NAMESNewFormat;
-    const transformedData = parsedData?.map((item: any) => ({
-      value: item._id,
-      label: item.name,
-    }));
+    console.log({parsedData});
+    let transformedData = []
+    if (includeRole) {
+      transformedData = parsedData?.map((item: any) => ({
+        value: item._id,
+        label: `${item.name}-${item.role}`,
+        role: item.role,
+      }))
+      
+    }else{
+      transformedData = parsedData?.map((item: any) => ({
+        value: item._id,
+        label: item.name,
+      }));
+    }
+    
     if (!forSelectOptions) {
       return data ? JSON.parse(data) : [];
     } else {

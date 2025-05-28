@@ -50,7 +50,7 @@ const AdvanceFilterUI: React.FC<AdvanceFilterUIProps> = ({
   initialFilterData = {},
   setIsAdvanceFilterEnable = () => {},
 }) => {
-  const agentList = getStoredAgents(true);
+  const agentList = getStoredAgents(true, true);
   const serviceList = getStoredProductsServices(true);
   const sourceList = getStoredSources(true);
   const statusList = getStoredStatus(true);
