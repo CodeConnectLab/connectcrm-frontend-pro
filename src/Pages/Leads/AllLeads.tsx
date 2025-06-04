@@ -13,6 +13,7 @@ import {
 } from "../../api/commonAPI/exportApi";
 import { getTableColumns } from "./Columns";
 import { DEFAULT_VISIBLE_COLUMNS } from './Columns';
+import { getUserRole } from "../../api/commonAPI";
 
 interface Lead {
   key: string;
@@ -147,6 +148,8 @@ const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
       country: lead?.country || "-",
     }));
   };
+
+  const userRole=getUserRole();
 
   const handleQuickUpdate = async (updateData: any) => {
     if (!selectedLead) return;
@@ -403,7 +406,7 @@ const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
         onResetFilters={handleResetFilters}
         loading={loading}
         initialFilterData={{ statusId, filterType }}
-        showExportButtons={showExportButtons}
+        showExportButtons={showExportButtons && userRole === "Super Admin" }
         onExportPDF={handleExportPDFLogic}
         onExportExcel={handleExportExcelLogic}
         columns={columns}

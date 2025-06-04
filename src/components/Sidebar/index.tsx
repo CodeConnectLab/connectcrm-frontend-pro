@@ -45,19 +45,19 @@ export const menuGroups: MenuGroup[] = [
         route: "#",
         children: [{ label: "Overview", route: "/" },],
       },
-      {
-        icon: <FaFileInvoiceDollar className="text-2xl" />,
-        label: "Booking",
-        route: "#",
-        children: [
-          { label: "Overview", route: "/booking" },
-          { label: "Add Booking", route: "/booking/add-booking" },
-          { label: "All Booking", route: "/booking/all-booking" },
-          { label: "New Booking", route: "/booking/new-booking" },
-          { label: "Upcoming Payments", route: "/booking/upcoming-payments" },
-          { label: "Reports", route: "/booking/reports" },
-        ],
-      },
+      // {
+      //   icon: <FaFileInvoiceDollar className="text-2xl" />,
+      //   label: "Booking",
+      //   route: "#",
+      //   children: [
+      //     { label: "Overview", route: "/booking" },
+      //     { label: "Add Booking", route: "/booking/add-booking" },
+      //     { label: "All Booking", route: "/booking/all-booking" },
+      //     { label: "New Booking", route: "/booking/new-booking" },
+      //     { label: "Upcoming Payments", route: "/booking/upcoming-payments" },
+      //     { label: "Reports", route: "/booking/reports" },
+      //   ],
+      // },
       {
         icon: <LuUserPlus className="text-2xl" />,
         label: "Lead",

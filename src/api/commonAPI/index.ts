@@ -194,6 +194,20 @@ export const getStoredNotification = (forSelectOptions = false): any[] => {
   }
 };
 
+export const getUserRole = (): string | null => {
+  try {
+    const data = localStorage.getItem("user");
+    const parsedData = data ? JSON.parse(data) : [];
+    if (parsedData?.role) {
+      return parsedData?.role;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error parsing countries data:", error);
+    return null;
+  }
+};
+
 // Helper function to clear all stored general data
 export const clearGeneralData = (): void => {
   localStorage.removeItem("crm_status");
