@@ -13,6 +13,7 @@ import {
 } from "../../api/commonAPI/exportApi";
 import { getTableColumns } from "./Columns";
 import { DEFAULT_VISIBLE_COLUMNS } from './Columns';
+import { isWithinPast24Hours } from "../../utils/useFullFunctions";
 
 interface Lead {
   key: string;
@@ -421,6 +422,12 @@ const AllLeads = ({ derivativeEndpoint = "", showExportButtons = true }) => {
           onChange: handleTableChange,
           pageSizeOptions: ["10", "20", "50", "100"],
           showSizeChanger: true,
+        }}
+        rowClassName={(record: Lead) => {          
+          const dateValue= record?.createdAt && new Date(record.createdAt) || new Date();          
+          if (isWithinPast24Hours(dateValue)) {
+            return "bg-blue-light-6 !hover:bg-blue-light-5 transition-colors duration-200";
+          }
         }}
         isLoading={loading}
         onRow={(record: any) => ({ onClick: () => handleRowClick(record) })}

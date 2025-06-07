@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button, Tooltip } from "antd";
-import { EditFilled } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import CustomAntdTable from "../../components/Tables/CustomAntdTable";
-import CheckboxTwo from "../../components/FormElements/Checkboxes/CheckboxTwo";
 import LeadsTableHeader from "./LeadsTableHeader";
 import { API } from "../../api";
 import { END_POINT } from "../../api/UrlProvider";
@@ -12,7 +9,7 @@ import { toast } from "react-toastify";
 import QuickEditModal from "../../components/Modals/QuickEdit";
 import {
   isWithinNext24Hours,
-  isWithinPast24Hours,
+  isPast24Hours,
 } from "../../utils/useFullFunctions";
 import { DEFAULT_VISIBLE_COLUMNS, getTableColumns } from "./Columns";
 
@@ -407,7 +404,7 @@ const FollowupLeads = () => {
             // return "bg-green-50 hover:bg-green-100 transition-colors duration-200 animate-in-range";
             return "bg-green-50 hover:bg-green-100 transition-colors duration-200";
           }
-          if (isWithinPast24Hours(record.followUpDate)) {
+          if (isPast24Hours(record.followUpDate)) {
             return "bg-red-50 hover:bg-red-100 transition-colors duration-200";
             // return "bg-red-50 hover:bg-red-100 transition-colors duration-200 animate-in-range";
           }

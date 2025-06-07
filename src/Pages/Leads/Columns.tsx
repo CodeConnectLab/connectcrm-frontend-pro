@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { EditFilled } from "@ant-design/icons";
 import {
   isWithinNext24Hours,
-  isWithinPast24Hours,
+  isPast24Hours,
 } from "../../utils/useFullFunctions";
 
 export const DEFAULT_VISIBLE_COLUMNS = [
@@ -19,17 +19,17 @@ export const DEFAULT_VISIBLE_COLUMNS = [
   "action",
 ];
 
-const getRowClassName = (record: any): string => {
-  const followUpDate = new Date(record.followUpDate);
+// const getRowClassName = (record: any): string => {
+//   const followUpDate = new Date(record.followUpDate);
 
-  if (isWithinNext24Hours(followUpDate)) {
-    return "upcoming-followup pulse-green";
-  }
-  if (isWithinPast24Hours(followUpDate)) {
-    return "missed-followup pulse-red";
-  }
-  return "";
-};
+//   if (isWithinNext24Hours(followUpDate)) {
+//     return "upcoming-followup pulse-green";
+//   }
+//   if (isPast24Hours(followUpDate)) {
+//     return "missed-followup pulse-red";
+//   }
+//   return "";
+// };
 
 export const getTableColumns = (
   handleSelectAll: ({ isChecked }: { isChecked: boolean }) => void,
@@ -114,7 +114,7 @@ export const getTableColumns = (
       const formattedDateTime = `${formattedDate} - ${formattedTime}`;
       // const formattedDate = date.toLocaleString();
       const isUpcoming = isWithinNext24Hours(date);
-      const isMissed = isWithinPast24Hours(date);
+      const isMissed = isPast24Hours(date);
 
       return (
         <div className="flex items-center gap-2">

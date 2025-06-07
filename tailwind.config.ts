@@ -77,8 +77,9 @@ const config: Config = {
             2: "#8099EC",
             3: "#ADBCF2",
             4: "#C3CEF6",
-            5: "#E1E8FF",
-          },
+            5: "#c8c3f5",
+            6: "#E1E8FF",
+          }
         },
         orange: {
           DEFAULT: "#F59460",
